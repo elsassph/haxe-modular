@@ -330,7 +330,7 @@ instances of reloaded classes to use the new code.
 The feature is based on the [LiveReload](https://livereload.com) API. `Require` will 
 set a listener for `LiveReloadConnect` and register a "reloader plugin" to handle changes. 
 
-It is recommended to simply use [livereloadx](https://livereloadx). The static mode 
+It is recommended to simply use [livereloadx](http://nitoyon.github.io/livereloadx/). The static mode 
 dynamically injects the livereload client API script in HTML pages served:
 
     npm install livereloadx -g
