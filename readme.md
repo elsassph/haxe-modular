@@ -57,14 +57,13 @@ The goal of this project is to propose one robust and scalable solution.
 
 2. Haxe-JS code splitting
 
-    Using regular Haxe compiler options and metadata it is possible to emit multiple
-    JavaScript files from a single codebase. These files only need a minor post-generation 
-    treatment in order to behave at runtime like a single script. 
+    Code splitting works by identifying features which can be asynchronously loaded at 
+	run time. Features can be automatically extracted into JS bundles. 
 
 3. Lazy loading
 
-    A helper class allows to easily load modules at runtime. Modularisation is not
-    automatic but user-defined.
+    A helper class allows to easily load modules at run time. JS bundles can be created
+	automatically.
 
 4. Hot-reload
 
@@ -75,6 +74,10 @@ The goal of this project is to propose one robust and scalable solution.
 This project provides support classes to implement the proposed solution:
 
     haxelib install modular
+
+Add to your HXML:
+
+	-lib modular
 
 
 ## NPM dependencies bundling
@@ -168,114 +171,69 @@ with its own NPM dependencies, you will load the dependencies first, then the Ha
 
 Code splitting requires a bit more planning than in JavaScript, so **read carefully**! 
 
-For code splitting we are going to use 2 Haxe-JS compiler features:
+By splitting it means that:
+- you need to break down the features of your application in units that can be logically 
+  loaded at run time,
+- features need to have one entry point class.
 
-1. [Exclude package](http://api.haxe.org/haxe/macro/Compiler.html#exclude) 
-   compiler flag: `--exclude('name.of.package')`
+How it works:
+- A graph of the classes "direct references" is created,
+- The reference graph is split at the entry point of bundles,
+- Each bundle will include the direct (non-split) graph of classes,
+- unless the class is present in the main bundle (it will be shared).
 
-   This is very important because we will essentially compile the application several
-   times, excluding what should not be in each module.
+What is a direct reference?
+- `new A()`
+- `A.b` / `A.c()`
+- `Std.is(o, A)`
 
-2. [Exposing Haxe classes for JavaScript](https://haxe.org/manual/target-javascript-expose.html) 
-   using the class `@:expose` metadata. 
-
-   This is the key to "joining" the modules: lazy-loaded and shared classes have to be 
-   "exposed" in order to be usable from other modules.
-
-### Using exclusion
-
-Planning starts here:
-- what modules will I need to create?
-- what will be their entry point?
-- what should be excluded in each module?
-- which classes will be shared?
-
-#### What modules will I need to create?
-
-For example if you architect a React+Redux application, you will at least split it into:
-- core (startup, Redux store setup, ReactDOM render),
-- views (React views, thunk async operations).
-
-*Separating the views is the minimum structure because we'll want to hot-reload them.*
-
-#### What will be their entry point?
-
-For the "core" module: the Main class is the obvious entry point.
-
-For the "views" module: we will reference each top-level React view.
-
-#### What should be excluded in each module?
-
-Exclusion is easier if you exclude entire packages, which means you will want to
-organise your classes by module and give them a specific package name:
-for instance `myapp.core` and `myapp.view`:
-
-To compile the core module, `-main Main` marks the executable entry point.
-
-    # index.hxml
-    -lib modular
-    -lib react
-    -src src
-    -js bin/index.js
-    -main Main
-    --macro exclude('myapp.view')
-    --macro Stub.modules()
-
-To compile the views module, `myapp.view.MyAppView` marks a top-level view. You can 
-reference other top-level classes which could be referenced from the core module.
-In this example `myapp.core` is excluded but you only need to do it if you actually 
-reference core classes in the views.
-
-    # view.hxml
-    -lib modular
-    -lib react
-    -src src
-    -js bin/view.js
-    myapp.view.MyAppView
-    --macro exclude('myapp.core')
-    --macro Stub.modules()
-
-**Important:** all modules, including the main one, must have `--macro Stub.modules()`
-in their compiler arguments. This is the modules post-processor.
-
-### Which classes will be shared?
-
-Now the tricky part: the different modules will need to access classes from other 
-modules, that is, they need to be "shared". For example the core module will need to
-reference `myapp.view.MyAppView` to render the application.
-
-Normally, you must explicitly add `@:expose` in front of each and every shared class:
-
-```haxe
-@:expose
-class MyAppView extends ReactComponent {
-    ...
-}
-```
-
-To facilitate this process, `Stub.modules` can accept a parameter which would be a
-list of packages to automatically expose:
-
-    --macro Stub.modules(['myapp.model','myapp.command'])
-
-**Important**: unfortunately Haxe Enums can NOT be exposed/shared, but they can be excluded
-(which will break your code), so you must make sure Enums are never in an excluded 
-package if you need to use them (eg. creating Enum values) in in multiple modules. 
-You probably should declare Enums in their own `myapp.enums` package.
+You will then want to minimize the dependencies between the bundles:
+- feature bundles can load other feature bundles and use their entry point class,
+- BUT feature bundles can't reference other classes from other feature bundles: 
+  classes will be duplicated. 
 
 
-## Lazy loading
+## Bundling
 
-The `Require` class provides Promise-based lazy-loading functionality:
+The `Bundle` class provides the module extraction functionality which then translates into
+the regular "Lazy loading" API.
 
 ```haxe
 import myapp.view.MyAppView;
 ...
-Require.module('view').then(function(_) {
-    // 'view.js' was loaded and evaluated.
+Bundle.load(MyAppView).then(function(_) {
     // Class myapp.view.MyAppView can be safely used from now on.
     // It's time to render the view.
     new MyAppView();
+}); 
+```
+
+This marks MyAppView as a split point, and is approximately generated into:
+```haxe
+Require.module('MyAppView').then(function(_) {
+    // 'MyAppView.js' was loaded and evaluated.
+	new MyAppView();
+});
+```
+
+### API
+
+`Bundle.load(module:Class, loadCss:Bool = false):Promise<String>`
+
+- `module`: the entry point class reference,
+- `loadCss`: optionally load a CSS file of the same name.
+- returns a Promise providing the name of the loaded module
+
+(API is identical generally to the "Lazy loading" feature below)
+
+
+## Lazy loading
+
+The `Require` class provides Promise-based lazy-loading functionality for JS files:
+
+```haxe
+Require.module('view').then(function(_) {
+    // 'view.js' was loaded and evaluated.
 }); 
 ```
 
@@ -330,8 +288,8 @@ instances of reloaded classes to use the new code.
 The feature is based on the [LiveReload](https://livereload.com) API. `Require` will 
 set a listener for `LiveReloadConnect` and register a "reloader plugin" to handle changes. 
 
-It is recommended to simply use [livereloadx](http://nitoyon.github.io/livereloadx/). The static mode 
-dynamically injects the livereload client API script in HTML pages served:
+It is recommended to simply use [livereloadx](http://nitoyon.github.io/livereloadx/). The 
+static mode dynamically injects the livereload client API script in HTML pages served:
 
     npm install livereloadx -g
     livereloadx -s bin
