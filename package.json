@@ -1,16 +1,27 @@
 {
   "name": "haxe-modular",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
-  "main": "index.js",
-  "scripts": {
-    "build": "haxe build-run.hxml && haxe build-split.hxml"
+  "main": "runtime/index.js",
+  "bin": {
+    "haxe-split": "bin/cmd.js"
+  },
+  "files": [
+	"bin",
+	"tool/bin",
+	"runtime"
+  ],
+  "repository": {
+	"type": "git",
+	"url": "https://github.com/elsassph/haxe-modular.git"
   },
   "author": "Philippe Elsass",
   "license": "ISC",
   "dependencies": {
     "acorn": "^4.0.3",
     "graphlib": "^2.1.1",
+    "react-deep-force-update": "^2.0.1",
+    "react-proxy": "^2.0.8",
     "source-map": "^0.5.6"
   }
 }

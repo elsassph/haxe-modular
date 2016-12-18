@@ -20,6 +20,7 @@ class Parser
 	var candidates:Map<String, AstNode>;
 	var types:Map<String, Array<AstNode>>;
 	var init:Map<String, Array<AstNode>>;
+	var requires:Map<String, AstNode>;
 
 	public function new(src:String) 
 	{
@@ -97,6 +98,7 @@ class Parser
 		candidates = new Map();
 		types = new Map();
 		init = new Map();
+		requires = new Map();
 		step = ParseStep.Start;
 		
 		var body = getBodyNodes(program);
@@ -248,8 +250,10 @@ class Parser
 							else candidates.set(name, def);
 						case 'CallExpression' if (isRequire(init.callee)): // require
 							//trace('(require)');
+							required(name, def);
 						case 'MemberExpression' if (init.object.type == 'CallExpression' && isRequire(init.object.callee)): // require with prop
 							//trace('(require.something)');
+							required(name, def);
 						default:
 							//trace('--copy ' + decl.type);
 					}
@@ -264,6 +268,11 @@ class Parser
 				//trace('--copy ' + decl.type);
 			}
 		}
+	}
+	
+	function required(name:String, def:AstNode) 
+	{
+		requires.set(name, def);
 	}
 	
 	function register(name:String, def:AstNode)

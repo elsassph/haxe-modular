@@ -27,6 +27,8 @@ class Split
 	static function generated()
 	{
 		// emit the bundles
-		Sys.command('haxelib', ['run', 'modular', tempOutput, output].concat(bundles));
+		var cmd = './node_modules/.bin/haxe-split';
+		if (!FileSystem.exists(cmd)) cmd = 'haxe-split'; // try global
+		Sys.command(cmd, [tempOutput, output].concat(bundles));
 	}
 }

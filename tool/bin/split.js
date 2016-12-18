@@ -166,6 +166,29 @@ Bundler.prototype = {
 };
 var HxOverrides = function() { };
 HxOverrides.__name__ = true;
+HxOverrides.strDate = function(s) {
+	var _g = s.length;
+	switch(_g) {
+	case 8:
+		var k = s.split(":");
+		var d = new Date();
+		d.setTime(0);
+		d.setUTCHours(k[0]);
+		d.setUTCMinutes(k[1]);
+		d.setUTCSeconds(k[2]);
+		return d;
+	case 10:
+		var k1 = s.split("-");
+		return new Date(k1[0],k1[1] - 1,k1[2],0,0,0);
+	case 19:
+		var k2 = s.split(" ");
+		var y = k2[0].split("-");
+		var t = k2[1].split(":");
+		return new Date(y[0],y[1] - 1,y[2],t[0],t[1],t[2]);
+	default:
+		throw new js__$Boot_HaxeError("Invalid date format : " + s);
+	}
+};
 HxOverrides.cca = function(s,index) {
 	var x = s.charCodeAt(index);
 	if(x != x) {
@@ -195,10 +218,22 @@ HxOverrides.iter = function(a) {
 var Main = function() { };
 Main.__name__ = true;
 Main.main = function() {
+	var args = process.argv;
+	if(args.length < 3) {
+		process.stdout.write("Haxe-JS code splitting, usage:");
+		process.stdout.write("\n");
+		process.stdout.write("");
+		process.stdout.write("\n");
+		process.stdout.write("  haxe-split <path to input.js> <path to main output.js> [<module name 1> <module name 2> ...]");
+		process.stdout.write("\n");
+		process.stdout.write("");
+		process.stdout.write("\n");
+		return;
+	}
 	var t0 = new Date().getTime();
-	var input = process.argv[2];
-	var output = process.argv[3];
-	var modules = process.argv.slice(4);
+	var input = args[2];
+	var output = args[3];
+	var modules = args.slice(4);
 	var src = js_node_Fs.readFileSync(input).toString();
 	var parser = new Parser(src);
 	var sourceMap = new SourceMap(input,src);
@@ -316,6 +351,7 @@ Parser.prototype = {
 		this.candidates = new haxe_ds_StringMap();
 		this.types = new haxe_ds_StringMap();
 		this.init = new haxe_ds_StringMap();
+		this.requires = new haxe_ds_StringMap();
 		this.step = ParseStep.Start;
 		var body = this.getBodyNodes(program);
 		var _g = 0;
@@ -451,7 +487,9 @@ Parser.prototype = {
 						}
 						break;
 					case "CallExpression":
-						this.isRequire(init.callee);
+						if(this.isRequire(init.callee)) {
+							this.required(name,def);
+						}
 						break;
 					case "FunctionExpression":
 						var _this1 = this.candidates;
@@ -462,7 +500,9 @@ Parser.prototype = {
 						}
 						break;
 					case "MemberExpression":
-						var tmp = init.object.type == "CallExpression" && this.isRequire(init.object.callee);
+						if(init.object.type == "CallExpression" && this.isRequire(init.object.callee)) {
+							this.required(name,def);
+						}
 						break;
 					case "ObjectExpression":
 						if(this.isEnum(init)) {
@@ -480,6 +520,14 @@ Parser.prototype = {
 					}
 				}
 			}
+		}
+	}
+	,required: function(name,def) {
+		var _this = this.requires;
+		if(__map_reserved[name] != null) {
+			_this.setReserved(name,def);
+		} else {
+			_this.h[name] = def;
 		}
 	}
 	,register: function(name,def) {

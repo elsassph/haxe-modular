@@ -4,9 +4,12 @@ import haxe.macro.Type;
 
 class Bundle
 {
-	macro static public function load(viewRef:Expr, loadCss:Bool = false) 
+	/**
+	 * Load async application bundle created with `classRef` as entry point
+	 */
+	macro static public function load(classRef:Expr, loadCss:Bool = false) 
 	{
-		switch (Context.typeof(viewRef))
+		switch (Context.typeof(classRef))
 		{
 			case Type.TType(_.get() => t, _):
 				var module = t.module.split('.').join('_');

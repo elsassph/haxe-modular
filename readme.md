@@ -63,34 +63,37 @@ The goal of this project is to propose one robust and scalable solution.
 3. Lazy loading
 
     A helper class allows to easily load modules at run time. JS bundles can be created
-	automatically.
+	automatically if you use `Bundle.load`.
 
 4. Hot-reload
 
-    The same helper class can be used listen to a LiveReload server and reload
-    lazy-loaded modules automatically.
+    A helper class can be used listen to a LiveReload server and reload lazy-loaded 
+	modules automatically.
 
 
-This project provides support classes to implement the proposed solution:
+## Installation
 
+You need to install both a Haxe library and a NPM module: 
+
+	# code splitting and hot-reload (must be local)
+	npm install haxe-modular --save
+
+	# Haxe support classes
     haxelib install modular
 
 Add to your HXML:
 
+	# Haxe support classes and output rewriting
 	-lib modular
 
 
 ## NPM dependencies bundling
 
-Best practice (for speed and better caching) is to regroup all the NPM dependencies
-into a single JavaScript file, traditionally called `vendor.js` or `libs.js`.
+Best practice (for compilation speed and better caching) is to regroup all the NPM 
+dependencies into a single JavaScript file, traditionally called `vendor.js` or `libs.js`.
 
-It is good (and quite complicated) in JavaScript, when using Webpack or others, because 
-it significantly improves build times, and gives you a nicely cacheable file. 
-
-It is required (and very easy) when doing a modular Haxe application, because this is 
-needed to share NPM dependencies between Haxe modules. *In fact, you should use this 
-technique for non-modular applications as well!*
+It is absolutely required when doing a modular Haxe application and in particular
+if you want to use the React live-reload functionality. 
 
 ### Template
 
@@ -110,6 +113,12 @@ Create a `src/libs.js` file using the following template:
 		'react-dom': require('react-dom'),
 		'redux': require('redux')
 	});
+	
+	if (process.env.NODE_ENV !== 'production') {
+		// enable React hot-reload
+		require('haxe-modular');
+	}
+	
 })(typeof $hx_scope != "undefined" ? $hx_scope : $hx_scope = {});
 ```
 
@@ -117,8 +126,9 @@ As you can see we are defining a "registry" of NPM modules. It is very important
 correctly name the keys of the object (eg. `'react'`) to match the Haxe require 
 calls (eg. `@:jsRequire('react')`). 
 
-`$hx_scope` is the "scope root" of this modularity system. Generated Haxe JavaScript 
-files will look up required modules from `$hx_scope.__registry__`.
+For React hot-module replacement, you just have to `require('haxe-modular')`. Notice 
+that this enablement is only for development mode and will be removed when doing a
+release build.
 
 Note: there is nothing forcing your to register NPM modules, you can register any 
 valid JavaScript object here.
@@ -150,8 +160,7 @@ If you use NPM libraries (like React and its multiple addons), you will want to 
 at least one library. The library MUST be loaded before your Haxe code referencing 
 them is loaded. 
 
-Simply reference the library file in your `index.html`. Smart browers will even be able 
-to load the scripts in parallel:
+Simply reference the library file in your `index.html` in the right order:
 
 ```html
 <script src="libs.js"></script>
@@ -176,9 +185,13 @@ By splitting it means that:
   loaded at run time,
 - features need to have one entry point class.
 
+A good way to split is to break down your application into "routes" (cf. 
+[react-router](https://github.com/ReactTraining/react-router/tree/master/docs)) or
+reusable complex components. Don't worry too much about having a bit of redundancy.
+
 How it works:
 - A graph of the classes "direct references" is created,
-- The reference graph is split at the entry point of bundles,
+- The references graph is split at the entry point of bundles,
 - Each bundle will include the direct (non-split) graph of classes,
 - unless the class is present in the main bundle (it will be shared).
 
@@ -225,6 +238,15 @@ Require.module('MyAppView').then(function(_) {
 - returns a Promise providing the name of the loaded module
 
 (API is identical generally to the "Lazy loading" feature below)
+
+### React-router usage
+
+`Bundle.loadRoute(MyAppView)` generates a wrapper function to satisfy React-router's
+async routes API using [getComponent](https://github.com/ReactTraining/react-router/blob/master/docs/API.md#getcomponentnextstate-callback):
+
+```js
+<Route getComponent=${Bundle.loadRoute(MyAppView)} />
+```
 
 
 ## Lazy loading
@@ -282,6 +304,21 @@ instances of reloaded classes to use the new code.
 
 - `handler`: a callback to be notified of modules having reloaded
 - `forModule`: if provided, only be notified of a specific module changes
+
+### React hot-reload wrapper
+
+When using hot-reload for React views you will want to use the handy `autoRefresh` wrapper:
+
+```haxe
+var app = ReactDOM.render(...);
+
+#if (debug && react_hot)
+ReactHMR.autoRefresh(app);
+#end
+```
+
+The feature leverages [react-proxy](https://github.com/gaearon/react-proxy/tree/master) and
+needs to be enabled by calling `require('haxe-modular')`, preferably in your NPM modules bundle.
 
 ### LiveReload server
 
