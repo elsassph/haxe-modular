@@ -38,7 +38,7 @@ class SourceMap
 	
 	public function emitMappings(nodes:Array<AstNode>, offset:Int):SourceMapGenerator
 	{
-		if (nodes.length == 0) return null;
+		if (nodes.length == 0 || source == null) return null;
 		
 		var inc:Array<Null<Int>> = [];
 		var line = 3 + offset;

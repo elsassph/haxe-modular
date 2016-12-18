@@ -588,7 +588,7 @@ var SourceMap = function(input,src) {
 SourceMap.__name__ = true;
 SourceMap.prototype = {
 	emitMappings: function(nodes,offset) {
-		if(nodes.length == 0) {
+		if(nodes.length == 0 || this.source == null) {
 			return null;
 		}
 		var inc = [];
