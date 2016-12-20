@@ -51,23 +51,23 @@ The goal of this project is to propose one robust and scalable solution.
 ## Overview of solution
 
 1. NPM dependencies bundling in a single libs/vendor JavaScript file
-    
-    Best practice (for speed and better caching) is to regroup all the NPM dependencies
-    into a single JavaScript file, traditionally called `vendor.js` or `libs.js`.
+
+	Best practice (for speed and better caching) is to regroup all the NPM dependencies
+	into a single JavaScript file, traditionally called `vendor.js` or `libs.js`.
 
 2. Haxe-JS code splitting
 
-    Code splitting works by identifying features which can be asynchronously loaded at 
+	Code splitting works by identifying features which can be asynchronously loaded at 
 	run time. Features can be automatically extracted into JS bundles. 
 
 3. Lazy loading
 
-    A helper class allows to easily load modules at run time. JS bundles can be created
+	A helper class allows to easily load modules at run time. JS bundles can be created
 	automatically if you use `Bundle.load`.
 
 4. Hot-reload
 
-    A helper class can be used listen to a LiveReload server and reload lazy-loaded 
+	A helper class can be used listen to a LiveReload server and reload lazy-loaded 
 	modules automatically.
 
 
@@ -79,7 +79,7 @@ You need to install both a Haxe library and a NPM module:
 	npm install haxe-modular --save
 
 	# Haxe support classes
-    haxelib install modular
+	haxelib install modular
 
 Add to your HXML:
 
@@ -140,11 +140,11 @@ typically using [Browserify](http://browserify.org/) (very simple, and fast).
 
 For development (code with sourcemaps):
 
-    cross-env NODE_ENV=development browserify src/libs.js -o bin/libs.js -d
+	cross-env NODE_ENV=development browserify src/libs.js -o bin/libs.js -d
 
 For release, optimise and minify:
 
-    cross-env NODE_ENV=production browserify src/libs.js | uglifyjs -c > bin/libs.js
+	cross-env NODE_ENV=production browserify src/libs.js | uglifyjs -c > bin/libs.js
 
 The difference is significant: React+Redux goes from 1.8Mb for dev to 280Kb for release 
 (and 65Kb with `gzip -6`). 
@@ -215,16 +215,16 @@ the regular "Lazy loading" API.
 import myapp.view.MyAppView;
 ...
 Bundle.load(MyAppView).then(function(_) {
-    // Class myapp.view.MyAppView can be safely used from now on.
-    // It's time to render the view.
-    new MyAppView();
+	// Class myapp.view.MyAppView can be safely used from now on.
+	// It's time to render the view.
+	new MyAppView();
 }); 
 ```
 
 This marks MyAppView as a split point, and is approximately generated into:
 ```haxe
 Require.module('MyAppView').then(function(_) {
-    // 'MyAppView.js' was loaded and evaluated.
+	// 'MyAppView.js' was loaded and evaluated.
 	new MyAppView();
 });
 ```
@@ -255,7 +255,7 @@ The `Require` class provides Promise-based lazy-loading functionality for JS fil
 
 ```haxe
 Require.module('view').then(function(_) {
-    // 'view.js' was loaded and evaluated.
+	// 'view.js' was loaded and evaluated.
 }); 
 ```
 
@@ -286,11 +286,11 @@ be triggered to allow the application to handle the change.
 ```haxe
 #if debug
 Require.hot(function(_) {
-    // Some lazy-loaded module has been reloaded (eg. 'view.js').
-    // Class myapp.view.MyAppView reference has now been updated,
-    // and new instances will use the newly loaded code!
-    // It's time to re-render the view.
-    new MyAppView();
+	// Some lazy-loaded module has been reloaded (eg. 'view.js').
+	// Class myapp.view.MyAppView reference has now been updated,
+	// and new instances will use the newly loaded code!
+	// It's time to re-render the view.
+	new MyAppView();
 });
 #end
 ```
@@ -328,9 +328,9 @@ set a listener for `LiveReloadConnect` and register a "reloader plugin" to handl
 It is recommended to simply use [livereloadx](http://nitoyon.github.io/livereloadx/). The 
 static mode dynamically injects the livereload client API script in HTML pages served:
 
-    npm install livereloadx -g
-    livereloadx -s bin
-    open http://localhost:35729
+	npm install livereloadx -g
+	livereloadx -s bin
+	open http://localhost:35729
 
 The reloader plugin will prevent page reloading when JS files change, and if the JS file 
 corresponds to a lazy-loaded module, it is reloaded and re-evaluated.
