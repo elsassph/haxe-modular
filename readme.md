@@ -51,43 +51,49 @@ The goal of this project is to propose one robust and scalable solution.
 ## Overview of solution
 
 1. NPM dependencies bundling in a single libs/vendor JavaScript file
-    
-    Best practice (for speed and better caching) is to regroup all the NPM dependencies
-    into a single JavaScript file, traditionally called `vendor.js` or `libs.js`.
+
+	Best practice (for speed and better caching) is to regroup all the NPM dependencies
+	into a single JavaScript file, traditionally called `vendor.js` or `libs.js`.
 
 2. Haxe-JS code splitting
 
-    Using regular Haxe compiler options and metadata it is possible to emit multiple
-    JavaScript files from a single codebase. These files only need a minor post-generation 
-    treatment in order to behave at runtime like a single script. 
+	Code splitting works by identifying features which can be asynchronously loaded at 
+	run time. Features can be automatically extracted into JS bundles. 
 
 3. Lazy loading
 
-    A helper class allows to easily load modules at runtime. Modularisation is not
-    automatic but user-defined.
+	A helper class allows to easily load modules at run time. JS bundles can be created
+	automatically if you use `Bundle.load`.
 
 4. Hot-reload
 
-    The same helper class can be used listen to a LiveReload server and reload
-    lazy-loaded modules automatically.
+	A helper class can be used listen to a LiveReload server and reload lazy-loaded 
+	modules automatically.
 
 
-This project provides support classes to implement the proposed solution:
+## Installation
 
-    haxelib install modular
+You need to install both a Haxe library and a NPM module: 
+
+	# code splitting and hot-reload (must be local)
+	npm install haxe-modular --save
+
+	# Haxe support classes
+	haxelib install modular
+
+Add to your HXML:
+
+	# Haxe support classes and output rewriting
+	-lib modular
 
 
 ## NPM dependencies bundling
 
-Best practice (for speed and better caching) is to regroup all the NPM dependencies
-into a single JavaScript file, traditionally called `vendor.js` or `libs.js`.
+Best practice (for compilation speed and better caching) is to regroup all the NPM 
+dependencies into a single JavaScript file, traditionally called `vendor.js` or `libs.js`.
 
-It is good (and quite complicated) in JavaScript, when using Webpack or others, because 
-it significantly improves build times, and gives you a nicely cacheable file. 
-
-It is required (and very easy) when doing a modular Haxe application, because this is 
-needed to share NPM dependencies between Haxe modules. *In fact, you should use this 
-technique for non-modular applications as well!*
+It is absolutely required when doing a modular Haxe application and in particular
+if you want to use the React live-reload functionality. 
 
 ### Template
 
@@ -107,6 +113,12 @@ Create a `src/libs.js` file using the following template:
 		'react-dom': require('react-dom'),
 		'redux': require('redux')
 	});
+	
+	if (process.env.NODE_ENV !== 'production') {
+		// enable React hot-reload
+		require('haxe-modular');
+	}
+	
 })(typeof $hx_scope != "undefined" ? $hx_scope : $hx_scope = {});
 ```
 
@@ -114,8 +126,9 @@ As you can see we are defining a "registry" of NPM modules. It is very important
 correctly name the keys of the object (eg. `'react'`) to match the Haxe require 
 calls (eg. `@:jsRequire('react')`). 
 
-`$hx_scope` is the "scope root" of this modularity system. Generated Haxe JavaScript 
-files will look up required modules from `$hx_scope.__registry__`.
+For React hot-module replacement, you just have to `require('haxe-modular')`. Notice 
+that this enablement is only for development mode and will be removed when doing a
+release build.
 
 Note: there is nothing forcing your to register NPM modules, you can register any 
 valid JavaScript object here.
@@ -127,11 +140,11 @@ typically using [Browserify](http://browserify.org/) (very simple, and fast).
 
 For development (code with sourcemaps):
 
-    cross-env NODE_ENV=development browserify src/libs.js -o bin/libs.js -d
+	cross-env NODE_ENV=development browserify src/libs.js -o bin/libs.js -d
 
 For release, optimise and minify:
 
-    cross-env NODE_ENV=production browserify src/libs.js | uglifyjs -c > bin/libs.js
+	cross-env NODE_ENV=production browserify src/libs.js | uglifyjs -c > bin/libs.js
 
 The difference is significant: React+Redux goes from 1.8Mb for dev to 280Kb for release 
 (and 65Kb with `gzip -6`). 
@@ -147,8 +160,7 @@ If you use NPM libraries (like React and its multiple addons), you will want to 
 at least one library. The library MUST be loaded before your Haxe code referencing 
 them is loaded. 
 
-Simply reference the library file in your `index.html`. Smart browers will even be able 
-to load the scripts in parallel:
+Simply reference the library file in your `index.html` in the right order:
 
 ```html
 <script src="libs.js"></script>
@@ -168,114 +180,82 @@ with its own NPM dependencies, you will load the dependencies first, then the Ha
 
 Code splitting requires a bit more planning than in JavaScript, so **read carefully**! 
 
-For code splitting we are going to use 2 Haxe-JS compiler features:
+By splitting it means that:
+- you need to break down the features of your application in units that can be logically 
+  loaded at run time,
+- features need to have one entry point class.
 
-1. [Exclude package](http://api.haxe.org/haxe/macro/Compiler.html#exclude) 
-   compiler flag: `--exclude('name.of.package')`
+A good way to split is to break down your application into "routes" (cf. 
+[react-router](https://github.com/ReactTraining/react-router/tree/master/docs)) or
+reusable complex components. Don't worry too much about having a bit of redundancy.
 
-   This is very important because we will essentially compile the application several
-   times, excluding what should not be in each module.
+How it works:
+- A graph of the classes "direct references" is created,
+- The references graph is split at the entry point of bundles,
+- Each bundle will include the direct (non-split) graph of classes,
+- unless the class is present in the main bundle (it will be shared).
 
-2. [Exposing Haxe classes for JavaScript](https://haxe.org/manual/target-javascript-expose.html) 
-   using the class `@:expose` metadata. 
+What is a direct reference?
+- `new A()`
+- `A.b` / `A.c()`
+- `Std.is(o, A)`
 
-   This is the key to "joining" the modules: lazy-loaded and shared classes have to be 
-   "exposed" in order to be usable from other modules.
-
-### Using exclusion
-
-Planning starts here:
-- what modules will I need to create?
-- what will be their entry point?
-- what should be excluded in each module?
-- which classes will be shared?
-
-#### What modules will I need to create?
-
-For example if you architect a React+Redux application, you will at least split it into:
-- core (startup, Redux store setup, ReactDOM render),
-- views (React views, thunk async operations).
-
-*Separating the views is the minimum structure because we'll want to hot-reload them.*
-
-#### What will be their entry point?
-
-For the "core" module: the Main class is the obvious entry point.
-
-For the "views" module: we will reference each top-level React view.
-
-#### What should be excluded in each module?
-
-Exclusion is easier if you exclude entire packages, which means you will want to
-organise your classes by module and give them a specific package name:
-for instance `myapp.core` and `myapp.view`:
-
-To compile the core module, `-main Main` marks the executable entry point.
-
-    # index.hxml
-    -lib modular
-    -lib react
-    -src src
-    -js bin/index.js
-    -main Main
-    --macro exclude('myapp.view')
-    --macro Stub.modules()
-
-To compile the views module, `myapp.view.MyAppView` marks a top-level view. You can 
-reference other top-level classes which could be referenced from the core module.
-In this example `myapp.core` is excluded but you only need to do it if you actually 
-reference core classes in the views.
-
-    # view.hxml
-    -lib modular
-    -lib react
-    -src src
-    -js bin/view.js
-    myapp.view.MyAppView
-    --macro exclude('myapp.core')
-    --macro Stub.modules()
-
-**Important:** all modules, including the main one, must have `--macro Stub.modules()`
-in their compiler arguments. This is the modules post-processor.
-
-### Which classes will be shared?
-
-Now the tricky part: the different modules will need to access classes from other 
-modules, that is, they need to be "shared". For example the core module will need to
-reference `myapp.view.MyAppView` to render the application.
-
-Normally, you must explicitly add `@:expose` in front of each and every shared class:
-
-```haxe
-@:expose
-class MyAppView extends ReactComponent {
-    ...
-}
-```
-
-To facilitate this process, `Stub.modules` can accept a parameter which would be a
-list of packages to automatically expose:
-
-    --macro Stub.modules(['myapp.model','myapp.command'])
-
-**Important**: unfortunately Haxe Enums can NOT be exposed/shared, but they can be excluded
-(which will break your code), so you must make sure Enums are never in an excluded 
-package if you need to use them (eg. creating Enum values) in in multiple modules. 
-You probably should declare Enums in their own `myapp.enums` package.
+You will then want to minimize the dependencies between the bundles:
+- feature bundles can load other feature bundles and use their entry point class,
+- BUT feature bundles can't reference other classes from other feature bundles: 
+  classes will be duplicated. 
 
 
-## Lazy loading
+## Bundling
 
-The `Require` class provides Promise-based lazy-loading functionality:
+The `Bundle` class provides the module extraction functionality which then translates into
+the regular "Lazy loading" API.
 
 ```haxe
 import myapp.view.MyAppView;
 ...
+Bundle.load(MyAppView).then(function(_) {
+	// Class myapp.view.MyAppView can be safely used from now on.
+	// It's time to render the view.
+	new MyAppView();
+}); 
+```
+
+This marks MyAppView as a split point, and is approximately generated into:
+```haxe
+Require.module('MyAppView').then(function(_) {
+	// 'MyAppView.js' was loaded and evaluated.
+	new MyAppView();
+});
+```
+
+### API
+
+`Bundle.load(module:Class, loadCss:Bool = false):Promise<String>`
+
+- `module`: the entry point class reference,
+- `loadCss`: optionally load a CSS file of the same name.
+- returns a Promise providing the name of the loaded module
+
+(API is identical generally to the "Lazy loading" feature below)
+
+### React-router usage
+
+`Bundle.loadRoute(MyAppView)` generates a wrapper function to satisfy React-router's
+async routes API using [getComponent](https://github.com/ReactTraining/react-router/blob/master/docs/API.md#getcomponentnextstate-callback):
+
+```js
+<Route getComponent=${Bundle.loadRoute(MyAppView)} />
+```
+
+
+## Lazy loading
+
+The `Require` class provides Promise-based lazy-loading functionality for JS files:
+
+```haxe
 Require.module('view').then(function(_) {
-    // 'view.js' was loaded and evaluated.
-    // Class myapp.view.MyAppView can be safely used from now on.
-    // It's time to render the view.
-    new MyAppView();
+	// 'view.js' was loaded and evaluated.
 }); 
 ```
 
@@ -306,11 +286,11 @@ be triggered to allow the application to handle the change.
 ```haxe
 #if debug
 Require.hot(function(_) {
-    // Some lazy-loaded module has been reloaded (eg. 'view.js').
-    // Class myapp.view.MyAppView reference has now been updated,
-    // and new instances will use the newly loaded code!
-    // It's time to re-render the view.
-    new MyAppView();
+	// Some lazy-loaded module has been reloaded (eg. 'view.js').
+	// Class myapp.view.MyAppView reference has now been updated,
+	// and new instances will use the newly loaded code!
+	// It's time to re-render the view.
+	new MyAppView();
 });
 #end
 ```
@@ -325,17 +305,32 @@ instances of reloaded classes to use the new code.
 - `handler`: a callback to be notified of modules having reloaded
 - `forModule`: if provided, only be notified of a specific module changes
 
+### React hot-reload wrapper
+
+When using hot-reload for React views you will want to use the handy `autoRefresh` wrapper:
+
+```haxe
+var app = ReactDOM.render(...);
+
+#if (debug && react_hot)
+ReactHMR.autoRefresh(app);
+#end
+```
+
+The feature leverages [react-proxy](https://github.com/gaearon/react-proxy/tree/master) and
+needs to be enabled by calling `require('haxe-modular')`, preferably in your NPM modules bundle.
+
 ### LiveReload server
 
 The feature is based on the [LiveReload](https://livereload.com) API. `Require` will 
 set a listener for `LiveReloadConnect` and register a "reloader plugin" to handle changes. 
 
-It is recommended to simply use [livereloadx](http://nitoyon.github.io/livereloadx/). The static mode 
-dynamically injects the livereload client API script in HTML pages served:
+It is recommended to simply use [livereloadx](http://nitoyon.github.io/livereloadx/). The 
+static mode dynamically injects the livereload client API script in HTML pages served:
 
-    npm install livereloadx -g
-    livereloadx -s bin
-    open http://localhost:35729
+	npm install livereloadx -g
+	livereloadx -s bin
+	open http://localhost:35729
 
 The reloader plugin will prevent page reloading when JS files change, and if the JS file 
 corresponds to a lazy-loaded module, it is reloaded and re-evaluated.
