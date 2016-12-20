@@ -104,11 +104,7 @@ Bundler.prototype = {
 		return { src : buffer, map : this.sourceMap.emitMappings(mapNodes,mapOffset)};
 	}
 	,verifyExport: function(s) {
-		if(s.indexOf("$" + "hx_exports") > 0) {
-			return s;
-		} else {
-			return s.split("function (").join("function ($" + "hx_exports");
-		}
+		return s.replace(new RegExp("function \\([^)]*\\)","".split("u").join("")),"function ($" + "hx_exports)");
 	}
 	,process: function(modules) {
 		console.log("Bundling...");
