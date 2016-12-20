@@ -44,7 +44,6 @@ class Parser
 	{
 		var g = new Graph({ directed: true, compound:true });
 		var cpt = 0;
-		var ids = 0;
 		var refs = 0;
 		for (t in types.keys())
 		{
@@ -52,45 +51,28 @@ class Parser
 			g.setNode(t, t);
 		}
 		
-		for (t in types.keys())
-		{
-			var ns = types.get(t);
-			for (n in ns)
-			{
-				Walk.simple(n, {
-					Identifier: function(node:AstNode) {
-						ids++;
-						var name = node.name;
-						if (name != t && types.exists(name)) 
-						{
-							g.setEdge(t, name);
-							refs++;
-						}
-					}
-				});
-			}
-		}
-		for (t in init.keys())
-		{
-			var ns = init.get(t);
-			for (n in ns)
-			{
-				Walk.simple(n, {
-					Identifier: function(node:AstNode) {
-						ids++;
-						var name = node.name;
-						if (name != t && types.exists(name)) 
-						{
-							g.setEdge(t, name);
-							refs++;
-						}
-					}
-				});
-			}
-		}
+		for (t in types.keys()) refs += walk(g, t, types.get(t));
+		for (t in init.keys()) refs += walk(g, t, init.get(t));
 		
-		trace('Stats: $cpt types, $ids ids, $refs refs');
+		trace('Stats: $cpt types, $refs references');
 		graph = g;
+	}
+	
+	function walk(g:Graph, id:String, nodes:Array<AstNode>) 
+	{
+		var refs = 0;
+		var visitors = {
+			Identifier: function(node:AstNode) {
+				var name = node.name;
+				if (name != id && types.exists(name)) 
+				{
+					g.setEdge(id, name);
+					refs++;
+				}
+			}
+		};
+		for (decl in nodes) Walk.simple(decl, visitors);
+		return refs;
 	}
 	
 	function walkProgram(program:AstNode) 

@@ -269,10 +269,8 @@ Parser.prototype = {
 		this.walkProgram(acorn_Acorn.parse(src,{ ecmaVersion : 5, locations : true, ranges : true}));
 	}
 	,buildGraph: function() {
-		var _gthis = this;
 		var g = new graphlib_Graph({ directed : true, compound : true});
 		var cpt = 0;
-		var ids = 0;
 		var refs = 0;
 		var tmp = this.types.keys();
 		while(tmp.hasNext()) {
@@ -282,70 +280,47 @@ Parser.prototype = {
 		}
 		var tmp1 = this.types.keys();
 		while(tmp1.hasNext()) {
-			var t1 = [tmp1.next()];
+			var t1 = tmp1.next();
 			var _this = this.types;
-			var ns = __map_reserved[t1[0]] != null?_this.getReserved(t1[0]):_this.h[t1[0]];
-			var _g = 0;
-			while(_g < ns.length) {
-				var n = ns[_g];
-				++_g;
-				acorn_Walk.simple(n,{ Identifier : (function(t2) {
-					return function(node) {
-						++ids;
-						var name = node.name;
-						var tmp2;
-						if(name != t2[0]) {
-							var _this1 = _gthis.types;
-							if(__map_reserved[name] != null) {
-								tmp2 = _this1.existsReserved(name);
-							} else {
-								tmp2 = _this1.h.hasOwnProperty(name);
-							}
-						} else {
-							tmp2 = false;
-						}
-						if(tmp2) {
-							g.setEdge(t2[0],name);
-							++refs;
-						}
-					};
-				})(t1)});
-			}
+			refs += this.walk(g,t1,__map_reserved[t1] != null?_this.getReserved(t1):_this.h[t1]);
 		}
-		var tmp3 = this.init.keys();
-		while(tmp3.hasNext()) {
-			var t3 = [tmp3.next()];
-			var _this2 = this.init;
-			var ns1 = __map_reserved[t3[0]] != null?_this2.getReserved(t3[0]):_this2.h[t3[0]];
-			var _g1 = 0;
-			while(_g1 < ns1.length) {
-				var n1 = ns1[_g1];
-				++_g1;
-				acorn_Walk.simple(n1,{ Identifier : (function(t4) {
-					return function(node1) {
-						++ids;
-						var name1 = node1.name;
-						var tmp4;
-						if(name1 != t4[0]) {
-							var _this3 = _gthis.types;
-							if(__map_reserved[name1] != null) {
-								tmp4 = _this3.existsReserved(name1);
-							} else {
-								tmp4 = _this3.h.hasOwnProperty(name1);
-							}
-						} else {
-							tmp4 = false;
-						}
-						if(tmp4) {
-							g.setEdge(t4[0],name1);
-							++refs;
-						}
-					};
-				})(t3)});
-			}
+		var tmp2 = this.init.keys();
+		while(tmp2.hasNext()) {
+			var t2 = tmp2.next();
+			var _this1 = this.init;
+			refs += this.walk(g,t2,__map_reserved[t2] != null?_this1.getReserved(t2):_this1.h[t2]);
 		}
-		console.log("Stats: " + cpt + " types, " + ids + " ids, " + refs + " refs");
+		console.log("Stats: " + cpt + " types, " + refs + " references");
 		this.graph = g;
+	}
+	,walk: function(g,id,nodes) {
+		var _gthis = this;
+		var refs = 0;
+		var visitors = { Identifier : function(node) {
+			var name = node.name;
+			var tmp;
+			if(name != id) {
+				var _this = _gthis.types;
+				if(__map_reserved[name] != null) {
+					tmp = _this.existsReserved(name);
+				} else {
+					tmp = _this.h.hasOwnProperty(name);
+				}
+			} else {
+				tmp = false;
+			}
+			if(tmp) {
+				g.setEdge(id,name);
+				++refs;
+			}
+		}};
+		var _g = 0;
+		while(_g < nodes.length) {
+			var decl = nodes[_g];
+			++_g;
+			acorn_Walk.simple(decl,visitors);
+		}
+		return refs;
 	}
 	,walkProgram: function(program) {
 		this.candidates = new haxe_ds_StringMap();
