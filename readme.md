@@ -180,34 +180,6 @@ You will then want to minimize the dependencies between the bundles:
 - BUT feature bundles can't reference other classes from other feature bundles: 
   classes will be duplicated. 
 
-### Problem with __init__
-
-When using `__init__` you may generate code that will not be moved to the right bundle:
-
-- assume that `__init__` code will be duplicated in all the bundles,
-- unless you generate calls to static methods.
-
-```haxe
-class MyComponent 
-{
-	static function __init__() 
-	{
-		// these lines will go in all the bundles
-		var foo = 42;
-		untyped window.something = function() {...}
-		
-		// these lines will go in the bundle containing MyComponent
-		MyComponent.doSomething();
-		if (...) MyComponent.anotherThing();
-		
-		// this line will go in the bundle containing OtherComponent
-		OtherComponent.someProp = 42;
-	}
-	...
-}
-```
-
-
 ## Bundling
 
 The `Bundle` class provides the module extraction functionality which then translates into
@@ -339,3 +311,36 @@ Haxe-JS application and let LiveReload inform our running application to reload 
 the JavaScript files.
 
 PS: stylesheets and static images will be normally live reloaded.
+
+
+## Known issues
+
+### Problem with init
+
+If you don't know what `__init__` is, don't worry :) 
+[If your're curious](http://old.haxe.org/doc/advanced/magic#initialization-magic)
+
+When using `__init__` you may generate code that will not be moved to the right bundle:
+
+- assume that `__init__` code will be duplicated in all the bundles,
+- unless you generate calls to static methods.
+
+```haxe
+class MyComponent 
+{
+	static function __init__() 
+	{
+		// these lines will go in all the bundles
+		var foo = 42;
+		untyped window.something = function() {...}
+		
+		// these lines will go in the bundle containing MyComponent
+		MyComponent.doSomething();
+		if (...) MyComponent.anotherThing();
+		
+		// this line will go in the bundle containing OtherComponent
+		OtherComponent.someProp = 42;
+	}
+	...
+}
+```
