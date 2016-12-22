@@ -157,16 +157,14 @@ with its own NPM dependencies, you will load the dependencies first, then the Ha
 
 Code splitting requires a bit more planning than in JavaScript, so **read carefully**! 
 
-By splitting it means that:
-- you need to break down the features of your application in units that can be logically 
-  loaded at run time,
-- features need to have one entry point class.
+Features need to have one entry point class that can be loaded asynchronously.
 
 A good way to split is to break down your application into "routes" (cf. 
 [react-router](https://github.com/ReactTraining/react-router/tree/master/docs)) or
-reusable complex components. Don't worry too much about having a bit of redundancy.
+reusable complex components.
 
-How it works:
+### How it works
+
 - A graph of the classes "direct references" is created,
 - The references graph is split at the entry point of bundles,
 - Each bundle will include the direct (non-split) graph of classes,
@@ -181,6 +179,32 @@ You will then want to minimize the dependencies between the bundles:
 - feature bundles can load other feature bundles and use their entry point class,
 - BUT feature bundles can't reference other classes from other feature bundles: 
   classes will be duplicated. 
+
+### Problem with __init__
+
+When using `__init__` you may generate code that will not be moved to the right bundle:
+
+- assume that `__init__` code will be duplicated in all the bundles,
+- unless you generate calls to static methods.
+
+```haxe
+class MyComponent 
+{
+	static function __init__() 
+	{
+		// these lines will go in all the bundles
+		var foo = 42;
+		untyped window.something = function() {...}
+		
+		// this line will go in the module containing MyComponent
+		MyComponent.doSomething();
+		
+		// this line will go in the module containing OtherComponent
+		OtherComponent.someProp = 42;
+	}
+	...
+}
+```
 
 
 ## Bundling
@@ -217,7 +241,7 @@ async routes API using [getComponent](https://github.com/ReactTraining/react-rou
 <Route getComponent=${Bundle.loadRoute(MyAppView)} />
 ```
 
-Magic! `MyAppView` will be extracted in its iwn bundle and loaded lazily when the 
+Magic! `MyAppView` will be extracted in its own bundle and loaded lazily when the 
 route is activated.
 
 
