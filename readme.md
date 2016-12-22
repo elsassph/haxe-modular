@@ -8,32 +8,14 @@ Webpack or other JSPM.
 For complete examples using this technique you can consult:
 
 - [Haxe React+Redux sample](https://github.com/elsassph/haxe-react-redux)
-- [Haxe React+MMVC sample](https://github.com/elsassph/haxe-react-mmvc)
+- [Haxe React+MMVC sample](https://github.com/elsassph/haxe-react-mmvc) (out of date)
 
 *Do not confuse with the project [modular-js](https://github.com/explorigin/modular-js), 
 which has a similar general goal but uses a completely different approach.* 
 
+> This project is compatible with Haxe 3.2.1+
 
 ## Context
-
-### JavaScript
-
-*Code splitting and HMR* (hot module replacement, or hot reload) is all the rage in the 
-JavaScript world, lead by [Webpack](https://webpack.github.io/) as the most advanced tool. 
-Webpack is however a relatively complex tool to configure, leading to the running joke
-that "webpack configuration" could be a fulltime job.
-
-The other trend is *optimised bundling*, or de-modularisation; although 
-[UglifyJS](https://github.com/mishoo/UglifyJS) does a decent job at removing explicit 
-dev VS production code, new and old contenders like [Rollup.js](http://rollupjs.org/)
-and [Google Closure compiler](https://github.com/google/closure-compiler/wiki) 
-try to go further in order to remove "dead" and unused code.
-
-These promises, although not always compatible, are irrestible for front-end devs. 
-If Haxe-JS wants to be a contender in the compile-to-JS competition, it ought to offer 
-a solid answer.
-
-### Haxe
 
 JavaScript is one of the target platforms of 
 [Haxe](http://haxe.org/documentation/introduction/language-introduction.html), 
@@ -55,20 +37,15 @@ The goal of this project is to propose one robust and scalable solution.
 	Best practice (for speed and better caching) is to regroup all the NPM dependencies
 	into a single JavaScript file, traditionally called `vendor.js` or `libs.js`.
 
-2. Haxe-JS code splitting
+2. Haxe-JS code splitting and lazy-loading
 
 	Code splitting works by identifying features which can be asynchronously loaded at 
-	run time. Features can be automatically extracted into JS bundles. 
-
-3. Lazy loading
-
-	A helper class allows to easily load modules at run time. JS bundles can be created
-	automatically if you use `Bundle.load`.
+	run time.  JS bundles can be created automatically if you use `Bundle.load`.
 
 4. Hot-reload
 
 	A helper class can be used listen to a LiveReload server and reload lazy-loaded 
-	modules automatically.
+	modules automatically. 
 
 
 ## Installation
@@ -221,14 +198,6 @@ Bundle.load(MyAppView).then(function(_) {
 }); 
 ```
 
-This marks MyAppView as a split point, and is approximately generated into:
-```haxe
-Require.module('MyAppView').then(function(_) {
-	// 'MyAppView.js' was loaded and evaluated.
-	new MyAppView();
-});
-```
-
 ### API
 
 `Bundle.load(module:Class, loadCss:Bool = false):Promise<String>`
@@ -247,6 +216,9 @@ async routes API using [getComponent](https://github.com/ReactTraining/react-rou
 ```js
 <Route getComponent=${Bundle.loadRoute(MyAppView)} />
 ```
+
+Magic! `MyAppView` will be extracted in its iwn bundle and loaded lazily when the 
+route is activated.
 
 
 ## Lazy loading
@@ -319,6 +291,8 @@ ReactHMR.autoRefresh(app);
 
 The feature leverages [react-proxy](https://github.com/gaearon/react-proxy/tree/master) and
 needs to be enabled by calling `require('haxe-modular')`, preferably in your NPM modules bundle.
+
+Note: you must compile with `-D react_hot`. The feature is only enabled in `debug` mode.
 
 ### LiveReload server
 
