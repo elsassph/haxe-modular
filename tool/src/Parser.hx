@@ -83,11 +83,6 @@ class Parser
 		requires = new Map();
 		step = ParseStep.Start;
 		
-		types.set('String', []);
-		init.set('String', []);
-		types.set('Array', []);
-		init.set('Array', []);
-		
 		var body = getBodyNodes(program);
 		for (node in body)
 		{
