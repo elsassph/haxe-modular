@@ -324,6 +324,34 @@ Parser.prototype = {
 		this.init = new haxe_ds_StringMap();
 		this.requires = new haxe_ds_StringMap();
 		this.step = ParseStep.Start;
+		var _this = this.types;
+		var value = [];
+		if(__map_reserved.String != null) {
+			_this.setReserved("String",value);
+		} else {
+			_this.h["String"] = value;
+		}
+		var _this1 = this.init;
+		var value1 = [];
+		if(__map_reserved.String != null) {
+			_this1.setReserved("String",value1);
+		} else {
+			_this1.h["String"] = value1;
+		}
+		var _this2 = this.types;
+		var value2 = [];
+		if(__map_reserved.Array != null) {
+			_this2.setReserved("Array",value2);
+		} else {
+			_this2.h["Array"] = value2;
+		}
+		var _this3 = this.init;
+		var value3 = [];
+		if(__map_reserved.Array != null) {
+			_this3.setReserved("Array",value3);
+		} else {
+			_this3.h["Array"] = value3;
+		}
 		var body = this.getBodyNodes(program);
 		var _g = 0;
 		while(_g < body.length) {
@@ -364,6 +392,11 @@ Parser.prototype = {
 			case "FunctionDeclaration":
 				if(this.inspectFunction(node.id,node)) {
 					continue;
+				}
+				break;
+			case "IfStatement":
+				if(node.consequent.type == "ExpressionStatement") {
+					this.inspectExpression(node.consequent.expression,node);
 				}
 				break;
 			case "VariableDeclaration":
@@ -621,11 +654,16 @@ SourceMap.prototype = {
 			while(_g2 < _g1) inc[_g2++] = line++;
 		}
 		var output = new sourcemap_SourceMapGenerator();
-		this.source.eachMapping(function(mapping) {
-			if(!isNaN(inc[mapping.generatedLine])) {
-				output.addMapping({ source : mapping.source, original : { line : mapping.originalLine, column : mapping.originalColumn}, generated : { line : inc[mapping.generatedLine], column : mapping.generatedColumn}});
-			}
-		});
+		try {
+			this.source.eachMapping(function(mapping) {
+				if(!isNaN(inc[mapping.generatedLine])) {
+					output.addMapping({ source : mapping.source, original : { line : mapping.originalLine, column : mapping.originalColumn >= 0?mapping.originalColumn:0}, generated : { line : inc[mapping.generatedLine], column : mapping.generatedColumn}});
+				}
+			});
+			return output;
+		} catch( err ) {
+			console.log("Invalid source-map");
+		}
 		return output;
 	}
 	,emitFile: function(output,map) {
@@ -757,92 +795,6 @@ js__$Boot_HaxeError.wrap = function(val) {
 js__$Boot_HaxeError.__super__ = Error;
 js__$Boot_HaxeError.prototype = $extend(Error.prototype,{
 });
-var js_Boot = function() { };
-js_Boot.__name__ = true;
-js_Boot.__string_rec = function(o,s) {
-	if(o == null) {
-		return "null";
-	}
-	if(s.length >= 5) {
-		return "<...>";
-	}
-	var t = typeof(o);
-	if(t == "function" && (o.__name__ || o.__ename__)) {
-		t = "object";
-	}
-	switch(t) {
-	case "function":
-		return "<function>";
-	case "object":
-		if(o instanceof Array) {
-			if(o.__enum__) {
-				if(o.length == 2) {
-					return o[0];
-				}
-				var str = o[0] + "(";
-				s += "\t";
-				var _g1 = 2;
-				var _g = o.length;
-				while(_g1 < _g) {
-					var i = _g1++;
-					if(i != 2) {
-						str += "," + js_Boot.__string_rec(o[i],s);
-					} else {
-						str += js_Boot.__string_rec(o[i],s);
-					}
-				}
-				return str + ")";
-			}
-			var l = o.length;
-			var i1;
-			var str1 = "[";
-			s += "\t";
-			var _g11 = 0;
-			var _g2 = l;
-			while(_g11 < _g2) {
-				var i2 = _g11++;
-				str1 += (i2 > 0?",":"") + js_Boot.__string_rec(o[i2],s);
-			}
-			str1 += "]";
-			return str1;
-		}
-		var tostr;
-		try {
-			tostr = o.toString;
-		} catch( e ) {
-			return "???";
-		}
-		if(tostr != null && tostr != Object.toString && typeof(tostr) == "function") {
-			var s2 = o.toString();
-			if(s2 != "[object Object]") {
-				return s2;
-			}
-		}
-		var k = null;
-		var str2 = "{\n";
-		s += "\t";
-		var hasp = o.hasOwnProperty != null;
-		for( var k in o ) {
-		if(hasp && !o.hasOwnProperty(k)) {
-			continue;
-		}
-		if(k == "prototype" || k == "__class__" || k == "__super__" || k == "__interfaces__" || k == "__properties__") {
-			continue;
-		}
-		if(str2.length != 2) {
-			str2 += ", \n";
-		}
-		str2 += s + k + " : " + js_Boot.__string_rec(o[k],s);
-		}
-		s = s.substring(1);
-		str2 += "\n" + s + "}";
-		return str2;
-	case "string":
-		return o;
-	default:
-		return String(o);
-	}
-};
 var js_node_Fs = require("fs");
 var js_node_Path = require("path");
 var js_node_buffer_Buffer = require("buffer").Buffer;
