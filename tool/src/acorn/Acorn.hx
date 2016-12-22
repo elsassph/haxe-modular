@@ -72,7 +72,7 @@ typedef AstNode = {
 	// Literal
 	value: String,
 	raw: String,
-	// ConditionalExpression
+	// ConditionalExpression/IfStatement
 	test: AstNode,
 	consequent: AstNode,
 	alternate: AstNode,

@@ -27,7 +27,9 @@ class Split
 	static function generated()
 	{
 		// emit the bundles
-		var cmd = './node_modules/.bin/haxe-split';
+		var cmd = Sys.systemName() == 'Windows' 
+			? 'node_modules\\.bin\\haxe-split.cmd'
+			: './node_modules/.bin/haxe-split';
 		if (!FileSystem.exists(cmd)) cmd = 'haxe-split'; // try global
 		Sys.command(cmd, [tempOutput, output].concat(bundles));
 	}

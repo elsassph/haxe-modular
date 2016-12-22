@@ -128,9 +128,7 @@ class Bundler
 	
 	function verifyExport(s:String) 
 	{
-		// insert exports variable if needed
-		if (s.indexOf('$$hx_exports') > 0) return s;
-		else return s.split('function (').join('function ($$hx_exports');
+		return ~/function \([^)]*\)/.replace(s, 'function ($$hx_exports)');
 	}
 	
 	public function process(modules:Array<String>) 

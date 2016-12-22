@@ -42,7 +42,6 @@ class SourceMap
 		
 		var inc:Array<Null<Int>> = [];
 		var line = 3 + offset;
-		//untyped console.log(nodes[0].expression);
 		for (node in nodes)
 		{
 			for (i in node.loc.start.line...node.loc.end.line + 1)
@@ -50,17 +49,24 @@ class SourceMap
 		}
 		
 		var output = new SourceMapGenerator();
-		source.eachMapping(function(mapping:EachMapping) {
-			if (!Math.isNaN(inc[mapping.generatedLine]))
-			{
-				var mapLine = inc[mapping.generatedLine];
-				output.addMapping({
-					source:mapping.source,
-					original:{ line:mapping.originalLine, column:mapping.originalColumn },
-					generated:{ line:mapLine, column:mapping.generatedColumn }
-				});
-			}
-		});
+		try {
+			source.eachMapping(function(mapping:EachMapping) {
+				if (!Math.isNaN(inc[mapping.generatedLine]))
+				{
+					var mapLine = inc[mapping.generatedLine];
+					var column = mapping.originalColumn >= 0 ? mapping.originalColumn : 0;
+					output.addMapping({
+						source:mapping.source,
+						original:{ line:mapping.originalLine, column:column },
+						generated:{ line:mapLine, column:mapping.generatedColumn }
+					});
+				}
+			});
+			return output;
+		}
+		catch (err:Dynamic) {
+			trace('Invalid source-map');
+		}
 		return output;
 	}
 	

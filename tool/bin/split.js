@@ -104,11 +104,7 @@ Bundler.prototype = {
 		return { src : buffer, map : this.sourceMap.emitMappings(mapNodes,mapOffset)};
 	}
 	,verifyExport: function(s) {
-		if(s.indexOf("$" + "hx_exports") > 0) {
-			return s;
-		} else {
-			return s.split("function (").join("function ($" + "hx_exports");
-		}
+		return s.replace(new RegExp("function \\([^)]*\\)","".split("u").join("")),"function ($" + "hx_exports)");
 	}
 	,process: function(modules) {
 		console.log("Bundling...");
@@ -370,6 +366,11 @@ Parser.prototype = {
 					continue;
 				}
 				break;
+			case "IfStatement":
+				if(node.consequent.type == "ExpressionStatement") {
+					this.inspectExpression(node.consequent.expression,node);
+				}
+				break;
 			case "VariableDeclaration":
 				this.inspectDeclarations(node.declarations,node);
 				break;
@@ -625,11 +626,16 @@ SourceMap.prototype = {
 			while(_g2 < _g1) inc[_g2++] = line++;
 		}
 		var output = new sourcemap_SourceMapGenerator();
-		this.source.eachMapping(function(mapping) {
-			if(!isNaN(inc[mapping.generatedLine])) {
-				output.addMapping({ source : mapping.source, original : { line : mapping.originalLine, column : mapping.originalColumn}, generated : { line : inc[mapping.generatedLine], column : mapping.generatedColumn}});
-			}
-		});
+		try {
+			this.source.eachMapping(function(mapping) {
+				if(!isNaN(inc[mapping.generatedLine])) {
+					output.addMapping({ source : mapping.source, original : { line : mapping.originalLine, column : mapping.originalColumn >= 0?mapping.originalColumn:0}, generated : { line : inc[mapping.generatedLine], column : mapping.generatedColumn}});
+				}
+			});
+			return output;
+		} catch( err ) {
+			console.log("Invalid source-map");
+		}
 		return output;
 	}
 	,emitFile: function(output,map) {

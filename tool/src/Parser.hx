@@ -138,8 +138,10 @@ class Parser
 						// function marks step change
 						continue;
 					}
+				case 'IfStatement' if (node.consequent.type == 'ExpressionStatement'):
+					inspectExpression(node.consequent.expression, node);
 				default:
-					//trace('----????');
+					//trace('----???? ' + node.type);
 					//trace(node);
 			}
 		}
@@ -155,11 +157,9 @@ class Parser
 			{
 				case "$extend":
 					step = ParseStep.Definitions;
-					//trace('---------------- DEFS');
 					return true;
 				case "$bind":
 					step = ParseStep.StaticInit;
-					//trace('---------------- INIT');
 					return true;
 			}
 		}
@@ -185,7 +185,7 @@ class Parser
 							if (moduleName.length == 1)
 								promote(moduleName[0], def);
 						default:
-							//trace('${path.join('.')} = ...');
+							//trace('${path.join('.')} = ... ' + types.exists(name));
 							if (types.exists(name)) append(name, def);
 							else if (path[1] == '__name__') promote(name, def);
 					}
