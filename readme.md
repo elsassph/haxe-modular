@@ -196,10 +196,11 @@ class MyComponent
 		var foo = 42;
 		untyped window.something = function() {...}
 		
-		// this line will go in the module containing MyComponent
+		// these lines will go in the bundle containing MyComponent
 		MyComponent.doSomething();
+		if (...) MyComponent.anotherThing();
 		
-		// this line will go in the module containing OtherComponent
+		// this line will go in the bundle containing OtherComponent
 		OtherComponent.someProp = 42;
 	}
 	...
