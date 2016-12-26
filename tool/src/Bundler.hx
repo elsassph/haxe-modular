@@ -97,6 +97,7 @@ class Bundler
 			mapOffset++;
 		}
 		
+		// split main content
 		for (node in body)
 		{
 			if (node.__tag__ != null && inc.indexOf(node.__tag__) < 0)
@@ -106,6 +107,10 @@ class Bundler
 			buffer += '\n';
 		}
 		
+		// hot-reload
+		buffer += emitHot(inc);
+		
+		// reference shared types
 		if (exports.length > 0)
 		{
 			for (node in exports)
@@ -113,6 +118,7 @@ class Bundler
 			buffer += '\n';
 		}
 		
+		// entry point
 		if (run != null)
 		{
 			buffer += src.substr(run.start, run.end - run.start);
@@ -124,6 +130,20 @@ class Bundler
 			src:buffer,
 			map:sourceMap.emitMappings(mapNodes, mapOffset)
 		}
+	}
+	
+	function emitHot(inc:Array<String>) 
+	{
+		var names = [];
+		for (name in parser.isHot.keys()) 
+			if (inc.indexOf(name) >= 0) names.push(name);
+		
+		if (names.length == 0) return '';
+
+		return 'if (window.__REACT_HOT_LOADER__)\n'
+			+ '  [${names.join(",")}].map(function(name) {\n'
+			+ '    __REACT_HOT_LOADER__.register(name,name.displayName,name.__fileName__);\n'
+			+ '  });\n';
 	}
 	
 	function verifyExport(s:String) 

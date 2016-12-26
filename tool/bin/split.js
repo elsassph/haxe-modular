@@ -87,6 +87,7 @@ Bundler.prototype = {
 			buffer += HxOverrides.substr(src,node1.start,node1.end - node1.start);
 			buffer += "\n";
 		}
+		buffer += this.emitHot(inc);
 		if(exports.length > 0) {
 			var _g3 = 0;
 			while(_g3 < exports.length) {
@@ -102,6 +103,20 @@ Bundler.prototype = {
 		}
 		buffer += "})(typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {});\n";
 		return { src : buffer, map : this.sourceMap.emitMappings(mapNodes,mapOffset)};
+	}
+	,emitHot: function(inc) {
+		var names = [];
+		var tmp = this.parser.isHot.keys();
+		while(tmp.hasNext()) {
+			var name = tmp.next();
+			if(inc.indexOf(name) >= 0) {
+				names.push(name);
+			}
+		}
+		if(names.length == 0) {
+			return "";
+		}
+		return "if (window.__REACT_HOT_LOADER__)\n" + ("  [" + names.join(",") + "].map(function(name) {\n") + "    __REACT_HOT_LOADER__.register(name,name.displayName,name.__fileName__);\n" + "  });\n";
 	}
 	,verifyExport: function(s) {
 		return s.replace(new RegExp("function \\([^)]*\\)","".split("u").join("")),"function ($" + "hx_exports)");
@@ -323,6 +338,7 @@ Parser.prototype = {
 		this.types = new haxe_ds_StringMap();
 		this.init = new haxe_ds_StringMap();
 		this.requires = new haxe_ds_StringMap();
+		this.isHot = new haxe_ds_StringMap();
 		this.step = ParseStep.Start;
 		var body = this.getBodyNodes(program);
 		var _g = 0;
@@ -410,6 +426,9 @@ Parser.prototype = {
 				default:
 					var _this = this.types;
 					if(__map_reserved[name] != null?_this.existsReserved(name):_this.h.hasOwnProperty(name)) {
+						if(path[1] == "__fileName__") {
+							this.trySetHot(name);
+						}
 						this.append(name,def);
 					} else if(path[1] == "__name__") {
 						this.promote(name,def);
@@ -437,6 +456,29 @@ Parser.prototype = {
 			}
 			break;
 		default:
+		}
+	}
+	,trySetHot: function(name) {
+		var _this = this.init;
+		var defs = __map_reserved[name] != null?_this.getReserved(name):_this.h[name];
+		if(defs == null || defs.length == 0) {
+			return;
+		}
+		var _g = 0;
+		while(_g < defs.length) {
+			var def = defs[_g];
+			++_g;
+			if(def.type == "ExpressionStatement" && def.expression.type == "AssignmentExpression") {
+				if(this.getIdentifier(def.expression.left)[1] == "displayName") {
+					var _this1 = this.isHot;
+					if(__map_reserved[name] != null) {
+						_this1.setReserved(name,true);
+					} else {
+						_this1.h[name] = true;
+					}
+					return;
+				}
+			}
 		}
 	}
 	,inspectDeclarations: function(declarations,def) {
