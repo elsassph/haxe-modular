@@ -15,6 +15,7 @@ class Parser
 {
 	public var graph:Graph;
 	public var rootBody:Array<AstNode>;
+	public var isHot:Map<String, Bool>;
 	
 	var step:ParseStep;
 	var candidates:Map<String, AstNode>;
@@ -81,6 +82,7 @@ class Parser
 		types = new Map();
 		init = new Map();
 		requires = new Map();
+		isHot = new Map();
 		step = ParseStep.Start;
 		
 		var body = getBodyNodes(program);
@@ -186,7 +188,11 @@ class Parser
 								promote(moduleName[0], def);
 						default:
 							//trace('${path.join('.')} = ... ' + types.exists(name));
-							if (types.exists(name)) append(name, def);
+							if (types.exists(name)) 
+							{
+								if (path[1] == '__fileName__') trySetHot(name);
+								append(name, def);
+							}
 							else if (path[1] == '__name__') promote(name, def);
 					}
 				}
@@ -202,6 +208,25 @@ class Parser
 				//else trace('--copy ' + expression.type);
 			default:
 				//trace('--copy ' + expression.type);
+		}
+	}
+	
+	// identify types with both `displayName` and `__fileName__` as set-up for hotreload
+	function trySetHot(name:String) 
+	{
+		var defs = init.get(name);
+		if (defs == null || defs.length == 0) return;
+		for (def in defs)
+		{
+			if (def.type == 'ExpressionStatement' && def.expression.type == 'AssignmentExpression')
+			{
+				var path = getIdentifier(def.expression.left);
+				if (path[1] == 'displayName')
+				{
+					isHot.set(name, true);
+					return;
+				}
+			}
 		}
 	}
 	
