@@ -8,7 +8,7 @@ Webpack or other JSPM.
 For complete examples using this technique you can consult:
 
 - [Haxe React+Redux sample](https://github.com/elsassph/haxe-react-redux)
-- [Haxe React+MMVC sample](https://github.com/elsassph/haxe-react-mmvc) (out of date)
+- [Haxe React+MMVC sample](https://github.com/elsassph/haxe-react-mmvc)
 
 *Do not confuse with the project [modular-js](https://github.com/explorigin/modular-js), 
 which has a similar general goal but uses a completely different approach.* 
