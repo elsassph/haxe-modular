@@ -2,8 +2,8 @@
 
 Code splitting and hot-reload for Haxe-JS applications.
 
-The following approach is similar but considerably simpler than (and doesn't depend on) 
-Webpack or other JSPM.
+Haxe modular is a set of tools and support classes allowing Webpack-like code-splitting, 
+lazy loading and hot code reloading. Without Webpack and the JS fatigue.
 
 For complete examples using this technique you can consult:
 
@@ -11,7 +11,7 @@ For complete examples using this technique you can consult:
 - [Haxe React+MMVC sample](https://github.com/elsassph/haxe-react-mmvc)
 
 *Do not confuse with the project [modular-js](https://github.com/explorigin/modular-js), 
-which has a similar general goal but uses a completely different approach.* 
+which has a similar general goal but different approach based on JSPM.* 
 
 > This project is compatible with Haxe 3.2.1+
 
@@ -37,10 +37,10 @@ The goal of this project is to propose one robust and scalable solution.
 	Best practice (for speed and better caching) is to regroup all the NPM dependencies
 	into a single JavaScript file, traditionally called `vendor.js` or `libs.js`.
 
-2. Haxe-JS code splitting and lazy-loading
+2. Haxe-JS code and source-maps splitting, and lazy-loading
 
 	Code splitting works by identifying features which can be asynchronously loaded at 
-	run time.  JS bundles can be created automatically if you use `Bundle.load`.
+	run time. JS bundles can be created automatically by using the `Bundle.load` helper.
 
 4. Hot-reload
 
@@ -52,7 +52,7 @@ The goal of this project is to propose one robust and scalable solution.
 
 You need to install both a Haxe library and a NPM module: 
 
-	# code splitting and hot-reload (must be local)
+	# code splitting and hot-reload
 	npm install haxe-modular --save
 
 	# Haxe support classes
@@ -69,14 +69,14 @@ Add to your HXML:
 Best practice (for compilation speed and better caching) is to regroup all the NPM 
 dependencies into a single JavaScript file, traditionally called `vendor.js` or `libs.js`.
 
-It is absolutely required when doing a modular Haxe application and in particular
-if you want to use the React live-reload functionality. 
+It is absolutely required when doing a modular Haxe application sharing NPM modules, 
+and in particular if you want to use the React hot-reload functionality. 
 
 ### Template
 
 Create a `src/libs.js` file using the following template:
 
-```haxe
+```javascript
 // 
 // npm dependencies library
 //
@@ -99,7 +99,7 @@ Create a `src/libs.js` file using the following template:
 })(typeof $hx_scope != "undefined" ? $hx_scope : $hx_scope = {});
 ```
 
-As you can see we are defining a "registry" of NPM modules. It is very important to 
+As you can see we are defining a "registry" of NPM modules. It is important to 
 correctly name the keys of the object (eg. `'react'`) to match the Haxe require 
 calls (eg. `@:jsRequire('react')`). 
 
@@ -107,27 +107,28 @@ For React hot-module replacement, you just have to `require('haxe-modular')`. No
 that this enablement is only for development mode and will be removed when doing a
 release build.
 
-Note: there is nothing forcing your to register NPM modules, you can register any 
+Tip: there is nothing forcing your to register NPM modules, you can register any 
 valid JavaScript object here.
 
 ### Building
 
 The library must be "compiled", that is required modules should be injected, 
-typically using [Browserify](http://browserify.org/) (very simple, and fast).
+typically using [Browserify](http://browserify.org/) (small, simple, and fast).
 
 For development (code with sourcemaps):
 
-	cross-env NODE_ENV=development browserify src/libs.js -o bin/libs.js -d
+	browserify src/libs.js -o bin/libs.js -d
 
 For release, optimise and minify:
 
-	cross-env NODE_ENV=production browserify src/libs.js | uglifyjs -c > bin/libs.js
+	cross-env NODE_ENV=production browserify src/libs.js | uglifyjs -c -m > bin/libs.js
 
 The difference is significant: React+Redux goes from 1.8Mb for dev to 280Kb for release 
 (and 65Kb with `gzip -6`). 
 
 Note:
 - `NODE_ENV=production` will tell UglifyJS to remove "development" code from modules,
+- `-d` to make source-maps, `-c` to compress, and `-m` to "mangle" (rename variables),
 - [cross-env](https://www.npmjs.com/package/cross-env) is needed to be able to set the 
   `NODE_ENV` variable on Windows. Alternatively you can use `envify`.
 
@@ -150,7 +151,7 @@ with its own NPM dependencies, you will load the dependencies first, then the Ha
 
 **Important:** 
 - all the NPM dependencies have to be moved into these NPM bundles,
-- do not run Browserify on the Haxe-JS bundles!
+- do not run Browserify on the Haxe-JS files!
 
 
 ## Haxe-JS code splitting
