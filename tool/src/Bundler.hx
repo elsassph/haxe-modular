@@ -19,7 +19,10 @@ class Bundler
 {
 	static inline var REQUIRE = "var require = (function(r){ return function require(m) { return r[m]; } })($hx_exports.__registry__);\n";
 	static inline var SHARED = "var $s = $hx_exports.__shared__ = $hx_exports.__shared__ || {};\n";
-	static inline var SCOPE = "})(typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {});\n";
+	static inline var SCOPE = "typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {}";
+	static inline var GLOBAL = "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this";
+	static inline var ARGS = '})($SCOPE, $GLOBAL);\n';
+	static inline var FUNCTION = "function ($hx_exports, $global)";
 
 	var parser:Parser;
 	var sourceMap:SourceMap;
@@ -125,7 +128,7 @@ class Bundler
 			buffer += '\n';
 		}
 		
-		buffer += SCOPE;
+		buffer += ARGS;
 		return {
 			src:buffer,
 			map:sourceMap.emitMappings(mapNodes, mapOffset)
@@ -140,7 +143,7 @@ class Bundler
 		
 		if (names.length == 0) return '';
 
-		return 'if (window.__REACT_HOT_LOADER__)\n'
+		return 'if ($$global.__REACT_HOT_LOADER__)\n'
 			+ '  [${names.join(",")}].map(function(name) {\n'
 			+ '    __REACT_HOT_LOADER__.register(name,name.displayName,name.__fileName__);\n'
 			+ '  });\n';
@@ -148,7 +151,7 @@ class Bundler
 	
 	function verifyExport(s:String) 
 	{
-		return ~/function \([^)]*\)/.replace(s, 'function ($$hx_exports)');
+		return ~/function \([^)]*\)/.replace(s, FUNCTION);
 	}
 	
 	public function process(modules:Array<String>) 

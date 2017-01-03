@@ -101,7 +101,7 @@ Bundler.prototype = {
 			buffer += HxOverrides.substr(src,run.start,run.end - run.start);
 			buffer += "\n";
 		}
-		buffer += "})(typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {});\n";
+		buffer += "})(" + "typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {}" + ", " + "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this" + ");\n";
 		return { src : buffer, map : this.sourceMap.emitMappings(mapNodes,mapOffset)};
 	}
 	,emitHot: function(inc) {
@@ -116,10 +116,10 @@ Bundler.prototype = {
 		if(names.length == 0) {
 			return "";
 		}
-		return "if (window.__REACT_HOT_LOADER__)\n" + ("  [" + names.join(",") + "].map(function(name) {\n") + "    __REACT_HOT_LOADER__.register(name,name.displayName,name.__fileName__);\n" + "  });\n";
+		return "if ($" + "global.__REACT_HOT_LOADER__)\n" + ("  [" + names.join(",") + "].map(function(name) {\n") + "    __REACT_HOT_LOADER__.register(name,name.displayName,name.__fileName__);\n" + "  });\n";
 	}
 	,verifyExport: function(s) {
-		return s.replace(new RegExp("function \\([^)]*\\)","".split("u").join("")),"function ($" + "hx_exports)");
+		return s.replace(new RegExp("function \\([^)]*\\)","".split("u").join("")),"function ($hx_exports, $global)");
 	}
 	,process: function(modules) {
 		console.log("Bundling...");
@@ -906,7 +906,10 @@ Date.__name__ = ["Date"];
 var __map_reserved = {}
 Bundler.REQUIRE = "var require = (function(r){ return function require(m) { return r[m]; } })($hx_exports.__registry__);\n";
 Bundler.SHARED = "var $s = $hx_exports.__shared__ = $hx_exports.__shared__ || {};\n";
-Bundler.SCOPE = "})(typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {});\n";
+Bundler.SCOPE = "typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {}";
+Bundler.GLOBAL = "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this";
+Bundler.ARGS = "})(" + "typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {}" + ", " + "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this" + ");\n";
+Bundler.FUNCTION = "function ($hx_exports, $global)";
 SourceMap.SRC_REF = "//# sourceMappingURL=";
 Main.main();
 })();
