@@ -8,13 +8,15 @@ var proxies = {};
 
 function register(classRef, name, file) 
 {
+	if (classRef == null || name == null || file == null) return;
+	var key = name + '@' + file;
 	if (proxies[file]) {
-		classRef.__proxy__ = file;
+		classRef.__hx_proxy__ = key;
 		classRef.displayName = name;
 		proxies[file].update(classRef);
 	}
 	else {
-		classRef.__proxy__ = file;
+		classRef.__hx_proxy__ = key;
 		classRef.displayName = name;
 	}
 }
@@ -29,9 +31,9 @@ function refresh(rootElement)
 var _createElement = React.createElement;
 
 React.createElement = function(type) {
-	if (type.__proxy__) {
-		var proxy = proxies[type.__proxy__];
-		if (!proxy) proxy = proxies[type.__proxy__] = createProxy(type);
+	if (type.__hx_proxy__) {
+		var proxy = proxies[type.__hx_proxy__];
+		if (!proxy) proxy = proxies[type.__hx_proxy__] = createProxy(type);
 		var args = Array.prototype.slice.call(arguments, 1);
 		args.unshift(proxy.get());
 		return _createElement.apply(React, args);
