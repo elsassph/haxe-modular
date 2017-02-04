@@ -10,10 +10,10 @@ function register(classRef, name, file)
 {
 	if (classRef == null || name == null || file == null) return;
 	var key = name + '@' + file;
-	if (proxies[file]) {
+	if (proxies[key]) {
 		classRef.__hx_proxy__ = key;
 		classRef.displayName = name;
-		proxies[file].update(classRef);
+		proxies[key].update(classRef);
 	}
 	else {
 		classRef.__hx_proxy__ = key;
