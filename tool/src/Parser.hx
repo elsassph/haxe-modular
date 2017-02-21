@@ -16,6 +16,7 @@ class Parser
 	public var graph:Graph;
 	public var rootBody:Array<AstNode>;
 	public var isHot:Map<String, Bool>;
+	public var isEnum:Map<String, Bool>;
 	
 	var step:ParseStep;
 	var candidates:Map<String, AstNode>;
@@ -83,6 +84,7 @@ class Parser
 		init = new Map();
 		requires = new Map();
 		isHot = new Map();
+		isEnum = new Map();
 		step = ParseStep.Start;
 		
 		var body = getBodyNodes(program);
@@ -253,7 +255,10 @@ class Parser
 							candidates.set(name, def);
 						case 'ObjectExpression': // enum
 							//trace('(enum?)');
-							if (isEnum(init)) register(name, def);
+							if (isEnumDecl(init)) {
+								isEnum.set(name, true);
+								register(name, def);
+							}
 							else candidates.set(name, def);
 						case 'CallExpression' if (isRequire(init.callee)): // require
 							//trace('(require)');
@@ -314,7 +319,7 @@ class Parser
 		defs.push(def);
 	}
 	
-	function isEnum(node:AstNode) 
+	function isEnumDecl(node:AstNode) 
 	{
 		var props = node.properties;
 		return node.type == 'ObjectExpression'

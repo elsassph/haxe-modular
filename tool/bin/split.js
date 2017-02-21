@@ -131,6 +131,8 @@ Bundler.prototype = {
 			this.unlink(g,$module);
 		}
 		var mainNodes = graphlib_Alg.preorder(g,"Main");
+		var tmp = this.parser.isEnum.keys();
+		while(tmp.hasNext()) mainNodes.push(tmp.next());
 		var exports = [];
 		var _g1 = 0;
 		while(_g1 < modules.length) {
@@ -339,6 +341,7 @@ Parser.prototype = {
 		this.init = new haxe_ds_StringMap();
 		this.requires = new haxe_ds_StringMap();
 		this.isHot = new haxe_ds_StringMap();
+		this.isEnum = new haxe_ds_StringMap();
 		this.step = ParseStep.Start;
 		var body = this.getBodyNodes(program);
 		var _g = 0;
@@ -523,14 +526,20 @@ Parser.prototype = {
 						}
 						break;
 					case "ObjectExpression":
-						if(this.isEnum(init)) {
+						if(this.isEnumDecl(init)) {
+							var _this2 = this.isEnum;
+							if(__map_reserved[name] != null) {
+								_this2.setReserved(name,true);
+							} else {
+								_this2.h[name] = true;
+							}
 							this.register(name,def);
 						} else {
-							var _this2 = this.candidates;
+							var _this3 = this.candidates;
 							if(__map_reserved[name] != null) {
-								_this2.setReserved(name,def);
+								_this3.setReserved(name,def);
 							} else {
-								_this2.h[name] = def;
+								_this3.h[name] = def;
 							}
 						}
 						break;
@@ -606,7 +615,7 @@ Parser.prototype = {
 		}
 		defs.push(def);
 	}
-	,isEnum: function(node) {
+	,isEnumDecl: function(node) {
 		var props = node.properties;
 		if(node.type == "ObjectExpression" && props != null && props.length > 0) {
 			return this.getIdentifier(props[0].key)[0] == "__ename__";
