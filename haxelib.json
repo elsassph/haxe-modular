@@ -5,7 +5,7 @@
 	"description": "Haxe-JS code-splitting and hot-reload for modular applications",
 	"contributors": ["elsassph"],
 	"releasenote": "See https://github.com/elsassph/haxe-modular",
-	"version": "0.1.5",
+	"version": "0.1.6",
 	"url": "https://github.com/elsassph/haxe-modular",
 	"classPath": "src",
 	"dependencies": {}
