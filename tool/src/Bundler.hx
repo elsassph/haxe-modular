@@ -165,9 +165,11 @@ class Bundler
 		
 		// find main nodes
 		var mainNodes = Alg.preorder(g, 'Main');
-		var exports = [];
+		// hoist enums in main module to avoid conflicts
+		for (key in parser.isEnum.keys()) mainNodes.push(key);
 		
 		// find modules nodes
+		var exports = [];
 		for (module in modules)
 		{
 			var nodes = Alg.preorder(g, module);
