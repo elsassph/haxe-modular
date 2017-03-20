@@ -36,10 +36,14 @@ class SourceMap
 		source = new SourceMapConsumer(raw);
 	}
 	
+	/**
+	 * Copy mappings from original sourcemap for the included code
+	 */
 	public function emitMappings(nodes:Array<AstNode>, offset:Int):SourceMapGenerator
 	{
 		if (nodes.length == 0 || source == null) return null;
 		
+		// flag lines from original source that we want to include
 		var inc:Array<Null<Int>> = [];
 		var line = 3 + offset;
 		for (node in nodes)
@@ -47,12 +51,17 @@ class SourceMap
 			for (i in node.loc.start.line...node.loc.end.line + 1)
 				inc[i] = line++;
 		}
-		
+
+		// new sourcemap
 		var output = new SourceMapGenerator();
+		var sourceFiles = {};
 		try {
+			// filter mappings by flagged lines
 			source.eachMapping(function(mapping:EachMapping) {
 				if (!Math.isNaN(inc[mapping.generatedLine]))
 				{
+					Reflect.setField(sourceFiles, mapping.source, true);
+					
 					var mapLine = inc[mapping.generatedLine];
 					var column = mapping.originalColumn >= 0 ? mapping.originalColumn : 0;
 					output.addMapping({
@@ -62,6 +71,14 @@ class SourceMap
 					});
 				}
 			});
+			
+			// copy sourceContent if present
+			for (sourceName in Reflect.fields(sourceFiles))
+			{
+				var src = source.sourceContentFor(sourceName, true);
+				if (src != null) output.setSourceContent(sourceName, src);
+			}
+			
 			return output;
 		}
 		catch (err:Dynamic) {
@@ -70,7 +87,10 @@ class SourceMap
 		return output;
 	}
 	
-	public function emitFile(output:String, map:SourceMapGenerator) 
+	/**
+	 * Set sourcemap's filename and serialize
+	 */
+	public function emitFile(output:String, map:SourceMapGenerator):String
 	{
 		if (map == null) return null;
 		

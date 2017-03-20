@@ -24,4 +24,9 @@ extern class SourceMapConsumer
 	 * line/column in this source map.
 	 */
 	public function eachMapping(callback:EachMapping->Void, ?context:Dynamic, ?order:String):Void;
+	
+	/**
+	 * Returns the original source content for the source provided. The only argument is the URL of the original source file.
+	 */
+	public function sourceContentFor(source:String, ?returnNullIfMissing:Bool):String;
 }
