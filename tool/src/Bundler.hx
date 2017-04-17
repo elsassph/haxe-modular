@@ -30,19 +30,19 @@ class Bundler
 	var mainExports:Array<String>;
 	var bundles:Array<Bundle> = [];
 
-	public function new(parser:Parser, sourceMap:SourceMap) 
+	public function new(parser:Parser, sourceMap:SourceMap)
 	{
 		this.parser = parser;
 		this.sourceMap = sourceMap;
 	}
-	
+
 	public function generate(src:String, output:String)
 	{
 		trace('Emit $output');
 		var buffer = emitBundle(src, main, mainExports, true);
 		writeMap(output, buffer);
 		write(output, buffer.src);
-		
+
 		for (bundle in bundles)
 		{
 			var bundleOutput = Path.join(Path.dirname(output), bundle.name + '.js');
@@ -52,28 +52,28 @@ class Bundler
 			write(bundleOutput, buffer.src);
 		}
 	}
-	
-	function writeMap(output:String, buffer:OutputBuffer) 
+
+	function writeMap(output:String, buffer:OutputBuffer)
 	{
 		if (buffer.map == null) return;
 		write('$output.map', sourceMap.emitFile(output, buffer.map));
 		buffer.src += '\n' + SourceMap.SRC_REF + Path.basename(output) + '.map';
 	}
-	
-	function write(output:String, buffer:String) 
+
+	function write(output:String, buffer:String)
 	{
 		if (buffer == null) return;
 		if (hasChanged(output, buffer))
 			Fs.writeFileSync(output, buffer);
 	}
-	
-	function hasChanged(output:String, buffer:String) 
+
+	function hasChanged(output:String, buffer:String)
 	{
 		if (!Fs.existsSync(output)) return true;
 		var original = Fs.readFileSync(output).toString();
 		return original != buffer;
 	}
-	
+
 	function emitBundle(src:String, bundle:Bundle, exports:Array<String>, isMain:Bool):OutputBuffer
 	{
 		var buffer = '';
@@ -83,10 +83,10 @@ class Bundler
 		var inc = bundle.nodes;
 		var mapNodes:Array<AstNode> = [];
 		var mapOffset = 0;
-		
+
 		// header
 		buffer += verifyExport(src.substr(0, head.end + 1));
-		
+
 		// shared scope
 		buffer += REQUIRE;
 		mapOffset++;
@@ -94,12 +94,13 @@ class Bundler
 		mapOffset++;
 		if (bundle.shared.length > 0)
 		{
-			for (node in bundle.shared)
-				buffer += 'var $node = $$s.$node; ';
-			buffer += '\n';
+			var tmp = isMain
+				? bundle.shared
+				: [for (node in bundle.shared) '$node = $$s.$node'];
+			buffer += 'var ${tmp.join(', ')};\n';
 			mapOffset++;
 		}
-		
+
 		// split main content
 		for (node in body)
 		{
@@ -109,10 +110,10 @@ class Bundler
 			buffer += src.substr(node.start, node.end - node.start);
 			buffer += '\n';
 		}
-		
+
 		// hot-reload
 		buffer += emitHot(inc);
-		
+
 		// reference shared types
 		if (exports.length > 0)
 		{
@@ -120,27 +121,27 @@ class Bundler
 				buffer += '$$s.$node = $node; ';
 			buffer += '\n';
 		}
-		
+
 		// entry point
 		if (run != null)
 		{
 			buffer += src.substr(run.start, run.end - run.start);
 			buffer += '\n';
 		}
-		
+
 		buffer += ARGS;
 		return {
 			src:buffer,
 			map:sourceMap.emitMappings(mapNodes, mapOffset)
 		}
 	}
-	
-	function emitHot(inc:Array<String>) 
+
+	function emitHot(inc:Array<String>)
 	{
 		var names = [];
-		for (name in parser.isHot.keys()) 
+		for (name in parser.isHot.keys())
 			if (inc.indexOf(name) >= 0) names.push(name);
-		
+
 		if (names.length == 0) return '';
 
 		return 'if ($$global.__REACT_HOT_LOADER__)\n'
@@ -148,60 +149,110 @@ class Bundler
 			+ '    __REACT_HOT_LOADER__.register(name,name.displayName,name.__fileName__);\n'
 			+ '  });\n';
 	}
-	
-	function verifyExport(s:String) 
+
+	function verifyExport(s:String)
 	{
 		return ~/function \([^)]*\)/.replace(s, FUNCTION);
 	}
-	
-	public function process(modules:Array<String>) 
+
+	public function process(modules:Array<String>, debugMode:Bool)
 	{
 		trace('Bundling...');
 		var g = parser.graph;
-		
-		// create sub-trees for main and modules
+
+		// create separated sub-trees for main and modules bundles
 		for (module in modules)
 			unlink(g, module);
-		
+
 		// find main nodes
 		var mainNodes = Alg.preorder(g, 'Main');
-		// hoist enums in main module to avoid conflicts
-		for (key in parser.isEnum.keys()) mainNodes.push(key);
-		
+
+		// /!\ force hoist enums in main bundle to avoid HMR conflicts
+		if (debugMode)
+			for (key in parser.isEnum.keys()) mainNodes.push(key);
+
 		// find modules nodes
-		var exports = [];
-		for (module in modules)
-		{
-			var nodes = Alg.preorder(g, module);
-			var shared = nodes.filter(function(v) return mainNodes.indexOf(v) >= 0);
-			nodes = nodes.filter(function(v) return shared.indexOf(v) < 0);
-			exports = addOnce(shared, exports);
-			bundles.push({
+		bundles = [
+			for (module in modules) {
 				name: module,
-				nodes: nodes,
-				shared: shared
-			});
-		}
-		
+				nodes: Alg.preorder(g, module),
+				shared: []
+			}
+		];
+
+		// hoist common nodes into main bundle
+		var dupes = deduplicate(bundles, mainNodes, debugMode);
+		mainNodes = addOnce(mainNodes, dupes.removed);
+		mainExports = dupes.shared;
+
 		main = {
 			name: 'Main',
 			nodes: mainNodes,
 			shared: modules
 		}
-		mainExports = exports;
 	}
-	
-	function addOnce(source:Array<String>, target:Array<String>) 
+
+	function deduplicate(bundles:Array<Bundle>, mainNodes:Array<String>, debugMode:Bool)
+	{
+		trace('Extract common chunks...' + (debugMode ? ' (fast)' : ''));
+
+		// map the nodes referenced in several bundles
+		// /!\ in debug mode, only deduplicate nodes in the main bundle to allow HMR of shared components
+		var map = new Map<String, Bool>();
+		for (node in mainNodes) map.set(node, true);
+		var dupes = [];
+		for (bundle in bundles)
+		{
+			for (node in bundle.nodes)
+				if (map.exists(node)) {
+					if (dupes.indexOf(node) < 0) dupes.push(node);
+				}
+				else if (!debugMode) map.set(node, true);
+		}
+
+		// find dependencies to share
+		var shared = [];
+		var g = parser.graph;
+		for (node in dupes)
+		{
+			// a node should be shared if not a transitive dependency of a shared node
+			var pre = g.predecessors(node)
+				.filter(function(preNode) return dupes.indexOf(preNode) < 0);
+			if (pre.length > 0) shared.push(node);
+		}
+
+		// remove common nodes from bundles and mark them as shared
+		for (bundle in bundles)
+		{
+			bundle.nodes = bundle.nodes.filter(function(node) {
+				if (dupes.indexOf(node) < 0) return true;
+				if (shared.indexOf(node) >= 0) bundle.shared.push(node);
+				return false;
+			});
+		}
+
+		trace('Moved ${dupes.length} common chunks (${shared.length} shared)');
+		return {
+			removed:dupes,
+			shared:shared
+		}
+	}
+
+	function addOnce(source:Array<String>, target:Array<String>)
 	{
 		var temp = target.copy();
 		for (node in source)
 			if (target.indexOf(node) < 0) temp.push(node);
 		return temp;
 	}
-	
-	function unlink(g:Graph, name:String) 
+
+	function unlink(g:Graph, name:String)
 	{
 		var pred = g.predecessors(name);
+		if (pred == null) {
+			trace('Cannot unlink $name');
+			return;
+		}
 		for (p in pred)
 			g.removeEdge(p, name);
 	}
