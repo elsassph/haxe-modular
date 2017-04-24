@@ -175,11 +175,22 @@ What is a direct reference?
 - `new A()`
 - `A.b` / `A.c()`
 - `Std.is(o, A)`
+- `cast(o, A)`
+- ...
 
-You will then want to minimize the dependencies between the bundles:
-- feature bundles can load other feature bundles and use their entry point class,
-- BUT feature bundles can't reference other classes from other feature bundles: 
-  classes will be duplicated. 
+#### Difference between Debug and Release builds
+
+Debug builds are optimised for "hot-reload":
+
+- Enums are compiled in the main bundle, otherwise you may load several incompatible 
+  instances of the enum definitions.
+- Transitive dependencies will be duplicated (eg. sub-components of views may be 
+  included in several routes) so you can hot-reload these sub-components. 
+
+Release builds are optimised for size:
+
+- All classes (and their dependencies) used in more than one bundle will be included
+  in the main bundle. 
 
 ## Bundling
 
