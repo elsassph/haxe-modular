@@ -31,7 +31,7 @@ function refresh(rootElement)
 var _createElement = React.createElement;
 
 React.createElement = function(type) {
-	if (type.__hx_proxy__) {
+	if (type && type.__hx_proxy__) {
 		var proxy = proxies[type.__hx_proxy__];
 		if (!proxy) proxy = proxies[type.__hx_proxy__] = createProxy(type);
 		var args = Array.prototype.slice.call(arguments, 1);
