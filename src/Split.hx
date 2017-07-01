@@ -32,7 +32,10 @@ class Split
 			: './node_modules/.bin/haxe-split';
 		if (!FileSystem.exists(cmd)) cmd = 'haxe-split'; // try global
 
-		var options = #if debug ['-debug']; #else []; #end
+		var options = [
+			#if debug '-debug', #end
+			#if webpack '-webpack', #end
+		];
 
 		Sys.command(cmd, [tempOutput, output].concat(bundles).concat(options));
 	}

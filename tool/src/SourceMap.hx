@@ -9,13 +9,13 @@ import sourcemap.SourceMapGenerator;
 import sourcemap.SourceMapGenerator.DefMapping;
 
 typedef SourceMapFile = {
-	version:Int, 
-	file:String, 
-	sourceRoot:String, 
-	sources:Array<String>, 
-	sourcesContent:Array<String>, 
-	names:Array<String>, 
-	mappings:String 
+	version:Int,
+	file:String,
+	sourceRoot:String,
+	sources:Array<String>,
+	sourcesContent:Array<String>,
+	names:Array<String>,
+	mappings:String
 }
 
 class SourceMap
@@ -25,8 +25,8 @@ class SourceMap
 	var fileName:String;
 	var source:SourceMapConsumer;
 	var lines:Array<String>;
-	
-	public function new(input:String, src:String) 
+
+	public function new(input:String, src:String)
 	{
 		var p = src.lastIndexOf(SRC_REF);
 		if (p < 0) return;
@@ -35,14 +35,14 @@ class SourceMap
 		var raw:SourceMapFile = Json.parse(Fs.readFileSync(fileName).toString());
 		source = new SourceMapConsumer(raw);
 	}
-	
+
 	/**
 	 * Copy mappings from original sourcemap for the included code
 	 */
 	public function emitMappings(nodes:Array<AstNode>, offset:Int):SourceMapGenerator
 	{
 		if (nodes.length == 0 || source == null) return null;
-		
+
 		// flag lines from original source that we want to include
 		var inc:Array<Null<Int>> = [];
 		var line = 3 + offset;
@@ -61,7 +61,7 @@ class SourceMap
 				if (!Math.isNaN(inc[mapping.generatedLine]))
 				{
 					Reflect.setField(sourceFiles, mapping.source, true);
-					
+
 					var mapLine = inc[mapping.generatedLine];
 					var column = mapping.originalColumn >= 0 ? mapping.originalColumn : 0;
 					output.addMapping({
@@ -71,14 +71,14 @@ class SourceMap
 					});
 				}
 			});
-			
+
 			// copy sourceContent if present
 			for (sourceName in Reflect.fields(sourceFiles))
 			{
 				var src = source.sourceContentFor(sourceName, true);
 				if (src != null) output.setSourceContent(sourceName, src);
 			}
-			
+
 			return output;
 		}
 		catch (err:Dynamic) {
@@ -86,15 +86,15 @@ class SourceMap
 		}
 		return output;
 	}
-	
+
 	/**
 	 * Set sourcemap's filename and serialize
 	 */
-	public function emitFile(output:String, map:SourceMapGenerator):String
+	public function emitFile(output:String, map:SourceMapGenerator):SourceMapGenerator
 	{
 		if (map == null) return null;
-		
+
 		map.file = Path.basename(output);
-		return map.toString();
+		return map;
 	}
 }

@@ -7,7 +7,7 @@ class RouteBundle
 	/**
 	 * React-router async route bundle created with `classRef` as entry point
 	 */
-	macro static public function load(reactClassRef:Expr, loadCss:Bool = false) 
+	macro static public function load(reactClassRef:Expr)
 	{
 		switch (Context.typeof(reactClassRef))
 		{
@@ -20,7 +20,7 @@ class RouteBundle
 						#if debug
 						Require.hot(function(_) $bridge, $v{module});
 						#end
-						Require.module($v{module}, $v{loadCss})
+						Require.module($v{module})
 							.then(function(id:String) {
 								$bridge;
 								cb(null, function(props) {

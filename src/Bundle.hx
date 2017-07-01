@@ -7,7 +7,7 @@ class Bundle
 	/**
 	 * Load async application bundle created with `classRef` as entry point
 	 */
-	macro static public function load(classRef:Expr, loadCss:Bool = false) 
+	macro static public function load(classRef:Expr)
 	{
 		switch (Context.typeof(classRef))
 		{
@@ -19,7 +19,7 @@ class Bundle
 					#if debug
 					Require.hot(function(_) $bridge, $v{module});
 					#end
-					Require.module($v{module}, $v{loadCss})
+					Require.module($v{module})
 						.then(function(id:String) {
 							$bridge;
 							return id;
