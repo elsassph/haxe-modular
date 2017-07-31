@@ -312,9 +312,11 @@ class Parser
 
 	function append(name:String, def:AstNode)
 	{
-		def.__tag__ = name;
 		var defs = step == ParseStep.Definitions ? types.get(name) : init.get(name);
-		defs.push(def);
+		if (defs != null) {
+			def.__tag__ = name;
+			defs.push(def);
+		}
 	}
 
 	function isEnumDecl(node:AstNode)

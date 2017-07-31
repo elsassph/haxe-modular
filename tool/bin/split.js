@@ -625,7 +625,6 @@ Parser.prototype = {
 		}
 	}
 	,append: function(name,def) {
-		def.__tag__ = name;
 		var defs;
 		if(this.step == ParseStep.Definitions) {
 			var _this = this.types;
@@ -642,7 +641,10 @@ Parser.prototype = {
 				defs = _this1.h[name];
 			}
 		}
-		defs.push(def);
+		if(defs != null) {
+			def.__tag__ = name;
+			defs.push(def);
+		}
 	}
 	,isEnumDecl: function(node) {
 		var props = node.properties;
