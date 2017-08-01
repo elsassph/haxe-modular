@@ -3,6 +3,7 @@ package;
 import js.Node;
 import js.node.Fs;
 import acorn.Acorn;
+import js.node.Path;
 
 class Main
 {
@@ -25,6 +26,8 @@ class Main
 		bundler.process(modules, debugMode);
 
 		// emit
+		var dir = Path.dirname(output);
+		if (!Fs.existsSync(dir)) Fs.mkdirSync(dir);
 		return bundler.generate(src, output, webpackMode);
 	}
 }
