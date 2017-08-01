@@ -193,6 +193,8 @@ class Bundler
 
 	public function process(modules:Array<String>, debugMode:Bool)
 	{
+		var mainModule = modules.shift();
+
 		if (parser.typesCount == 0) {
 			trace('Warning: unable to process (no type metadata)');
 			main = {
@@ -212,7 +214,7 @@ class Bundler
 			unlink(g, module);
 
 		// find main nodes
-		var mainNodes = Alg.preorder(g, 'Main');
+		var mainNodes = Alg.preorder(g, mainModule);
 
 		// /!\ force hoist enums in main bundle to avoid HMR conflicts
 		if (debugMode)

@@ -145,6 +145,7 @@ Bundler.prototype = {
 		return s.replace(_this_r,"function ($hx_exports, $global)");
 	}
 	,process: function(modules,debugMode) {
+		var mainModule = modules.shift();
 		if(this.parser.typesCount == 0) {
 			console.log("Warning: unable to process (no type metadata)");
 			this.main = { name : "Main", nodes : [], shared : []};
@@ -159,7 +160,7 @@ Bundler.prototype = {
 			++_g;
 			this.unlink(g,$module);
 		}
-		var mainNodes = graphlib_Alg.preorder(g,"Main");
+		var mainNodes = graphlib_Alg.preorder(g,mainModule);
 		if(debugMode) {
 			var key = this.parser.isEnum.keys();
 			while(key.hasNext()) {
