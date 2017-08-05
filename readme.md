@@ -2,16 +2,20 @@
 
 Code splitting and hot-reload for Haxe-JS applications.
 
-Haxe modular is a set of tools and support classes allowing Webpack-like code-splitting, 
-lazy loading and hot code reloading. Without Webpack and the JS fatigue.
+*Haxe modular is a set of tools and support classes allowing Webpack-like code-splitting, 
+lazy loading and hot code reloading. Without Webpack and the JS fatigue.*
 
-For complete examples using this technique you can consult:
+For complete architecture examples using this technique you can consult:
 
 - [Haxe React+Redux sample](https://github.com/elsassph/haxe-react-redux)
 - [Haxe React+MMVC sample](https://github.com/elsassph/haxe-react-mmvc)
 
-*Do not confuse with the project [modular-js](https://github.com/explorigin/modular-js), 
-which has a similar general goal but different approach based on JSPM.* 
+Notes:
+- There is in fact also a [webpack-haxe-loader](https://github.com/jasononeil/webpack-haxe-loader), 
+based on this library.
+- Do not confuse with [modular-js](https://github.com/explorigin/modular-js/network), 
+which has a similar general goal but a different approach based on emitting one JS file 
+per Haxe class (check the forks).
 
 > This project is compatible with Haxe 3.2.1+
 
