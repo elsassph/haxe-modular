@@ -72,7 +72,7 @@ class Require
 		if (!isHot)
 		{
 			isHot = true;
-			Browser.document.addEventListener('LiveReloadConnect', function() {
+			js.Browser.document.addEventListener('LiveReloadConnect', function() {
 				untyped window.LiveReload.reloader.plugins.push({
 					reload: Require.reload
 				});
@@ -100,8 +100,8 @@ class Require
 		reloadTimer = null;
 		trace('Reloading ${modules}...');
 
-		Promise.all([for (module in modules) {
-			var script = Browser.document.querySelector('script[src$="$module.js"]');
+		js.Promise.all([for (module in modules) {
+			var script = js.Browser.document.querySelector('script[src$="$module.js"]');
 			if (script != null) script.remove();
 			loaded.remove(module);
 			Require.module(module);

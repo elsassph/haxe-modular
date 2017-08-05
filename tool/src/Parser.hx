@@ -9,7 +9,9 @@ class Parser
 	public var rootBody:Array<AstNode>;
 	public var isHot:Map<String, Bool>;
 	public var isEnum:Map<String, Bool>;
+	public var isRequire:Map<String, Bool>;
 	public var typesCount(default, null):Int;
+	public var mainModule:String = 'Main';
 
 	var reservedTypes = {
 		'String':true, 'Math':true, 'Array':true, 'Int':true, 'Float':true,
@@ -18,7 +20,6 @@ class Parser
 	};
 
 	var types:Map<String, Array<AstNode>>;
-	var requires:Map<String, AstNode>;
 
 	public function new(src:String)
 	{
@@ -77,10 +78,9 @@ class Parser
 	function walkProgram(program:AstNode)
 	{
 		types = new Map();
-
-		requires = new Map();
 		isHot = new Map();
 		isEnum = new Map();
+		isRequire = new Map();
 
 		var body = getBodyNodes(program);
 		for (node in body)
@@ -191,10 +191,17 @@ class Parser
 					}
 				}
 			case 'CallExpression':
-				var name = getIdentifier(expression.callee.object);
+				var path = getIdentifier(expression.callee.object);
 				var prop = getIdentifier(expression.callee.property);
-				if (prop.length > 0 && name.length > 0 && types.exists(name[0]))
-					tag(name[0], def);
+				if (prop.length > 0 && path.length > 0 && types.exists(path[0]))
+				{
+					var name = path[0];
+					if (prop.length == 1 && prop[0] == 'main') {
+						// last SomeType.main() is the main module
+						mainModule = name;
+					}
+					tag(name, def);
+				}
 			default:
 		}
 	}
@@ -229,11 +236,11 @@ class Parser
 								isEnum.set(name, true);
 							tag(name, def);
 						case 'CallExpression':
-							if (isRequire(init.callee))
+							if (isRequireDecl(init.callee))
 								required(name, def);
 						case 'MemberExpression':
 							// jsRequire with prop
-							if (init.object.type == 'CallExpression' && isRequire(init.object.callee))
+							if (init.object.type == 'CallExpression' && isRequireDecl(init.object.callee))
 								required(name, def);
 						case 'Identifier':
 							// eg. var Float = Number;
@@ -252,7 +259,8 @@ class Parser
 
 	function required(name:String, def:AstNode)
 	{
-		requires.set(name, def);
+		isRequire.set(name, true);
+		tag(name, def);
 	}
 
 	function tag(name:String, def:AstNode)
@@ -284,7 +292,7 @@ class Parser
 			&& getIdentifier(props[0].key)[0] == '__ename__';
 	}
 
-	function isRequire(node:AstNode)
+	function isRequireDecl(node:AstNode)
 	{
 		return node != null && node.type == 'Identifier' && node.name == 'require';
 	}

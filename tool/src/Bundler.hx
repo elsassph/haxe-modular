@@ -191,10 +191,8 @@ class Bundler
 		return ~/function \([^)]*\)/.replace(s, FUNCTION);
 	}
 
-	public function process(modules:Array<String>, debugMode:Bool)
+	public function process(mainModule:String, modules:Array<String>, debugMode:Bool)
 	{
-		var mainModule = modules.shift();
-
 		if (parser.typesCount == 0) {
 			trace('Warning: unable to process (no type metadata)');
 			main = {

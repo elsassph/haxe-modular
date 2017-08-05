@@ -23,7 +23,7 @@ class Main
 
 		// process
 		var bundler = new Bundler(parser, sourceMap);
-		bundler.process(modules, debugMode);
+		bundler.process(parser.mainModule, modules, debugMode);
 
 		// emit
 		var dir = Path.dirname(output);

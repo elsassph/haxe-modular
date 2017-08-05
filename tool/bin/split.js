@@ -144,8 +144,7 @@ Bundler.prototype = {
 		var _this_r = new RegExp("function \\([^)]*\\)","".split("u").join(""));
 		return s.replace(_this_r,"function ($hx_exports, $global)");
 	}
-	,process: function(modules,debugMode) {
-		var mainModule = modules.shift();
+	,process: function(mainModule,modules,debugMode) {
 		if(this.parser.typesCount == 0) {
 			console.log("Warning: unable to process (no type metadata)");
 			this.main = { name : "Main", nodes : [], shared : []};
@@ -313,7 +312,7 @@ Main.run = function(input,output,modules,debugMode,webpackMode) {
 	var parser = new Parser(src);
 	var sourceMap = new SourceMap(input,src);
 	var bundler = new Bundler(parser,sourceMap);
-	bundler.process(modules,debugMode);
+	bundler.process(parser.mainModule,modules,debugMode);
 	var dir = js_node_Path.dirname(output);
 	if(!js_node_Fs.existsSync(dir)) {
 		js_node_Fs.mkdirSync(dir);
@@ -322,6 +321,7 @@ Main.run = function(input,output,modules,debugMode,webpackMode) {
 };
 var Parser = function(src) {
 	this.reservedTypes = { "String" : true, "Math" : true, "Array" : true, "Int" : true, "Float" : true, "Bool" : true, "Class" : true, "Date" : true, "Dynamic" : true, "Enum" : true, __map_reserved : true};
+	this.mainModule = "Main";
 	var t0 = new Date().getTime();
 	this.processInput(src);
 	var t1 = new Date().getTime();
@@ -386,9 +386,9 @@ Parser.prototype = {
 	}
 	,walkProgram: function(program) {
 		this.types = new haxe_ds_StringMap();
-		this.requires = new haxe_ds_StringMap();
 		this.isHot = new haxe_ds_StringMap();
 		this.isEnum = new haxe_ds_StringMap();
+		this.isRequire = new haxe_ds_StringMap();
 		var body = this.getBodyNodes(program);
 		var _g = 0;
 		while(_g < body.length) {
@@ -495,10 +495,14 @@ Parser.prototype = {
 			}
 			break;
 		case "CallExpression":
-			var name1 = this.getIdentifier(expression.callee.object);
+			var path1 = this.getIdentifier(expression.callee.object);
 			var prop = this.getIdentifier(expression.callee.property);
-			if(prop.length > 0 && name1.length > 0 && this.types.exists(name1[0])) {
-				this.tag(name1[0],def);
+			if(prop.length > 0 && path1.length > 0 && this.types.exists(path1[0])) {
+				var name1 = path1[0];
+				if(prop.length == 1 && prop[0] == "main") {
+					this.mainModule = name1;
+				}
+				this.tag(name1,def);
 			}
 			break;
 		default:
@@ -539,7 +543,7 @@ Parser.prototype = {
 						}
 						break;
 					case "CallExpression":
-						if(this.isRequire(init.callee)) {
+						if(this.isRequireDecl(init.callee)) {
 							this.required(name,def);
 						}
 						break;
@@ -557,7 +561,7 @@ Parser.prototype = {
 						}
 						break;
 					case "MemberExpression":
-						if(init.object.type == "CallExpression" && this.isRequire(init.object.callee)) {
+						if(init.object.type == "CallExpression" && this.isRequireDecl(init.object.callee)) {
 							this.required(name,def);
 						}
 						break;
@@ -574,12 +578,13 @@ Parser.prototype = {
 		}
 	}
 	,required: function(name,def) {
-		var _this = this.requires;
+		var _this = this.isRequire;
 		if(__map_reserved[name] != null) {
-			_this.setReserved(name,def);
+			_this.setReserved(name,true);
 		} else {
-			_this.h[name] = def;
+			_this.h[name] = true;
 		}
+		this.tag(name,def);
 	}
 	,tag: function(name,def) {
 		var _this = this.types;
@@ -614,7 +619,7 @@ Parser.prototype = {
 			return false;
 		}
 	}
-	,isRequire: function(node) {
+	,isRequireDecl: function(node) {
 		if(node != null && node.type == "Identifier") {
 			return node.name == "require";
 		} else {
