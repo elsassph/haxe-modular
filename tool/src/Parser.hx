@@ -3,45 +3,42 @@ import haxe.ds.StringMap;
 import js.node.Assert;
 import acorn.Acorn;
 
-enum ParseStep
-{
-	Start;
-	Definitions;
-	Utils;
-	StaticInit;
-}
-
 class Parser
 {
 	public var graph:Graph;
 	public var rootBody:Array<AstNode>;
 	public var isHot:Map<String, Bool>;
 	public var isEnum:Map<String, Bool>;
-	
-	var step:ParseStep;
-	var candidates:Map<String, AstNode>;
-	var types:Map<String, Array<AstNode>>;
-	var init:Map<String, Array<AstNode>>;
-	var requires:Map<String, AstNode>;
+	public var isRequire:Map<String, Bool>;
+	public var typesCount(default, null):Int;
+	public var mainModule:String = 'Main';
 
-	public function new(src:String) 
+	var reservedTypes = {
+		'String':true, 'Math':true, 'Array':true, 'Int':true, 'Float':true,
+		'Bool':true, 'Class':true, 'Date':true, 'Dynamic':true, 'Enum': true,
+		__map_reserved:true
+	};
+
+	var types:Map<String, Array<AstNode>>;
+
+	public function new(src:String)
 	{
 		var t0 = Date.now().getTime();
 		processInput(src);
 		var t1 = Date.now().getTime();
-		trace('Parsed in ${t1 - t0}ms');
-		
+		trace('Parsed in: ${t1 - t0}ms');
+
 		buildGraph();
 		var t2 = Date.now().getTime();
-		trace('Graph processed in ${t2 - t1}ms');
+		trace('Graph processed in: ${t2 - t1}ms');
 	}
-	
+
 	function processInput(src:String)
 	{
 		var program = Acorn.parse(src, { ecmaVersion:5, locations:true, ranges:true });
 		walkProgram(program);
 	}
-	
+
 	function buildGraph()
 	{
 		var g = new Graph({ directed: true, compound:true });
@@ -52,21 +49,22 @@ class Parser
 			cpt++;
 			g.setNode(t, t);
 		}
-		
-		for (t in types.keys()) refs += walk(g, t, types.get(t));
-		for (t in init.keys()) refs += walk(g, t, init.get(t));
-		
+
+		for (t in types.keys())
+			refs += walk(g, t, types.get(t));
+
 		trace('Stats: $cpt types, $refs references');
+		typesCount = cpt;
 		graph = g;
 	}
-	
-	function walk(g:Graph, id:String, nodes:Array<AstNode>) 
+
+	function walk(g:Graph, id:String, nodes:Array<AstNode>)
 	{
 		var refs = 0;
 		var visitors = {
 			Identifier: function(node:AstNode) {
 				var name = node.name;
-				if (name != id && types.exists(name)) 
+				if (name != id && types.exists(name))
 				{
 					g.setEdge(id, name);
 					refs++;
@@ -76,17 +74,14 @@ class Parser
 		for (decl in nodes) Walk.simple(decl, visitors);
 		return refs;
 	}
-	
-	function walkProgram(program:AstNode) 
+
+	function walkProgram(program:AstNode)
 	{
-		candidates = new Map();
 		types = new Map();
-		init = new Map();
-		requires = new Map();
 		isHot = new Map();
 		isEnum = new Map();
-		step = ParseStep.Start;
-		
+		isRequire = new Map();
+
 		var body = getBodyNodes(program);
 		for (node in body)
 		{
@@ -99,10 +94,10 @@ class Parser
 			}
 		}
 	}
-	
-	function walkRootExpression(expr:AstNode) 
+
+	function walkRootExpression(expr:AstNode)
 	{
-		switch (expr.type) 
+		switch (expr.type)
 		{
 			case 'CallExpression':
 				walkRootFunction(expr.callee);
@@ -110,11 +105,11 @@ class Parser
 				throw 'Expecting root statement to be a function call';
 		}
 	}
-	
-	function walkRootFunction(callee:AstNode) 
+
+	function walkRootFunction(callee:AstNode)
 	{
 		var block = getBodyNodes(callee)[0];
-		switch (block.type) 
+		switch (block.type)
 		{
 			case 'BlockStatement':
 				var body = getBodyNodes(block);
@@ -123,11 +118,11 @@ class Parser
 				throw 'Expecting block of statements inside root function';
 		}
 	}
-	
-	function walkDeclarations(body:Array<AstNode>) 
+
+	function walkDeclarations(body:Array<AstNode>)
 	{
 		rootBody = body;
-		
+
 		for (node in body)
 		{
 			switch (node.type)
@@ -137,189 +132,158 @@ class Parser
 				case 'ExpressionStatement':
 					inspectExpression(node.expression, node);
 				case 'FunctionDeclaration':
-					if (inspectFunction(node.id, node)) 
-					{
-						// function marks step change
-						continue;
-					}
-				case 'IfStatement' if (node.consequent.type == 'ExpressionStatement'):
-					inspectExpression(node.consequent.expression, node);
+					inspectFunction(node.id, node);
+				case 'IfStatement':
+					if (node.consequent.type == 'ExpressionStatement')
+						inspectExpression(node.consequent.expression, node);
+					else
+						inspectIfStatement(node.test, node);
 				default:
-					//trace('----???? ' + node.type);
-					//trace(node);
+					trace('unknown node');
 			}
 		}
 	}
-	
-	function inspectFunction(id:AstNode, def:AstNode) 
+
+	function inspectIfStatement(test:AstNode, def:AstNode)
+	{
+		if (test.type == 'BinaryExpression')
+		{
+			// conditional prototype modification
+			// eg. if(ArrayBuffer.prototype.slice == null) {...}
+			var path = getIdentifier(test.left);
+			if (path.length > 1 && path[1] == 'prototype')
+				tag(path[0], def);
+		}
+	}
+
+	function inspectFunction(id:AstNode, def:AstNode)
 	{
 		var path = getIdentifier(id);
-		if (path.length > 0) 
+		if (path.length > 0)
 		{
-			//trace('--copy function ${path.join('.')}()');
-			switch (path[0])
-			{
-				case "$extend":
-					step = ParseStep.Definitions;
-					return true;
-				case "$bind":
-					step = ParseStep.StaticInit;
-					return true;
-			}
+			var name = path[0];
+			if (name == "$extend" || name == "$bind" || name == "$iterator") tag(name, def);
 		}
-		return false;
 	}
-	
-	function inspectExpression(expression:AstNode, def:AstNode) 
+
+	function inspectExpression(expression:AstNode, def:AstNode)
 	{
 		switch (expression.type)
 		{
 			case 'AssignmentExpression':
 				var path = getIdentifier(expression.left);
-				if (path.length > 0) 
+				if (path.length > 0)
 				{
 					var name = path[0];
 					switch (name)
 					{
 						case "$hx_exports":
-							//trace('--copy ' + expression.type);
 						case "$hxClasses":
 							var moduleName = getIdentifier(expression.right);
-							//trace('$$hxClasses[...] = ${moduleName.join('.')}');
-							if (moduleName.length == 1)
-								promote(moduleName[0], def);
+							if (moduleName.length == 1) tag(moduleName[0], def);
 						default:
-							//trace('${path.join('.')} = ... ' + types.exists(name));
-							if (types.exists(name)) 
+							if (types.exists(name))
 							{
-								if (path[1] == '__fileName__') trySetHot(name);
-								append(name, def);
+								if (path[1] == 'displayName') trySetHot(name);
+								else if (path[1] == '__fileName__') trySetHot(name);
 							}
-							else if (path[1] == '__name__') promote(name, def);
+							tag(name, def);
 					}
 				}
-				//else trace('--copy ' + expression.type);
 			case 'CallExpression':
-				var name = getIdentifier(expression.callee.object);
+				var path = getIdentifier(expression.callee.object);
 				var prop = getIdentifier(expression.callee.property);
-				if (prop.length > 0 && name.length > 0 && types.exists(name[0]))
+				if (prop.length > 0 && path.length > 0 && types.exists(path[0]))
 				{
-					//trace('--${name.join('.')}.${prop.join('.')}()');
-					append(name[0], def);
+					var name = path[0];
+					if (prop.length == 1 && prop[0] == 'main') {
+						// last SomeType.main() is the main module
+						mainModule = name;
+					}
+					tag(name, def);
 				}
-				//else trace('--copy ' + expression.type);
 			default:
-				//trace('--copy ' + expression.type);
 		}
 	}
-	
-	// identify types with both `displayName` and `__fileName__` as set-up for hotreload
-	function trySetHot(name:String) 
+
+	// Identify types with both `displayName` and `__fileName__` as set-up for hotreload
+	function trySetHot(name:String)
 	{
-		var defs = init.get(name);
-		if (defs == null || defs.length == 0) return;
-		for (def in defs)
-		{
-			if (def.type == 'ExpressionStatement' && def.expression.type == 'AssignmentExpression')
-			{
-				var path = getIdentifier(def.expression.left);
-				if (path[1] == 'displayName')
-				{
-					isHot.set(name, true);
-					return;
-				}
-			}
-		}
+		// first set isHot to false, then true when both properties are seen
+		if (isHot.exists(name)) isHot.set(name, true);
+		else isHot.set(name, false);
 	}
-	
-	function inspectDeclarations(declarations:Array<AstNode>, def:AstNode) 
+
+	function inspectDeclarations(declarations:Array<AstNode>, def:AstNode)
 	{
-		if (step == ParseStep.StaticInit) 
-			return;
-		
 		for (decl in declarations)
 		{
-			if (decl.id != null) 
+			if (decl.id != null)
 			{
 				var name = decl.id.name;
-				//trace('var ${name}');
-				
 				if (decl.init != null)
 				{
 					var init = decl.init;
-					switch (init.type) 
+					switch (init.type)
 					{
 						case 'FunctionExpression': // ctor
-							candidates.set(name, def);
-						case 'AssignmentExpression' if (init.right.type == 'FunctionExpression'): // ctor with export
-							candidates.set(name, def);
+							tag(name, def);
+						case 'AssignmentExpression':
+							if (init.right.type == 'FunctionExpression') // ctor with export
+								tag(name, def);
 						case 'ObjectExpression': // enum
-							//trace('(enum?)');
-							if (isEnumDecl(init)) {
+							if (isEnumDecl(init))
 								isEnum.set(name, true);
-								register(name, def);
-							}
-							else candidates.set(name, def);
-						case 'CallExpression' if (isRequire(init.callee)): // require
-							//trace('(require)');
-							required(name, def);
-						case 'MemberExpression' if (init.object.type == 'CallExpression' && isRequire(init.object.callee)): // require with prop
-							//trace('(require.something)');
-							required(name, def);
+							tag(name, def);
+						case 'CallExpression':
+							if (isRequireDecl(init.callee))
+								required(name, def);
+						case 'MemberExpression':
+							// jsRequire with prop
+							if (init.object.type == 'CallExpression' && isRequireDecl(init.object.callee))
+								required(name, def);
+						case 'Identifier':
+							// eg. var Float = Number;
+							if (name.charAt(0) != '$')
+								tag(name, def);
+						case 'LogicalExpression':
+							// eg. var ArrayBuffer = $global.ArrayBuffer || js_html_compat_ArrayBuffer;
+							if (name.indexOf('Array') >= 0)
+								tag(name, def);
 						default:
-							//trace('--copy ' + decl.type);
 					}
 				}
-				else 
-				{
-					//trace('--copy ' + decl.type);
-				}
-			}
-			else 
-			{
-				//trace('--copy ' + decl.type);
 			}
 		}
 	}
-	
-	function required(name:String, def:AstNode) 
+
+	function required(name:String, def:AstNode)
 	{
-		requires.set(name, def);
+		isRequire.set(name, true);
+		tag(name, def);
 	}
-	
-	function register(name:String, def:AstNode)
+
+	function tag(name:String, def:AstNode)
 	{
-		def.__tag__ = name;
-		types.set(name, [def]);
-		init.set(name, []);
-	}
-	
-	function promote(name:String, def:AstNode) 
-	{
-		if (candidates.exists(name))
-		{
-			//trace('type: $name');
-			var cDef = candidates.get(name);
-			candidates.remove(name);
-			cDef.__tag__ = name;
-			def.__tag__ = name;
-			types.set(name, [cDef, def]);
-			init.set(name, []);
+		if (!types.exists(name)) {
+			if (isReserved(name)) {
+				// Tag types we want to include only in main module (eg. 'Math.__name__ = "Math";)
+				// but 'var __map_reserved = {}' is better to just include everywhere
+				if (name !=  '__map_reserved') def.__tag__ = '__reserved__';
+				return;
+			}
+			types.set(name, [def]);
 		}
-		else if (types.exists(name)) 
-		{
-			append(name, def);
-		}
-	}
-	
-	function append(name:String, def:AstNode) 
-	{
+		else types.get(name).push(def);
 		def.__tag__ = name;
-		var defs = step == ParseStep.Definitions ? types.get(name) : init.get(name);
-		defs.push(def);
 	}
-	
-	function isEnumDecl(node:AstNode) 
+
+	inline function isReserved(name:String)
+	{
+		return untyped reservedTypes[name];
+	}
+
+	function isEnumDecl(node:AstNode)
 	{
 		var props = node.properties;
 		return node.type == 'ObjectExpression'
@@ -327,26 +291,26 @@ class Parser
 			&& props.length > 0
 			&& getIdentifier(props[0].key)[0] == '__ename__';
 	}
-	
-	function isRequire(node:AstNode) 
+
+	function isRequireDecl(node:AstNode)
 	{
-		return node != null && node.type == 'Identifier' && node.name == 'require'; 
+		return node != null && node.type == 'Identifier' && node.name == 'require';
 	}
-	
+
 	function getBodyNodes(node:AstNode):Array<AstNode>
 	{
-		return Std.is(node.body, Array) 
-			? cast node.body 
+		return Std.is(node.body, Array)
+			? cast node.body
 			: [cast node.body];
 	}
-	
-	function getIdentifier(left:AstNode) 
+
+	function getIdentifier(left:AstNode)
 	{
-		switch (left.type) 
+		switch (left.type)
 		{
-			case 'Identifier': 
+			case 'Identifier':
 				return [left.name];
-			case 'MemberExpression': 
+			case 'MemberExpression':
 				return getIdentifier(left.object).concat(getIdentifier(left.property));
 			case 'Literal':
 				return [left.raw];

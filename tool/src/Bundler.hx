@@ -18,17 +18,27 @@ typedef OutputBuffer = {
 class Bundler
 {
 	static inline var REQUIRE = "var require = (function(r){ return function require(m) { return r[m]; } })($hx_exports.__registry__);\n";
-	static inline var SHARED = "var $s = $hx_exports.__shared__ = $hx_exports.__shared__ || {};\n";
-	static inline var SCOPE = "typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {}";
+    static inline var SCOPE = "typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {}";
 	static inline var GLOBAL = "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this";
-	static inline var ARGS = '})($SCOPE, $GLOBAL);\n';
 	static inline var FUNCTION = "function ($hx_exports, $global)";
+
+	static var FRAGMENTS = {
+		MAIN: {
+			EXPORTS: "var $hx_exports = global.$hx_exports = global.$hx_exports || {__shared__:{}}, $s = $hx_exports.__shared__;\n",
+			SHARED: "var $s = $hx_exports.__shared__ = $hx_exports.__shared__ || {};\n"
+		},
+		CHILD: {
+			EXPORTS: "var $hx_exports = global.$hx_exports, $s = $hx_exports.__shared__;\n",
+			SHARED: "var $s = $hx_exports.__shared__;\n"
+		}
+	}
 
 	var parser:Parser;
 	var sourceMap:SourceMap;
 	var main:Bundle;
 	var mainExports:Array<String>;
 	var bundles:Array<Bundle> = [];
+	var webpackMode:Bool;
 
 	public function new(parser:Parser, sourceMap:SourceMap)
 	{
@@ -36,35 +46,50 @@ class Bundler
 		this.sourceMap = sourceMap;
 	}
 
-	public function generate(src:String, output:String)
+	public function generate(src:String, output:String, webpackMode:Bool)
 	{
+		this.webpackMode = webpackMode;
+
 		trace('Emit $output');
+		var result = [];
 		var buffer = emitBundle(src, main, mainExports, true);
-		writeMap(output, buffer);
-		write(output, buffer.src);
+		result.push({
+			name: 'Main',
+			map: writeMap(output, buffer),
+			source: write(output, buffer.src)
+		});
 
 		for (bundle in bundles)
 		{
 			var bundleOutput = Path.join(Path.dirname(output), bundle.name + '.js');
 			trace('Emit $bundleOutput');
 			buffer = emitBundle(src, bundle, [bundle.name], false);
-			writeMap(bundleOutput, buffer);
-			write(bundleOutput, buffer.src);
+			result.push({
+				name: bundle.name,
+				map: writeMap(bundleOutput, buffer),
+				source: write(bundleOutput, buffer.src)
+			});
 		}
+
+		return result;
 	}
 
 	function writeMap(output:String, buffer:OutputBuffer)
 	{
-		if (buffer.map == null) return;
-		write('$output.map', sourceMap.emitFile(output, buffer.map));
-		buffer.src += '\n' + SourceMap.SRC_REF + Path.basename(output) + '.map';
+		if (buffer.map == null) return null;
+		return {
+			path: '$output.map',
+			content: sourceMap.emitFile(output, buffer.map).toString()
+		};
 	}
 
 	function write(output:String, buffer:String)
 	{
-		if (buffer == null) return;
-		if (hasChanged(output, buffer))
-			Fs.writeFileSync(output, buffer);
+		if (buffer == null) return null;
+		return {
+			path: output,
+			content: buffer
+		}
 	}
 
 	function hasChanged(output:String, buffer:String)
@@ -76,22 +101,30 @@ class Bundler
 
 	function emitBundle(src:String, bundle:Bundle, exports:Array<String>, isMain:Bool):OutputBuffer
 	{
-		var buffer = '';
+		var buffer = webpackMode ? '/* eslint-disable */ "use strict"\n' : '';
 		var body = parser.rootBody.copy();
 		var head = body.shift();
 		var run = isMain ? body.pop() : null;
 		var inc = bundle.nodes;
+		var incAll = isMain && bundle.nodes.length == 0;
 		var mapNodes:Array<AstNode> = [];
 		var mapOffset = 0;
+		var frag = isMain ? FRAGMENTS.MAIN : FRAGMENTS.CHILD;
 
 		// header
-		buffer += verifyExport(src.substr(0, head.end + 1));
-
-		// shared scope
-		buffer += REQUIRE;
-		mapOffset++;
-		buffer += SHARED;
-		mapOffset++;
+		if (webpackMode)
+		{
+			buffer += frag.EXPORTS;
+		}
+		else
+		{
+			buffer += verifyExport(src.substr(0, head.end + 1));
+			// shared scope
+			buffer += REQUIRE;
+			mapOffset++;
+			buffer += frag.SHARED;
+			mapOffset++;
+		}
 		if (bundle.shared.length > 0)
 		{
 			var tmp = isMain
@@ -104,8 +137,10 @@ class Bundler
 		// split main content
 		for (node in body)
 		{
-			if (node.__tag__ != null && inc.indexOf(node.__tag__) < 0)
-				continue;
+			if (!incAll && node.__tag__ != null && inc.indexOf(node.__tag__) < 0) {
+				if (!isMain || node.__tag__ != '__reserved__')
+					continue;
+			}
 			mapNodes.push(node);
 			buffer += src.substr(node.start, node.end - node.start);
 			buffer += '\n';
@@ -129,7 +164,8 @@ class Bundler
 			buffer += '\n';
 		}
 
-		buffer += ARGS;
+		if (!webpackMode) buffer += '})($SCOPE, $GLOBAL);\n';
+
 		return {
 			src:buffer,
 			map:sourceMap.emitMappings(mapNodes, mapOffset)
@@ -140,13 +176,13 @@ class Bundler
 	{
 		var names = [];
 		for (name in parser.isHot.keys())
-			if (inc.indexOf(name) >= 0) names.push(name);
+			if (parser.isHot.get(name) && inc.indexOf(name) >= 0) names.push(name);
 
 		if (names.length == 0) return '';
 
 		return 'if ($$global.__REACT_HOT_LOADER__)\n'
-			+ '  [${names.join(",")}].map(function(name) {\n'
-			+ '    __REACT_HOT_LOADER__.register(name,name.displayName,name.__fileName__);\n'
+			+ '  [${names.join(",")}].map(function(c) {\n'
+			+ '    __REACT_HOT_LOADER__.register(c,c.displayName,c.__fileName__);\n'
 			+ '  });\n';
 	}
 
@@ -155,8 +191,19 @@ class Bundler
 		return ~/function \([^)]*\)/.replace(s, FUNCTION);
 	}
 
-	public function process(modules:Array<String>, debugMode:Bool)
+	public function process(mainModule:String, modules:Array<String>, debugMode:Bool)
 	{
+		if (parser.typesCount == 0) {
+			trace('Warning: unable to process (no type metadata)');
+			main = {
+				name: 'Main',
+				nodes: [],
+				shared: []
+			};
+			mainExports = [];
+			return;
+		}
+
 		trace('Bundling...');
 		var g = parser.graph;
 
@@ -165,7 +212,7 @@ class Bundler
 			unlink(g, module);
 
 		// find main nodes
-		var mainNodes = Alg.preorder(g, 'Main');
+		var mainNodes = Alg.preorder(g, mainModule);
 
 		// /!\ force hoist enums in main bundle to avoid HMR conflicts
 		if (debugMode)
