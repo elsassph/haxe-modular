@@ -18,11 +18,20 @@ typedef OutputBuffer = {
 class Bundler
 {
 	static inline var REQUIRE = "var require = (function(r){ return function require(m) { return r[m]; } })($hx_exports.__registry__);\n";
-	static inline var SHARED = "var $s = $hx_exports.__shared__ = $hx_exports.__shared__ || {};\n";
-	static inline var SCOPE = "typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {}";
+    static inline var SCOPE = "typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {}";
 	static inline var GLOBAL = "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this";
-	static inline var ARGS = '})($SCOPE, $GLOBAL);\n';
 	static inline var FUNCTION = "function ($hx_exports, $global)";
+
+	static var FRAGMENTS = {
+		MAIN: {
+			EXPORTS: "var $hx_exports = global.$hx_exports = global.$hx_exports || {__shared__:{}}, $s = $hx_exports.__shared__;\n",
+			SHARED: "var $s = $hx_exports.__shared__ = $hx_exports.__shared__ || {};\n"
+		},
+		CHILD: {
+			EXPORTS: "var $hx_exports = global.$hx_exports, $s = $hx_exports.__shared__;\n",
+			SHARED: "var $s = $hx_exports.__shared__;\n"
+		}
+	}
 
 	var parser:Parser;
 	var sourceMap:SourceMap;
@@ -100,11 +109,12 @@ class Bundler
 		var incAll = isMain && bundle.nodes.length == 0;
 		var mapNodes:Array<AstNode> = [];
 		var mapOffset = 0;
+		var frag = isMain ? FRAGMENTS.MAIN : FRAGMENTS.CHILD;
 
 		// header
 		if (webpackMode)
 		{
-			buffer += 'var $$hx_exports = global.$$hx_exports = global.$$hx_exports || {__shared__:{}}; var $$s = $$hx_exports.__shared__;\n';
+			buffer += frag.EXPORTS;
 		}
 		else
 		{
@@ -112,7 +122,7 @@ class Bundler
 			// shared scope
 			buffer += REQUIRE;
 			mapOffset++;
-			buffer += SHARED;
+			buffer += frag.SHARED;
 			mapOffset++;
 		}
 		if (bundle.shared.length > 0)
@@ -127,8 +137,10 @@ class Bundler
 		// split main content
 		for (node in body)
 		{
-			if (!incAll && node.__tag__ != null && inc.indexOf(node.__tag__) < 0)
-				continue;
+			if (!incAll && node.__tag__ != null && inc.indexOf(node.__tag__) < 0) {
+				if (!isMain || node.__tag__ != '__reserved__')
+					continue;
+			}
 			mapNodes.push(node);
 			buffer += src.substr(node.start, node.end - node.start);
 			buffer += '\n';
@@ -152,7 +164,7 @@ class Bundler
 			buffer += '\n';
 		}
 
-		if (!webpackMode) buffer += ARGS;
+		if (!webpackMode) buffer += '})($SCOPE, $GLOBAL);\n';
 
 		return {
 			src:buffer,
@@ -164,13 +176,13 @@ class Bundler
 	{
 		var names = [];
 		for (name in parser.isHot.keys())
-			if (inc.indexOf(name) >= 0) names.push(name);
+			if (parser.isHot.get(name) && inc.indexOf(name) >= 0) names.push(name);
 
 		if (names.length == 0) return '';
 
 		return 'if ($$global.__REACT_HOT_LOADER__)\n'
-			+ '  [${names.join(",")}].map(function(name) {\n'
-			+ '    __REACT_HOT_LOADER__.register(name,name.displayName,name.__fileName__);\n'
+			+ '  [${names.join(",")}].map(function(c) {\n'
+			+ '    __REACT_HOT_LOADER__.register(c,c.displayName,c.__fileName__);\n'
 			+ '  });\n';
 	}
 
@@ -179,7 +191,7 @@ class Bundler
 		return ~/function \([^)]*\)/.replace(s, FUNCTION);
 	}
 
-	public function process(modules:Array<String>, debugMode:Bool)
+	public function process(mainModule:String, modules:Array<String>, debugMode:Bool)
 	{
 		if (parser.typesCount == 0) {
 			trace('Warning: unable to process (no type metadata)');
@@ -200,7 +212,7 @@ class Bundler
 			unlink(g, module);
 
 		// find main nodes
-		var mainNodes = Alg.preorder(g, 'Main');
+		var mainNodes = Alg.preorder(g, mainModule);
 
 		// /!\ force hoist enums in main bundle to avoid HMR conflicts
 		if (debugMode)

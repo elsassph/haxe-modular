@@ -12,7 +12,6 @@ var Bundler = function(parser,sourceMap) {
 	this.parser = parser;
 	this.sourceMap = sourceMap;
 };
-Bundler.__name__ = true;
 Bundler.prototype = {
 	generate: function(src,output,webpackMode) {
 		this.webpackMode = webpackMode;
@@ -60,13 +59,14 @@ Bundler.prototype = {
 		var incAll = isMain && bundle.nodes.length == 0;
 		var mapNodes = [];
 		var mapOffset = 0;
+		var frag = isMain ? Bundler.FRAGMENTS.MAIN : Bundler.FRAGMENTS.CHILD;
 		if(this.webpackMode) {
-			buffer += "var $" + "hx_exports = global.$" + "hx_exports = global.$" + "hx_exports || {__shared__:{}}; var $" + "s = $" + "hx_exports.__shared__;\n";
+			buffer += frag.EXPORTS;
 		} else {
 			buffer += this.verifyExport(HxOverrides.substr(src,0,head.end + 1));
 			buffer += "var require = (function(r){ return function require(m) { return r[m]; } })($hx_exports.__registry__);\n";
 			++mapOffset;
-			buffer += "var $s = $hx_exports.__shared__ = $hx_exports.__shared__ || {};\n";
+			buffer += frag.SHARED;
 			++mapOffset;
 		}
 		if(bundle.shared.length > 0) {
@@ -92,7 +92,9 @@ Bundler.prototype = {
 			var node1 = body[_g3];
 			++_g3;
 			if(!incAll && node1.__tag__ != null && inc.indexOf(node1.__tag__) < 0) {
-				continue;
+				if(!isMain || node1.__tag__ != "__reserved__") {
+					continue;
+				}
 			}
 			mapNodes.push(node1);
 			buffer += HxOverrides.substr(src,node1.start,node1.end - node1.start);
@@ -122,20 +124,27 @@ Bundler.prototype = {
 		var name = this.parser.isHot.keys();
 		while(name.hasNext()) {
 			var name1 = name.next();
-			if(inc.indexOf(name1) >= 0) {
+			var tmp;
+			var _this = this.parser.isHot;
+			if(__map_reserved[name1] != null ? _this.getReserved(name1) : _this.h[name1]) {
+				tmp = inc.indexOf(name1) >= 0;
+			} else {
+				tmp = false;
+			}
+			if(tmp) {
 				names.push(name1);
 			}
 		}
 		if(names.length == 0) {
 			return "";
 		}
-		return "if ($" + "global.__REACT_HOT_LOADER__)\n" + ("  [" + names.join(",") + "].map(function(name) {\n") + "    __REACT_HOT_LOADER__.register(name,name.displayName,name.__fileName__);\n" + "  });\n";
+		return "if ($" + "global.__REACT_HOT_LOADER__)\n" + ("  [" + names.join(",") + "].map(function(c) {\n") + "    __REACT_HOT_LOADER__.register(c,c.displayName,c.__fileName__);\n" + "  });\n";
 	}
 	,verifyExport: function(s) {
 		var _this_r = new RegExp("function \\([^)]*\\)","".split("u").join(""));
 		return s.replace(_this_r,"function ($hx_exports, $global)");
 	}
-	,process: function(modules,debugMode) {
+	,process: function(mainModule,modules,debugMode) {
 		if(this.parser.typesCount == 0) {
 			console.log("Warning: unable to process (no type metadata)");
 			this.main = { name : "Main", nodes : [], shared : []};
@@ -150,7 +159,7 @@ Bundler.prototype = {
 			++_g;
 			this.unlink(g,$module);
 		}
-		var mainNodes = graphlib_Alg.preorder(g,"Main");
+		var mainNodes = graphlib_Alg.preorder(g,mainModule);
 		if(debugMode) {
 			var key = this.parser.isEnum.keys();
 			while(key.hasNext()) {
@@ -268,7 +277,6 @@ Bundler.prototype = {
 	}
 };
 var HxOverrides = function() { };
-HxOverrides.__name__ = true;
 HxOverrides.cca = function(s,index) {
 	var x = s.charCodeAt(index);
 	if(x != x) {
@@ -296,7 +304,6 @@ HxOverrides.iter = function(a) {
 	}};
 };
 var Main = function() { };
-Main.__name__ = true;
 Main.main = function() {
 	module.exports = { run : Main.run};
 };
@@ -305,20 +312,16 @@ Main.run = function(input,output,modules,debugMode,webpackMode) {
 	var parser = new Parser(src);
 	var sourceMap = new SourceMap(input,src);
 	var bundler = new Bundler(parser,sourceMap);
-	bundler.process(modules,debugMode);
+	bundler.process(parser.mainModule,modules,debugMode);
+	var dir = js_node_Path.dirname(output);
+	if(!js_node_Fs.existsSync(dir)) {
+		js_node_Fs.mkdirSync(dir);
+	}
 	return bundler.generate(src,output,webpackMode);
 };
-Math.__name__ = true;
-var ParseStep = { __ename__ : true, __constructs__ : ["Start","Definitions","Utils","StaticInit"] };
-ParseStep.Start = ["Start",0];
-ParseStep.Start.__enum__ = ParseStep;
-ParseStep.Definitions = ["Definitions",1];
-ParseStep.Definitions.__enum__ = ParseStep;
-ParseStep.Utils = ["Utils",2];
-ParseStep.Utils.__enum__ = ParseStep;
-ParseStep.StaticInit = ["StaticInit",3];
-ParseStep.StaticInit.__enum__ = ParseStep;
 var Parser = function(src) {
+	this.reservedTypes = { "String" : true, "Math" : true, "Array" : true, "Int" : true, "Float" : true, "Bool" : true, "Class" : true, "Date" : true, "Dynamic" : true, "Enum" : true, __map_reserved : true};
+	this.mainModule = "Main";
 	var t0 = new Date().getTime();
 	this.processInput(src);
 	var t1 = new Date().getTime();
@@ -327,7 +330,6 @@ var Parser = function(src) {
 	var t2 = new Date().getTime();
 	console.log("Graph processed in: " + (t2 - t1) + "ms");
 };
-Parser.__name__ = true;
 Parser.prototype = {
 	processInput: function(src) {
 		var program = acorn_Acorn.parse(src,{ ecmaVersion : 5, locations : true, ranges : true});
@@ -348,12 +350,6 @@ Parser.prototype = {
 			var t3 = t2.next();
 			var _this = this.types;
 			refs += this.walk(g,t3,__map_reserved[t3] != null ? _this.getReserved(t3) : _this.h[t3]);
-		}
-		var t4 = this.init.keys();
-		while(t4.hasNext()) {
-			var t5 = t4.next();
-			var _this1 = this.init;
-			refs += this.walk(g,t5,__map_reserved[t5] != null ? _this1.getReserved(t5) : _this1.h[t5]);
 		}
 		console.log("Stats: " + cpt + " types, " + refs + " references");
 		this.typesCount = cpt;
@@ -390,11 +386,9 @@ Parser.prototype = {
 	}
 	,walkProgram: function(program) {
 		this.types = new haxe_ds_StringMap();
-		this.init = new haxe_ds_StringMap();
-		this.requires = new haxe_ds_StringMap();
 		this.isHot = new haxe_ds_StringMap();
 		this.isEnum = new haxe_ds_StringMap();
-		this.step = ParseStep.Start;
+		this.isRequire = new haxe_ds_StringMap();
 		var body = this.getBodyNodes(program);
 		var _g = 0;
 		while(_g < body.length) {
@@ -438,36 +432,39 @@ Parser.prototype = {
 				this.inspectExpression(node.expression,node);
 				break;
 			case "FunctionDeclaration":
-				if(this.inspectFunction(node.id,node)) {
-					continue;
-				}
+				this.inspectFunction(node.id,node);
 				break;
 			case "IfStatement":
 				if(node.consequent.type == "ExpressionStatement") {
 					this.inspectExpression(node.consequent.expression,node);
+				} else {
+					this.inspectIfStatement(node.test,node);
 				}
 				break;
 			case "VariableDeclaration":
 				this.inspectDeclarations(node.declarations,node);
 				break;
 			default:
+				console.log("unknown node");
+			}
+		}
+	}
+	,inspectIfStatement: function(test,def) {
+		if(test.type == "BinaryExpression") {
+			var path = this.getIdentifier(test.left);
+			if(path.length > 1 && path[1] == "prototype") {
+				this.tag(path[0],def);
 			}
 		}
 	}
 	,inspectFunction: function(id,def) {
 		var path = this.getIdentifier(id);
 		if(path.length > 0) {
-			var _g = path[0];
-			switch(_g) {
-			case "$bind":
-				this.step = ParseStep.StaticInit;
-				return true;
-			case "$extend":
-				this.step = ParseStep.Definitions;
-				return true;
+			var name = path[0];
+			if(name == "$extend" || name == "$bind" || name == "$iterator") {
+				this.tag(name,def);
 			}
 		}
-		return false;
 	}
 	,inspectExpression: function(expression,def) {
 		var _g = expression.type;
@@ -480,59 +477,56 @@ Parser.prototype = {
 				case "$hxClasses":
 					var moduleName = this.getIdentifier(expression.right);
 					if(moduleName.length == 1) {
-						this.append(moduleName[0],def);
+						this.tag(moduleName[0],def);
 					}
 					break;
 				case "$hx_exports":
 					break;
 				default:
 					if(this.types.exists(name)) {
-						if(path[1] == "__fileName__") {
+						if(path[1] == "displayName") {
+							this.trySetHot(name);
+						} else if(path[1] == "__fileName__") {
 							this.trySetHot(name);
 						}
-						this.append(name,def);
 					}
+					this.tag(name,def);
 				}
 			}
 			break;
 		case "CallExpression":
-			var name1 = this.getIdentifier(expression.callee.object);
+			var path1 = this.getIdentifier(expression.callee.object);
 			var prop = this.getIdentifier(expression.callee.property);
-			if(prop.length > 0 && name1.length > 0 && this.types.exists(name1[0])) {
-				this.append(name1[0],def);
+			if(prop.length > 0 && path1.length > 0 && this.types.exists(path1[0])) {
+				var name1 = path1[0];
+				if(prop.length == 1 && prop[0] == "main") {
+					this.mainModule = name1;
+				}
+				this.tag(name1,def);
 			}
 			break;
 		default:
 		}
 	}
 	,trySetHot: function(name) {
-		var _this = this.init;
-		var defs = __map_reserved[name] != null ? _this.getReserved(name) : _this.h[name];
-		if(defs == null || defs.length == 0) {
-			return;
-		}
-		var _g = 0;
-		while(_g < defs.length) {
-			var def = defs[_g];
-			++_g;
-			if(def.type == "ExpressionStatement" && def.expression.type == "AssignmentExpression") {
-				var path = this.getIdentifier(def.expression.left);
-				if(path[1] == "displayName") {
-					var _this1 = this.isHot;
-					if(__map_reserved[name] != null) {
-						_this1.setReserved(name,true);
-					} else {
-						_this1.h[name] = true;
-					}
-					return;
-				}
+		var _this = this.isHot;
+		if(__map_reserved[name] != null ? _this.existsReserved(name) : _this.h.hasOwnProperty(name)) {
+			var _this1 = this.isHot;
+			if(__map_reserved[name] != null) {
+				_this1.setReserved(name,true);
+			} else {
+				_this1.h[name] = true;
+			}
+		} else {
+			var _this2 = this.isHot;
+			if(__map_reserved[name] != null) {
+				_this2.setReserved(name,false);
+			} else {
+				_this2.h[name] = false;
 			}
 		}
 	}
 	,inspectDeclarations: function(declarations,def) {
-		if(this.step == ParseStep.StaticInit) {
-			return;
-		}
 		var _g = 0;
 		while(_g < declarations.length) {
 			var decl = declarations[_g];
@@ -545,31 +539,37 @@ Parser.prototype = {
 					switch(_g1) {
 					case "AssignmentExpression":
 						if(init.right.type == "FunctionExpression") {
-							this.promote(name,def);
+							this.tag(name,def);
 						}
 						break;
 					case "CallExpression":
-						if(this.isRequire(init.callee)) {
+						if(this.isRequireDecl(init.callee)) {
 							this.required(name,def);
 						}
 						break;
 					case "FunctionExpression":
+						this.tag(name,def);
+						break;
+					case "Identifier":
 						if(name.charAt(0) != "$") {
-							this.promote(name,def);
+							this.tag(name,def);
+						}
+						break;
+					case "LogicalExpression":
+						if(name.indexOf("Array") >= 0) {
+							this.tag(name,def);
 						}
 						break;
 					case "MemberExpression":
-						if(init.object.type == "CallExpression" && this.isRequire(init.object.callee)) {
+						if(init.object.type == "CallExpression" && this.isRequireDecl(init.object.callee)) {
 							this.required(name,def);
 						}
 						break;
 					case "ObjectExpression":
 						if(this.isEnumDecl(init)) {
 							this.isEnum.set(name,true);
-							this.register(name,def);
-						} else if(name != "__map_reserved") {
-							this.promote(name,def);
 						}
+						this.tag(name,def);
 						break;
 					default:
 					}
@@ -578,36 +578,23 @@ Parser.prototype = {
 		}
 	}
 	,required: function(name,def) {
-		var _this = this.requires;
+		var _this = this.isRequire;
 		if(__map_reserved[name] != null) {
-			_this.setReserved(name,def);
+			_this.setReserved(name,true);
 		} else {
-			_this.h[name] = def;
+			_this.h[name] = true;
 		}
+		this.tag(name,def);
 	}
-	,register: function(name,def) {
-		def.__tag__ = name;
+	,tag: function(name,def) {
 		var _this = this.types;
-		var value = [def];
-		if(__map_reserved[name] != null) {
-			_this.setReserved(name,value);
-		} else {
-			_this.h[name] = value;
-		}
-		var _this1 = this.init;
-		var value1 = [];
-		if(__map_reserved[name] != null) {
-			_this1.setReserved(name,value1);
-		} else {
-			_this1.h[name] = value1;
-		}
-	}
-	,promote: function(name,def) {
-		var _this = this.types;
-		if(__map_reserved[name] != null ? _this.existsReserved(name) : _this.h.hasOwnProperty(name)) {
-			this.append(name,def);
-		} else {
-			def.__tag__ = name;
+		if(!(__map_reserved[name] != null ? _this.existsReserved(name) : _this.h.hasOwnProperty(name))) {
+			if(this.reservedTypes[name]) {
+				if(name != "__map_reserved") {
+					def.__tag__ = "__reserved__";
+				}
+				return;
+			}
 			var _this1 = this.types;
 			var value = [def];
 			if(__map_reserved[name] != null) {
@@ -615,36 +602,14 @@ Parser.prototype = {
 			} else {
 				_this1.h[name] = value;
 			}
-			var _this2 = this.init;
-			var value1 = [];
-			if(__map_reserved[name] != null) {
-				_this2.setReserved(name,value1);
-			} else {
-				_this2.h[name] = value1;
-			}
-		}
-	}
-	,append: function(name,def) {
-		var defs;
-		if(this.step == ParseStep.Definitions) {
-			var _this = this.types;
-			if(__map_reserved[name] != null) {
-				defs = _this.getReserved(name);
-			} else {
-				defs = _this.h[name];
-			}
 		} else {
-			var _this1 = this.init;
-			if(__map_reserved[name] != null) {
-				defs = _this1.getReserved(name);
-			} else {
-				defs = _this1.h[name];
-			}
+			var _this2 = this.types;
+			(__map_reserved[name] != null ? _this2.getReserved(name) : _this2.h[name]).push(def);
 		}
-		if(defs != null) {
-			def.__tag__ = name;
-			defs.push(def);
-		}
+		def.__tag__ = name;
+	}
+	,isReserved: function(name) {
+		return this.reservedTypes[name];
 	}
 	,isEnumDecl: function(node) {
 		var props = node.properties;
@@ -654,7 +619,7 @@ Parser.prototype = {
 			return false;
 		}
 	}
-	,isRequire: function(node) {
+	,isRequireDecl: function(node) {
 		if(node != null && node.type == "Identifier") {
 			return node.name == "require";
 		} else {
@@ -683,7 +648,6 @@ Parser.prototype = {
 	}
 };
 var Reflect = function() { };
-Reflect.__name__ = true;
 Reflect.fields = function(o) {
 	var a = [];
 	if(o != null) {
@@ -706,7 +670,6 @@ var SourceMap = function(input,src) {
 	var raw = JSON.parse(js_node_Fs.readFileSync(this.fileName).toString());
 	this.source = new sourcemap_SourceMapConsumer(raw);
 };
-SourceMap.__name__ = true;
 SourceMap.prototype = {
 	emitMappings: function(nodes,offset) {
 		if(nodes.length == 0 || this.source == null) {
@@ -761,7 +724,6 @@ SourceMap.prototype = {
 	}
 };
 var StringTools = function() { };
-StringTools.__name__ = true;
 StringTools.isSpace = function(s,pos) {
 	var c = HxOverrides.cca(s,pos);
 	if(!(c > 8 && c < 14)) {
@@ -798,11 +760,9 @@ var acorn_Walk = require("acorn/dist/walk");
 var graphlib_Graph = require("graphlib").Graph;
 var graphlib_Alg = require("graphlib/lib/alg");
 var haxe_IMap = function() { };
-haxe_IMap.__name__ = true;
 var haxe_ds_StringMap = function() {
 	this.h = { };
 };
-haxe_ds_StringMap.__name__ = true;
 haxe_ds_StringMap.__interfaces__ = [haxe_IMap];
 haxe_ds_StringMap.prototype = {
 	set: function(key,value) {
@@ -858,7 +818,6 @@ haxe_ds_StringMap.prototype = {
 	}
 };
 var haxe_io_Bytes = function() { };
-haxe_io_Bytes.__name__ = true;
 var js__$Boot_HaxeError = function(val) {
 	Error.call(this);
 	this.val = val;
@@ -867,7 +826,6 @@ var js__$Boot_HaxeError = function(val) {
 		Error.captureStackTrace(this,js__$Boot_HaxeError);
 	}
 };
-js__$Boot_HaxeError.__name__ = true;
 js__$Boot_HaxeError.wrap = function(val) {
 	if((val instanceof Error)) {
 		return val;
@@ -878,107 +836,17 @@ js__$Boot_HaxeError.wrap = function(val) {
 js__$Boot_HaxeError.__super__ = Error;
 js__$Boot_HaxeError.prototype = $extend(Error.prototype,{
 });
-var js_Boot = function() { };
-js_Boot.__name__ = true;
-js_Boot.__string_rec = function(o,s) {
-	if(o == null) {
-		return "null";
-	}
-	if(s.length >= 5) {
-		return "<...>";
-	}
-	var t = typeof(o);
-	if(t == "function" && (o.__name__ || o.__ename__)) {
-		t = "object";
-	}
-	switch(t) {
-	case "function":
-		return "<function>";
-	case "object":
-		if(o instanceof Array) {
-			if(o.__enum__) {
-				if(o.length == 2) {
-					return o[0];
-				}
-				var str = o[0] + "(";
-				s += "\t";
-				var _g1 = 2;
-				var _g = o.length;
-				while(_g1 < _g) {
-					var i = _g1++;
-					if(i != 2) {
-						str += "," + js_Boot.__string_rec(o[i],s);
-					} else {
-						str += js_Boot.__string_rec(o[i],s);
-					}
-				}
-				return str + ")";
-			}
-			var l = o.length;
-			var i1;
-			var str1 = "[";
-			s += "\t";
-			var _g11 = 0;
-			var _g2 = l;
-			while(_g11 < _g2) {
-				var i2 = _g11++;
-				str1 += (i2 > 0 ? "," : "") + js_Boot.__string_rec(o[i2],s);
-			}
-			str1 += "]";
-			return str1;
-		}
-		var tostr;
-		try {
-			tostr = o.toString;
-		} catch( e ) {
-			return "???";
-		}
-		if(tostr != null && tostr != Object.toString && typeof(tostr) == "function") {
-			var s2 = o.toString();
-			if(s2 != "[object Object]") {
-				return s2;
-			}
-		}
-		var k = null;
-		var str2 = "{\n";
-		s += "\t";
-		var hasp = o.hasOwnProperty != null;
-		for( var k in o ) {
-		if(hasp && !o.hasOwnProperty(k)) {
-			continue;
-		}
-		if(k == "prototype" || k == "__class__" || k == "__super__" || k == "__interfaces__" || k == "__properties__") {
-			continue;
-		}
-		if(str2.length != 2) {
-			str2 += ", \n";
-		}
-		str2 += s + k + " : " + js_Boot.__string_rec(o[k],s);
-		}
-		s = s.substring(1);
-		str2 += "\n" + s + "}";
-		return str2;
-	case "string":
-		return o;
-	default:
-		return String(o);
-	}
-};
 var js_node_Fs = require("fs");
 var js_node_Path = require("path");
 var js_node_buffer_Buffer = require("buffer").Buffer;
 var sourcemap_SourceMapConsumer = require("source-map").SourceMapConsumer;
 var sourcemap_SourceMapGenerator = require("source-map").SourceMapGenerator;
-String.__name__ = true;
-Array.__name__ = true;
-Date.__name__ = ["Date"];
 var __map_reserved = {}
 Bundler.REQUIRE = "var require = (function(r){ return function require(m) { return r[m]; } })($hx_exports.__registry__);\n";
-Bundler.SHARED = "var $s = $hx_exports.__shared__ = $hx_exports.__shared__ || {};\n";
 Bundler.SCOPE = "typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {}";
 Bundler.GLOBAL = "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this";
-Bundler.ARGS = "})(" + "typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {}" + ", " + "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this" + ");\n";
 Bundler.FUNCTION = "function ($hx_exports, $global)";
+Bundler.FRAGMENTS = { MAIN : { EXPORTS : "var $hx_exports = global.$hx_exports = global.$hx_exports || {__shared__:{}}, $s = $hx_exports.__shared__;\n", SHARED : "var $s = $hx_exports.__shared__ = $hx_exports.__shared__ || {};\n"}, CHILD : { EXPORTS : "var $hx_exports = global.$hx_exports, $s = $hx_exports.__shared__;\n", SHARED : "var $s = $hx_exports.__shared__;\n"}};
 SourceMap.SRC_REF = "//# sourceMappingURL=";
 Main.main();
 })();
