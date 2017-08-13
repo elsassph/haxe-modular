@@ -14,7 +14,7 @@ class RouteBundle
 			case Type.TType(_.get() => t, _):
 				var module = t.module.split('.').join('_');
 				Split.register(module);
-				var bridge = macro untyped $i{module} = $p{["$hx_exports", "__shared__", module]};
+				var bridge = macro untyped $i{module} = $p{["$s", module]};
 				return macro {
 					function(_, cb) {
 						#if debug

@@ -17,19 +17,19 @@ typedef OutputBuffer = {
 
 class Bundler
 {
-	static inline var REQUIRE = "var require = (function(r){ return function require(m) { return r[m]; } })($hx_exports.__registry__);\n";
-    static inline var SCOPE = "typeof $hx_scope != \"undefined\" ? $hx_scope : $hx_scope = {}";
+	static inline var REQUIRE = "var require = (function(r){ return function require(m) { return r[m]; } })($s.__registry__);\n";
+    static inline var SCOPE = "typeof exports != \"undefined\" ? exports : typeof window != \"undefined\" ? window : typeof self != \"undefined\" ? self : this";
 	static inline var GLOBAL = "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this";
 	static inline var FUNCTION = "function ($hx_exports, $global)";
 
 	static var FRAGMENTS = {
 		MAIN: {
-			EXPORTS: "var $hx_exports = global.$hx_exports = global.$hx_exports || {__shared__:{}}, $s = $hx_exports.__shared__;\n",
-			SHARED: "var $s = $hx_exports.__shared__ = $hx_exports.__shared__ || {};\n"
+			EXPORTS: "var $hx_exports = exports, $global = global;\n",
+			SHARED: "var $s = $global.$hx_scope = $global.$hx_scope || {};\n"
 		},
 		CHILD: {
-			EXPORTS: "var $hx_exports = global.$hx_exports, $s = $hx_exports.__shared__;\n",
-			SHARED: "var $s = $hx_exports.__shared__;\n"
+			EXPORTS: "var $hx_exports = exports, $global = global;\n",
+			SHARED: "var $s = $global.$hx_scope;\n"
 		}
 	}
 
@@ -115,14 +115,18 @@ class Bundler
 		if (webpackMode)
 		{
 			buffer += frag.EXPORTS;
+			// shared scope
+			buffer += frag.SHARED;
+			mapOffset++;
 		}
 		else
 		{
 			buffer += verifyExport(src.substr(0, head.end + 1));
 			// shared scope
-			buffer += REQUIRE;
-			mapOffset++;
 			buffer += frag.SHARED;
+			mapOffset++;
+			// npm require
+			buffer += REQUIRE;
 			mapOffset++;
 		}
 		if (bundle.shared.length > 0)

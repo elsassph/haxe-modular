@@ -6,7 +6,7 @@ var React = require('react');
 
 var proxies = {};
 
-function register(classRef, name, file) 
+function register(classRef, name, file)
 {
 	if (classRef == null || name == null || file == null) return;
 	var key = name + '@' + file;
@@ -21,7 +21,7 @@ function register(classRef, name, file)
 	}
 }
 
-function refresh(rootElement) 
+function refresh(rootElement)
 {
 	deepForceUpdate(rootElement);
 }
@@ -38,9 +38,11 @@ React.createElement = function(type) {
 		args.unshift(proxy.get());
 		return _createElement.apply(React, args);
 	}
-	
+
 	return _createElement.apply(React, arguments);
 }
 
-if (!window.__REACT_HOT_LOADER__) 
-	window.__REACT_HOT_LOADER__ = { register: register, refresh: refresh };
+module.exports = { register: register, refresh: refresh };
+
+if (!window.__REACT_HOT_LOADER__)
+	window.__REACT_HOT_LOADER__ = module.exports;
