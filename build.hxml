@@ -1,4 +1,4 @@
 -lib hxnodejs
 -cp tool/src
--main Main
+Main
 -js tool/bin/split.js

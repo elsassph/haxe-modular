@@ -139,7 +139,7 @@ class Parser
 					else
 						inspectIfStatement(node.test, node);
 				default:
-					trace('unknown node');
+					trace('WARNING: Unexpected ${node.type}, Line ${node.loc.start.line}');
 			}
 		}
 	}
@@ -229,8 +229,14 @@ class Parser
 						case 'FunctionExpression': // ctor
 							tag(name, def);
 						case 'AssignmentExpression':
-							if (init.right.type == 'FunctionExpression') // ctor with export
+							var right = init.right;
+							if (right.type == 'FunctionExpression') // ctor with export
 								tag(name, def);
+							else if (right.type == 'ObjectExpression') { // enum with export
+								if (isEnumDecl(right))
+									isEnum.set(name, true);
+								tag(name, def);
+							}
 						case 'ObjectExpression': // enum
 							if (isEnumDecl(init))
 								isEnum.set(name, true);

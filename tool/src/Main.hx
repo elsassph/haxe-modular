@@ -7,13 +7,7 @@ import js.node.Path;
 
 class Main
 {
-	static public function main()
-	{
-		untyped module.exports = {
-			run: run
-		};
-	}
-
+	@:expose('run')
 	static function run(input:String, output:String, modules:Array<String>, debugMode:Bool, webpackMode:Bool)
 	{
 		// parse input
