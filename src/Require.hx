@@ -29,11 +29,11 @@ class Require
 			var script:js.html.ScriptElement = null;
 			var hasFailed:Bool = false;
 
-			function resourceLoaded()
+			function resourceLoaded(_)
 			{
 				resolve(name);
 			}
-			function resourceFailed()
+			function resourceFailed(_)
 			{
 				if (!hasFailed)
 				{
@@ -72,7 +72,7 @@ class Require
 		if (!isHot)
 		{
 			isHot = true;
-			js.Browser.document.addEventListener('LiveReloadConnect', function() {
+			js.Browser.document.addEventListener('LiveReloadConnect', function(_) {
 				untyped window.LiveReload.reloader.plugins.push({
 					reload: Require.reload
 				});
