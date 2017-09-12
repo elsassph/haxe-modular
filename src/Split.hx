@@ -1,3 +1,4 @@
+import haxe.io.Path;
 import haxe.macro.Compiler;
 import haxe.macro.Context;
 import sys.FileSystem;
@@ -12,11 +13,21 @@ class Split
 	{
 		// generate in temp directory for processing
 		if (!FileSystem.exists('.temp')) FileSystem.createDirectory('.temp');
-		output = FileSystem.absolutePath(Compiler.getOutput());
-		tempOutput = FileSystem.absolutePath('.temp/output.js');
+
+		output = absolute(Compiler.getOutput());
+		tempOutput = absolute('.temp/output.js');
 		Compiler.setOutput(tempOutput);
 
 		Context.onAfterGenerate(generated);
+	}
+
+	static function absolute(path:String)
+	{
+		#if (haxe_ver < 3.2)
+		return Path.normalize(Path.join([Sys.getCwd(), path]));
+		#else
+		return FileSystem.absolutePath(path);
+		#end
 	}
 
 	static public function register(module:String)
@@ -35,8 +46,10 @@ class Split
 		var options = [
 			#if debug '-debug', #end
 			#if webpack '-webpack', #end
+			#if modular_dump '-dump', #end
 		];
 
+		var args = [tempOutput, output].concat(bundles).concat(options);
 		Sys.command(cmd, [tempOutput, output].concat(bundles).concat(options));
 	}
 }

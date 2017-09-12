@@ -5,6 +5,7 @@ const path = require('path');
 const args = [].concat(process.argv);
 const debugMode = remove(args, '-debug');
 const webpackMode = remove(args,  '-webpack');
+const dump = remove(args, '-dump');
 
 if (args.length < 3)
 	return printUsage();
@@ -21,7 +22,7 @@ const output = args[3];
 const modules = args.slice(4);
 
 const split = require('../tool/bin/split');
-const result = split.run(input, output, modules, debugMode, webpackMode);
+const result = split.run(input, output, modules, debugMode, webpackMode, dump);
 
 for (file of result) {
 	if (!file || !file.source) continue;
