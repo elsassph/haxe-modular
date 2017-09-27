@@ -1,12 +1,11 @@
 import graphlib.Graph;
 import haxe.DynamicAccess;
-import haxe.ds.StringMap;
-import js.node.Assert;
 import acorn.Acorn;
 
 class Parser
 {
 	public var graph:Graph;
+	public var beforeBody:Array<AstNode>;
 	public var rootBody:Array<AstNode>;
 	public var isHot:DynamicAccess<Bool>;
 	public var isEnum:DynamicAccess<Bool>;
@@ -84,15 +83,15 @@ class Parser
 		isRequire = {};
 
 		var body = getBodyNodes(program);
-		for (node in body)
+		var lastNode = body.pop();
+		beforeBody = body;
+
+		switch (lastNode.type)
 		{
-			switch (node.type)
-			{
-				case 'ExpressionStatement':
-					walkRootExpression(node.expression);
-				default:
-					throw 'Expecting single root statement in program';
-			}
+			case 'ExpressionStatement':
+				walkRootExpression(lastNode.expression);
+			default:
+				throw 'Expecting last node to be an ExpressionStatement';
 		}
 	}
 
@@ -103,7 +102,7 @@ class Parser
 			case 'CallExpression':
 				walkRootFunction(expr.callee);
 			default:
-				throw 'Expecting root statement to be a function call';
+				throw 'Expecting last node statement to be a function call';
 		}
 	}
 
