@@ -15,12 +15,13 @@ class Main
 		if (dump) dumpGraph(output, parser);
 
 		// process
-		var bundler = new Bundler(parser, sourceMap);
-		bundler.process(parser.mainModule, modules, debugMode);
+		var extractor = new Extractor(parser);
+		extractor.process(parser.mainModule, modules, debugMode);
 
 		// emit
+		var bundler = new Bundler(parser, sourceMap, extractor);
 		var dir = Path.dirname(output);
-		if (!Fs.existsSync(dir)) Fs.mkdirSync(dir);
+		if (!Fs.statSync(dir).isDirectory()) Fs.mkdirSync(dir);
 		return bundler.generate(src, output, webpackMode);
 	}
 

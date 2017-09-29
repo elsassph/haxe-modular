@@ -1,5 +1,10 @@
 package graphlib;
 
+typedef Edge = {
+	v:String,
+	w:String
+}
+
 @:jsRequire('graphlib', 'Graph')
 extern class Graph
 {
@@ -40,25 +45,25 @@ extern class Graph
 
 	public function setEdge(v:String, w:String, ?label:String):Void;
 	public function hasEdge(v:String, w:String, ?label:String):Bool;
-	public function edge(v:String, w:String, ?label:String):Dynamic;
-	public function removeEdge(v:String, w:String, ?label:String):Dynamic;
-	public function edges():Array<Dynamic>;
+	public function edge(v:String, w:String, ?label:String):Edge;
+	public function removeEdge(v:String, w:String, ?label:String):Edge;
+	public function edges():Array<Edge>;
 	public function edgeCount():Int;
 	/**
 	 * Return all edges that point to the node v. Optionally filters those edges down
 	 * to just those coming from node u.
 	 */
-	public function inEdges(v:String, ?u:String):Array<Dynamic>;
+	public function inEdges(v:String, ?u:String):Array<Edge>;
 	/**
 	 * Return all edges that are pointed at by node v. Optionally filters those edges
 	 * down to just those point to w.
 	 */
-	public function outEdges(v:String, ?w:String):Array<Dynamic>;
+	public function outEdges(v:String, ?w:String):Array<Edge>;
 	/**
 	 * Returns all edges to or from node v regardless of direction. Optionally filters
 	 * those edges down to just those between nodes v and w regardless of direction.
 	 */
-	public function nodeEdges(v:String, ?w:String):Array<Dynamic>;
+	public function nodeEdges(v:String, ?w:String):Array<Edge>;
 
 	/**
 	 * Returns the node that is a parent of node v or undefined if node v does not have
@@ -70,7 +75,7 @@ extern class Graph
 	 * Returns all nodes that are children of node v or undefined if node v is not in
 	 * the graph. Always returns [] for graphs that are not compound.
 	 */
-	public function children(v:String):String;
+	public function children(v:String):Array<String>;
 	/**
 	 * Sets the parent for v to parent if it is defined or removes the parent for v
 	 * if parent is undefined. Throws an error if the graph is not compound.

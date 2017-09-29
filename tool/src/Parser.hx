@@ -1,4 +1,5 @@
 import graphlib.Graph;
+import haxe.DynamicAccess;
 import haxe.ds.StringMap;
 import js.node.Assert;
 import acorn.Acorn;
@@ -7,9 +8,9 @@ class Parser
 {
 	public var graph:Graph;
 	public var rootBody:Array<AstNode>;
-	public var isHot:Map<String, Bool>;
-	public var isEnum:Map<String, Bool>;
-	public var isRequire:Map<String, Bool>;
+	public var isHot:DynamicAccess<Bool>;
+	public var isEnum:DynamicAccess<Bool>;
+	public var isRequire:DynamicAccess<Bool>;
 	public var typesCount(default, null):Int;
 	public var mainModule:String = 'Main';
 
@@ -19,7 +20,7 @@ class Parser
 		__map_reserved:true
 	};
 
-	var types:Map<String, Array<AstNode>>;
+	var types:DynamicAccess<Array<AstNode>>;
 
 	public function new(src:String)
 	{
@@ -77,10 +78,10 @@ class Parser
 
 	function walkProgram(program:AstNode)
 	{
-		types = new Map();
-		isHot = new Map();
-		isEnum = new Map();
-		isRequire = new Map();
+		types = {};
+		isHot = {};
+		isEnum = {};
+		isRequire = {};
 
 		var body = getBodyNodes(program);
 		for (node in body)
