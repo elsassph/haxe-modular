@@ -1,0 +1,23 @@
+# [1] build test project
+
+# local -lib modular
+-cp src
+extraParams.hxml
+
+# local haxe-split
+-D haxe_split=node bin/cmd.js
+
+-cp tool/test/src
+-main Main
+-js tool/test/bin/index.js
+
+-debug
+-D modular_debugmap
+
+--macro includeFile('tool/test/src/test.js')
+
+-cmd node bin/cmd.js .temp/output.js -webpack -debug -debugmap .temp/index.js foo_Bar
+
+#--next
+# [2] run tests
+

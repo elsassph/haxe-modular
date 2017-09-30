@@ -37,19 +37,29 @@ class Split
 
 	static function generated()
 	{
-		// emit the bundles
+		var args = [tempOutput, output];
+
+		// resolve haxe-split
+		#if haxe_split
+		var params = Compiler.getDefine('haxe_split').split(' ');
+		var cmd = params.shift();
+		if (params.length > 0) args = params.concat(args);
+
+		#else
 		var cmd = Sys.systemName() == 'Windows'
 			? 'node_modules\\.bin\\haxe-split.cmd'
 			: './node_modules/.bin/haxe-split';
 		if (!FileSystem.exists(cmd)) cmd = 'haxe-split'; // try global
+		#end
 
+		// emit the bundles
 		var options = [
 			#if debug '-debug', #end
 			#if webpack '-webpack', #end
 			#if modular_dump '-dump', #end
+			#if modular_debugmap '-debugmap', #end
 		];
-
-		var args = [tempOutput, output].concat(bundles).concat(options);
-		Sys.command(cmd, [tempOutput, output].concat(bundles).concat(options));
+		args = args.concat(bundles).concat(options);
+		Sys.command(cmd, args);
 	}
 }

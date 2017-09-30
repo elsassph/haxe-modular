@@ -5,6 +5,7 @@ const path = require('path');
 const args = [].concat(process.argv);
 const debugMode = remove(args, '-debug');
 const webpackMode = remove(args,  '-webpack');
+const debugSourceMap = remove(args,  '-debugmap');
 const dump = remove(args, '-dump');
 
 if (args.length < 3)
@@ -22,7 +23,7 @@ const output = args[3];
 const modules = args.slice(4);
 
 const split = require('../tool/bin/split');
-const result = split.run(input, output, modules, debugMode, webpackMode, dump);
+const result = split.run(input, output, modules, debugMode, webpackMode, debugSourceMap, dump);
 
 for (file of result) {
 	if (!file || !file.source) continue;
@@ -34,6 +35,9 @@ for (file of result) {
 			? `${file.source.content}\n//# sourceMappingURL=${path.basename(file.map.path)}`
 			: file.source.content;
 		writeIfChanged(file.source.path, content);
+	}
+	if (file.debugMap) {
+		writeIfChanged(file.source.path + '.map.html', file.debugMap);
 	}
 }
 

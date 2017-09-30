@@ -5,7 +5,7 @@ import acorn.Acorn;
 class Parser
 {
 	public var graph:Graph;
-	public var beforeBody:Array<AstNode>;
+	public var rootExpr:AstNode;
 	public var rootBody:Array<AstNode>;
 	public var isHot:DynamicAccess<Bool>;
 	public var isEnum:DynamicAccess<Bool>;
@@ -82,14 +82,14 @@ class Parser
 		isEnum = {};
 		isRequire = {};
 
+		// allow code to have been included before the Haxe output
 		var body = getBodyNodes(program);
-		var lastNode = body.pop();
-		beforeBody = body;
+		rootExpr = body.pop();
 
-		switch (lastNode.type)
+		switch (rootExpr.type)
 		{
 			case 'ExpressionStatement':
-				walkRootExpression(lastNode.expression);
+				walkRootExpression(rootExpr.expression);
 			default:
 				throw 'Expecting last node to be an ExpressionStatement';
 		}
