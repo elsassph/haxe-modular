@@ -45,7 +45,7 @@ class SourceMap
 
 		// flag lines from original source that we want to include
 		var inc:Array<Null<Int>> = [];
-		var line = 3 + offset;
+		var line = offset;
 		for (node in nodes)
 		{
 			for (i in node.loc.start.line...node.loc.end.line + 1)

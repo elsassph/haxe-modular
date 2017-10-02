@@ -331,7 +331,6 @@ the JavaScript files.
 
 PS: stylesheets and static images will be normally live reloaded.
 
-
 ## Known issues
 
 ### Problem with init
@@ -363,3 +362,12 @@ class MyComponent
 	...
 }
 ```
+
+## Further troubleshooting
+
+Modular recognises a few additional debugging flags:
+
+- `-D modular_dump`: generate an additional `.graph` file showing the relationship
+  between classes,
+- `-D modular_debugmap`: generate, for each module, an additiona; `.map.html` file
+  showing a visual representation of the sourcemap.

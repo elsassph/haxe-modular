@@ -6,7 +6,8 @@ import js.node.Path;
 class Main
 {
 	@:expose('run')
-	static function run(input:String, output:String, modules:Array<String>, debugMode:Bool, webpackMode:Bool, dump:Bool)
+	static function run(input:String, output:String, modules:Array<String>,
+		debugMode:Bool, webpackMode:Bool, debugSourceMap:Bool, dump:Bool)
 	{
 		// parse input
 		var src = Fs.readFileSync(input).toString();
@@ -22,7 +23,7 @@ class Main
 		var bundler = new Bundler(parser, sourceMap, extractor);
 		var dir = Path.dirname(output);
 		if (!Fs.statSync(dir).isDirectory()) Fs.mkdirSync(dir);
-		return bundler.generate(src, output, webpackMode);
+		return bundler.generate(src, output, webpackMode, debugSourceMap);
 	}
 
 	static function dumpGraph(output:String, parser:Parser)

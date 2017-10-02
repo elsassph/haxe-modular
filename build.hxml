@@ -2,3 +2,7 @@
 -cp tool/src
 Main
 -js tool/bin/split.js
+
+--macro includeFile('tool/src/generateHtml.js')
+
+-cmd haxe test.hxml

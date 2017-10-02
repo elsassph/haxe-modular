@@ -1,1 +1,3 @@
 node_modules/
+.temp/
+tool/test/bin/*.js*
