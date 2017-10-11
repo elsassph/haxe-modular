@@ -58,6 +58,7 @@ class Split
 			#if webpack '-webpack', #end
 			#if modular_dump '-dump', #end
 			#if modular_debugmap '-debugmap', #end
+			#if hxnodejs '-nodejs', #end
 		];
 		args = args.concat(bundles).concat(options);
 		Sys.command(cmd, args);

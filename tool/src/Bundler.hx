@@ -50,8 +50,9 @@ class Bundler
 	var parser:Parser;
 	var sourceMap:SourceMap;
 	var extractor:Extractor;
-	var webpackMode:Bool;
+	var commonjs:Bool;
 	var debugSourceMap:Bool;
+	var nodejsMode:Bool;
 
 	public function new(parser:Parser, sourceMap:SourceMap, extractor:Extractor)
 	{
@@ -60,9 +61,9 @@ class Bundler
 		this.extractor = extractor;
 	}
 
-	public function generate(src:String, output:String, webpackMode:Bool, debugSourceMap:Bool)
+	public function generate(src:String, output:String, commonjs:Bool, debugSourceMap:Bool)
 	{
-		this.webpackMode = webpackMode;
+		this.commonjs = commonjs;
 		this.debugSourceMap = debugSourceMap;
 
 		trace('Emit $output');
@@ -134,6 +135,7 @@ class Bundler
 		var consumer = new SourceMapConsumer(rawMap);
 		var sources = [for (source in rawMap.sources) {
 			var fileName = source.split('file:///').pop();
+			if (Sys.systemName() != 'Windows') fileName = '/' + fileName;
 			Fs.readFileSync(fileName).toString();
 		}];
 		return generateHtml(consumer, src, sources);
@@ -162,7 +164,7 @@ class Bundler
 		var frag = isMain || bundle.isLib ? FRAGMENTS.MAIN : FRAGMENTS.CHILD;
 
 		// header
-		if (webpackMode)
+		if (commonjs)
 		{
 			buffer += WP_START;
 			mapOffset++;
@@ -179,7 +181,7 @@ class Bundler
 			// shared scope
 			buffer += frag.SHARED;
 			mapOffset++;
-			// npm require
+			// npm require stub
 			buffer += REQUIRE;
 			mapOffset++;
 		}
@@ -222,7 +224,7 @@ class Bundler
 			buffer += '\n';
 		}
 
-		if (!webpackMode) buffer += FUNCTION_END;
+		if (!commonjs) buffer += FUNCTION_END;
 
 		return {
 			buffer:buffer,

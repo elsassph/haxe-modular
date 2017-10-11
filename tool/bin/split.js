@@ -352,8 +352,8 @@ var Bundler = function(parser,sourceMap,extractor) {
 	this.extractor = extractor;
 };
 Bundler.prototype = {
-	generate: function(src,output,webpackMode,debugSourceMap) {
-		this.webpackMode = webpackMode;
+	generate: function(src,output,commonjs,debugSourceMap) {
+		this.commonjs = commonjs;
 		this.debugSourceMap = debugSourceMap;
 		console.log("Emit " + output);
 		var result = [];
@@ -406,6 +406,9 @@ Bundler.prototype = {
 			var source = _g2[_g1];
 			++_g1;
 			var fileName = source.split("file:///").pop();
+			if(Sys.systemName() != "Windows") {
+				fileName = "/" + fileName;
+			}
 			_g.push(js_node_Fs.readFileSync(fileName).toString());
 		}
 		var sources = _g;
@@ -428,7 +431,7 @@ Bundler.prototype = {
 		var incAll = isMain && bundle.nodes.length == 0;
 		var mapNodes = [];
 		var frag = isMain || bundle.isLib ? Bundler.FRAGMENTS.MAIN : Bundler.FRAGMENTS.CHILD;
-		if(this.webpackMode) {
+		if(this.commonjs) {
 			buffer += "/* eslint-disable */ \"use strict\"\n";
 			++mapOffset;
 			buffer += frag.EXPORTS;
@@ -488,7 +491,7 @@ Bundler.prototype = {
 			buffer += HxOverrides.substr(src,run.start,run.end - run.start);
 			buffer += "\n";
 		}
-		if(!this.webpackMode) {
+		if(!this.commonjs) {
 			buffer += "})(" + "typeof exports != \"undefined\" ? exports : typeof window != \"undefined\" ? window : typeof self != \"undefined\" ? self : this" + ", " + "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this" + ");\n";
 		}
 		return { buffer : buffer, mapNodes : mapNodes, mapOffset : mapOffset};
@@ -700,6 +703,29 @@ Extractor.prototype = {
 	}
 };
 var HxOverrides = function() { };
+HxOverrides.strDate = function(s) {
+	var _g = s.length;
+	switch(_g) {
+	case 8:
+		var k = s.split(":");
+		var d = new Date();
+		d["setTime"](0);
+		d["setUTCHours"](k[0]);
+		d["setUTCMinutes"](k[1]);
+		d["setUTCSeconds"](k[2]);
+		return d;
+	case 10:
+		var k1 = s.split("-");
+		return new Date(k1[0],k1[1] - 1,k1[2],0,0,0);
+	case 19:
+		var k2 = s.split(" ");
+		var y = k2[0].split("-");
+		var t = k2[1].split(":");
+		return new Date(y[0],y[1] - 1,y[2],t[0],t[1],t[2]);
+	default:
+		throw new js__$Boot_HaxeError("Invalid date format : " + s);
+	}
+};
 HxOverrides.cca = function(s,index) {
 	var x = s.charCodeAt(index);
 	if(x != x) {
@@ -720,7 +746,7 @@ HxOverrides.substr = function(s,pos,len) {
 	return s.substr(pos,len);
 };
 var Main = function() { };
-Main.run = $hx_exports["run"] = function(input,output,modules,debugMode,webpackMode,debugSourceMap,dump) {
+Main.run = $hx_exports["run"] = function(input,output,modules,debugMode,commonjs,debugSourceMap,dump) {
 	var src = js_node_Fs.readFileSync(input).toString();
 	var parser = new Parser(src);
 	var sourceMap = new SourceMap(input,src);
@@ -731,10 +757,7 @@ Main.run = $hx_exports["run"] = function(input,output,modules,debugMode,webpackM
 	extractor.process(parser.mainModule,modules,debugMode);
 	var bundler = new Bundler(parser,sourceMap,extractor);
 	var dir = js_node_Path.dirname(output);
-	if(!js_node_Fs.statSync(dir).isDirectory()) {
-		js_node_Fs.mkdirSync(dir);
-	}
-	return bundler.generate(src,output,webpackMode,debugSourceMap);
+	return bundler.generate(src,output,commonjs,debugSourceMap);
 };
 Main.dumpGraph = function(output,parser) {
 	var g = parser.graph;
@@ -1175,6 +1198,23 @@ StringTools.rtrim = function(s) {
 };
 StringTools.trim = function(s) {
 	return StringTools.ltrim(StringTools.rtrim(s));
+};
+var Sys = function() { };
+Sys.systemName = function() {
+	var _g = process.platform;
+	switch(_g) {
+	case "darwin":
+		return "Mac";
+	case "freebsd":
+		return "BSD";
+	case "linux":
+		return "Linux";
+	case "win32":
+		return "Windows";
+	default:
+		var other = _g;
+		return other;
+	}
 };
 var acorn_Acorn = require("acorn");
 var acorn_Walk = require("acorn/dist/walk");

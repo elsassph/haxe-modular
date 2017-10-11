@@ -15,6 +15,18 @@ class RouteBundle
 				var module = t.module.split('.').join('_');
 				Split.register(module);
 				var bridge = macro untyped $i{module} = $p{["$s", module]};
+				#if hxnodejs
+				var jsModule = './$module';
+				return macro {
+					function(_, cb) {
+						untyped require($v{jsModule});
+						$bridge;
+						cb(null, function(props) {
+							return react.React.createElement($reactClassRef, props);
+						});
+					}
+				}
+				#end
 				return macro {
 					function(_, cb) {
 						#if debug
