@@ -5,6 +5,7 @@ const path = require('path');
 const args = [].concat(process.argv);
 const debugMode = remove(args, '-debug');
 const webpackMode = remove(args,  '-webpack');
+const nodejsMode = remove(args, '-nodejs');
 const debugSourceMap = remove(args,  '-debugmap');
 const dump = remove(args, '-dump');
 
@@ -23,7 +24,7 @@ const output = args[3];
 const modules = args.slice(4);
 
 const split = require('../tool/bin/split');
-const result = split.run(input, output, modules, debugMode, webpackMode, debugSourceMap, dump);
+const result = split.run(input, output, modules, debugMode, webpackMode || nodejsMode, debugSourceMap, dump);
 
 for (file of result) {
 	if (!file || !file.source) continue;
@@ -54,16 +55,17 @@ function remove(a, v) {
 	return true;
 }
 
-function hasChanged(path, content) {
-	if (!fs.existsSync(path)) return true;
-	var original = String(fs.readFileSync(path));
+function hasChanged(output, content) {
+	if (!fs.existsSync(output)) return true;
+	var original = String(fs.readFileSync(output));
 	return original != content;
 }
 
-function writeIfChanged(path, content) {
-	if (hasChanged(path, content)) {
-		console.log('Write ' + path);
-		fs.writeFileSync(path, content);
+function writeIfChanged(output, content) {
+	if (hasChanged(output, content)) {
+		console.log('Write ' + output);
+		try { fs.mkdirSync(path.dirname(output)); } catch (_) { }
+		fs.writeFileSync(output, content);
 	}
 }
 

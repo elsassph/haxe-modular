@@ -1,4 +1,4 @@
-# [1] build test project
+# [1] build test web project
 
 # local -lib modular
 -cp src
@@ -9,7 +9,7 @@ extraParams.hxml
 
 -cp tool/test/src
 -main Main
--js tool/test/bin/index.js
+-js tool/test/bin/client/index.js
 
 -debug
 -D modular_debugmap
@@ -18,6 +18,25 @@ extraParams.hxml
 
 -cmd node bin/cmd.js .temp/output.js -webpack -debug -debugmap .temp/index.js foo_Bar
 
+--next
+# [2] build test node project
+
+-lib hxnodejs
+
+# local -lib modular
+-cp src
+extraParams.hxml
+
+# local haxe-split
+-D haxe_split=node bin/cmd.js
+
+-cp tool/test/src
+-main ServerMain
+-js tool/test/bin/server/index.js
+
+-debug
+-D modular_debugmap
+
 #--next
-# [2] run tests
+# [3] run tests
 

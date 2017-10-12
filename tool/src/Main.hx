@@ -7,7 +7,7 @@ class Main
 {
 	@:expose('run')
 	static function run(input:String, output:String, modules:Array<String>,
-		debugMode:Bool, webpackMode:Bool, debugSourceMap:Bool, dump:Bool)
+		debugMode:Bool, commonjs:Bool, debugSourceMap:Bool, dump:Bool)
 	{
 		// parse input
 		var src = Fs.readFileSync(input).toString();
@@ -22,8 +22,7 @@ class Main
 		// emit
 		var bundler = new Bundler(parser, sourceMap, extractor);
 		var dir = Path.dirname(output);
-		if (!Fs.statSync(dir).isDirectory()) Fs.mkdirSync(dir);
-		return bundler.generate(src, output, webpackMode, debugSourceMap);
+		return bundler.generate(src, output, commonjs, debugSourceMap);
 	}
 
 	static function dumpGraph(output:String, parser:Parser)
