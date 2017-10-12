@@ -36,7 +36,7 @@ The goal of this project is to propose one robust and scalable solution.
 
 ## Overview of solution
 
-1. NPM dependencies bundling in a single libs/vendor JavaScript file
+1. In the browser, NPM dependencies bundling in a single libs/vendor JavaScript file
 
 	Best practice (for speed and better caching) is to regroup all the NPM dependencies
 	into a single JavaScript file, traditionally called `vendor.js` or `libs.js`.
@@ -68,7 +68,7 @@ Add to your HXML:
 	-lib modular
 
 
-## NPM dependencies bundling
+## NPM dependencies bundling (for the browser)
 
 Best practice (for compilation speed and better caching) is to regroup all the NPM
 dependencies into a single JavaScript file, traditionally called `vendor.js` or `libs.js`.
@@ -157,6 +157,7 @@ to load them on demand, just like you will load Haxe modules. If you have a Haxe
 with its own NPM dependencies, you will load the dependencies first, then the Haxe module.
 
 **Important:**
+- again, this is when running in the browser; you don't need that for nodejs!
 - all the NPM dependencies have to be moved into these NPM bundles,
 - do not run Browserify on the Haxe-JS files!
 
@@ -263,7 +264,7 @@ otherwise, calling the function again will attempt to reload the failed script.
 `Require.cssPath`: relative path to CSS files (defaults to `./`)
 
 
-## Hot-reload
+## Hot-reload (in the browser)
 
 Hot-reload functionality is based on the lazy-loading feature.
 
@@ -330,6 +331,14 @@ Haxe-JS application and let LiveReload inform our running application to reload 
 the JavaScript files.
 
 PS: stylesheets and static images will be normally live reloaded.
+
+## Nodejs
+
+When `-lib hxnodejs` is part of the compiler options, Modular will emit code for node
+(CommonJS).
+
+The big difference to note is that bundle loading is *synchronous*, that is it completes
+immediately, while in the browser it will always complete asynchronously.
 
 ## Known issues
 
