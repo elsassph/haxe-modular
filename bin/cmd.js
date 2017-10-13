@@ -77,6 +77,7 @@ Haxe-JS code splitting, usage:
 Arguments:
   -debug   : generate source maps
   -webpack : generate webpack-compatible source
+  -nodejs  : generate nodejs-compatible source
   input.js : path to input JS source
   output.js: path to output JS source
   module-i : qualified Haxe module name to split
