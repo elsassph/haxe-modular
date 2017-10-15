@@ -17,12 +17,10 @@ class Bundle
 				var bridge = macro untyped $i{module} = $p{["$s", module]};
 				#if hxnodejs
 				var jsModule = './$module';
-				return macro {
-					then: function(success:Dynamic, ?failure:Dynamic) {
-						untyped require($v{jsModule});
-						$bridge;
-						success($v{module});
-					}
+				return macro cast {
+					untyped require($v{jsModule});
+					$bridge;
+					js.Promise.resolve($v{module});
 				}
 				#else
 				return macro {
