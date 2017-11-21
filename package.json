@@ -7,13 +7,13 @@
     "haxe-split": "bin/cmd.js"
   },
   "files": [
-	"bin",
-	"tool/bin",
-	"runtime"
+    "bin",
+    "tool/bin",
+    "runtime"
   ],
   "repository": {
-	"type": "git",
-	"url": "https://github.com/elsassph/haxe-modular.git"
+    "type": "git",
+    "url": "https://github.com/elsassph/haxe-modular.git"
   },
   "author": "Philippe Elsass",
   "license": "ISC",

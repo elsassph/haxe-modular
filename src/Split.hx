@@ -32,7 +32,8 @@ class Split
 
 	static public function register(module:String)
 	{
-		bundles.push(module);
+		if (bundles.indexOf(module) < 0)
+			bundles.push(module);
 	}
 
 	static function generated()
