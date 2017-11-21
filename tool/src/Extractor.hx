@@ -22,7 +22,7 @@ class Extractor
 		this.parser = parser;
 	}
 
-	public function process(mainModule:String, modules:Array<String>, debugMode:Bool)
+	public function process(mainModule:String, modulesList:Array<String>, debugMode:Bool)
 	{
 		if (parser.typesCount == 0) {
 			trace('Warning: unable to process (no type metadata)');
@@ -38,6 +38,11 @@ class Extractor
 
 		trace('Bundling...');
 		var g = parser.graph;
+
+		// deduplicate modules
+		var modules = [];
+		for (module in modulesList)
+			if (modules.indexOf(module) < 0) modules.push(module);
 
 		// create separated sub-trees for main and modules bundles
 		for (module in modules)

@@ -16,7 +16,8 @@ extraParams.hxml
 
 --macro includeFile('tool/test/src/test.js')
 
--cmd node bin/cmd.js .temp/output.js -webpack -debug -debugmap .temp/index.js foo_Bar
+# manual splitting command, incorrectly passing a module multiple times
+-cmd node bin/cmd.js .temp/output.js -webpack -debug -debugmap .temp/index.js foo_Bar foo_Bar foo_Bar
 
 --next
 # [2] build test node project

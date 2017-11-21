@@ -10,6 +10,9 @@ class ServerMain
         Bundle.load(Bar).then(function(_) {
             var b = new Bar();
 			b.hello();
+			Bundle.load(Bar).then(function(_) {
+				trace('still ok');
+			});
         });
         trace('Done');
 
