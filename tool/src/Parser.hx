@@ -254,8 +254,11 @@ class Parser
 								tag(name, def);
 						case 'LogicalExpression':
 							// eg. var ArrayBuffer = $global.ArrayBuffer || js_html_compat_ArrayBuffer;
-							if (name.indexOf('Array') >= 0)
-								tag(name, def);
+							if (init.operator == '||' && init.right != null) {
+								var id = getIdentifier(init.right);
+								if (id.length > 0 && id[0].indexOf('_compat_') > 0)
+									tag(name, def);
+							}
 						default:
 					}
 				}
