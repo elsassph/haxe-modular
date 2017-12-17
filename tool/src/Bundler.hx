@@ -185,11 +185,11 @@ class Bundler
 			buffer += REQUIRE;
 			mapOffset++;
 		}
-		if (bundle.shared.length > 0)
+		if (bundle.imports.length > 0 || bundle.shared.length > 0)
 		{
-			var tmp = isMain
+			var tmp = bundle.imports.concat(isMain
 				? bundle.shared
-				: [for (node in bundle.shared) '$node = $$s.$node'];
+				: [for (node in bundle.shared) '$node = $$s.$node']);
 			buffer += 'var ${tmp.join(', ')};\n';
 			mapOffset++;
 		}
