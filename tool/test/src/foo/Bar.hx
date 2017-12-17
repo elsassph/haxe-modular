@@ -6,12 +6,10 @@ class Bar
 {
 	public function new()
 	{
-		trace('new Bar');
+		trace('3. new Bar');
 		var d = 4;
 		var c = [1, 2, 3];
 		c.push(d);
-
-		var d = new DataView(null);
 
 		Bundle.load(Sub).then(function(_) {
 			var s = new Sub();
@@ -22,6 +20,9 @@ class Bar
 
 	public function hello()
 	{
-		trace('hello');
+		trace('5. Bar hello');
+		#if !nodejs
+		var d = new DataView(null);
+		#end
 	}
 }
