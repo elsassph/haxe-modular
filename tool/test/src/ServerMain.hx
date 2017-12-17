@@ -6,15 +6,15 @@ class ServerMain
 {
     static public function main()
     {
-        trace('Synchronous require');
+        trace('1. Synchronous require');
         Bundle.load(Bar).then(function(_) {
             var b = new Bar();
 			b.hello();
 			Bundle.load(Bar).then(function(_) {
-				trace('still ok');
+				trace('8. Bar again');
 			});
         });
-        trace('Done');
+        trace('2. Done');
 
         var route = RouteBundle.load(Bar);
     }

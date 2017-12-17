@@ -4,6 +4,6 @@ class Sub
 {
 	public function new()
 	{
-		trace('Sub');
+		trace('6. Sub');
 	}
 }

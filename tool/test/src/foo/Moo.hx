@@ -4,6 +4,6 @@ class Moo
 {
 	public function new()
 	{
-		trace('Moo');
+		trace('7. new Moo');
 	}
 }

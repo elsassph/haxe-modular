@@ -6,6 +6,7 @@ class Bundle
 {
 	/**
 	 * Load async application bundle created with `classRef` as entry point
+	 * Note: excution is synchronous in nodejs; the Promise can be ignored
 	 */
 	macro static public function load(classRef:Expr)
 	{
@@ -15,14 +16,12 @@ class Bundle
 				var module = t.module.split('.').join('_');
 				Split.register(module);
 				var bridge = macro untyped $i{module} = $p{["$s", module]};
-				#if hxnodejs
+				#if nodejs
 				var jsModule = './$module';
-				return macro {
-					then: function(success:Dynamic, ?failure:Dynamic) {
-						untyped require($v{jsModule});
-						$bridge;
-						success($v{module});
-					}
+				return macro cast {
+					untyped require($v{jsModule});
+					$bridge;
+					js.Promise.resolve($v{module});
 				}
 				#else
 				return macro {

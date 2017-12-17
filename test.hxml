@@ -38,6 +38,5 @@ extraParams.hxml
 -debug
 -D modular_debugmap
 
-#--next
-# [3] run tests
-
+# [3] run node
+-cmd node tool/test/bin/server/index.js
