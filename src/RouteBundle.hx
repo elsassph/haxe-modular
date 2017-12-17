@@ -15,7 +15,7 @@ class RouteBundle
 				var module = t.module.split('.').join('_');
 				Split.register(module);
 				var bridge = macro untyped $i{module} = $p{["$s", module]};
-				#if hxnodejs
+				#if nodejs
 				var jsModule = './$module';
 				return macro {
 					function(_, cb) {
