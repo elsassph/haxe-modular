@@ -12,6 +12,12 @@ class Bar
 		c.push(d);
 
 		var d = new DataView(null);
+
+		Bundle.load(Sub).then(function(_) {
+			var s = new Sub();
+		});
+
+		var g = new Gee();
 	}
 
 	public function hello()

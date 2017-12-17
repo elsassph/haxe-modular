@@ -446,7 +446,8 @@ Bundler.prototype = {
 			buffer += "var require = (function(r){ return function require(m) { return r[m]; } })($s.__registry__);\n";
 			++mapOffset;
 		}
-		if(bundle.shared.length > 0) {
+		if(bundle.imports.length > 0 || bundle.shared.length > 0) {
+			var bundle1 = bundle.imports;
 			var tmp;
 			if(isMain) {
 				tmp = bundle.shared;
@@ -461,7 +462,8 @@ Bundler.prototype = {
 				}
 				tmp = _g;
 			}
-			buffer += "var " + tmp.join(", ") + ";\n";
+			var tmp1 = bundle1.concat(tmp);
+			buffer += "var " + tmp1.join(", ") + ";\n";
 			++mapOffset;
 		}
 		var _g3 = 0;
@@ -540,7 +542,7 @@ Extractor.prototype = {
 	process: function(mainModule,modulesList,debugMode) {
 		if(this.parser.typesCount == 0) {
 			console.log("Warning: unable to process (no type metadata)");
-			this.main = { isLib : false, name : "Main", nodes : [], exports : [], shared : []};
+			this.main = { isLib : false, name : "Main", nodes : [], exports : [], shared : [], imports : []};
 			return;
 		}
 		console.log("Bundling...");
@@ -554,10 +556,12 @@ Extractor.prototype = {
 				modules.push($module);
 			}
 		}
+		var moduleRefs = { };
 		var _g1 = 0;
 		while(_g1 < modules.length) {
 			var module1 = modules[_g1];
 			++_g1;
+			moduleRefs[module1] = g.predecessors(module1);
 			this.unlink(g,module1);
 		}
 		var mainNodes = graphlib_Alg.preorder(g,mainModule);
@@ -574,23 +578,19 @@ Extractor.prototype = {
 		var dupes = this.deduplicate(this.bundles,mainNodes,debugMode);
 		mainNodes = this.addOnce(mainNodes,dupes.removed);
 		var mainExports = dupes.shared;
-		var mainShared = this.bundles.filter(function(bundle) {
-			return !bundle.isLib;
-		}).map(function(bundle1) {
-			return bundle1.name;
-		});
 		var _g3 = 0;
 		var _g12 = this.bundles;
 		while(_g3 < _g12.length) {
-			var bundle2 = _g12[_g3];
+			var bundle = _g12[_g3];
 			++_g3;
-			if(bundle2.isLib) {
-				mainNodes = this.remove(bundle2.nodes,mainNodes);
-				mainExports = this.remove(bundle2.nodes,mainExports);
-				bundle2.exports = bundle2.nodes.slice();
+			if(bundle.isLib) {
+				mainNodes = this.remove(bundle.nodes,mainNodes);
+				mainExports = this.remove(bundle.nodes,mainExports);
+				bundle.exports = bundle.nodes.slice();
 			}
 		}
-		this.main = { isLib : false, name : "Main", nodes : mainNodes, exports : mainExports, shared : mainShared};
+		var mainImports = this.resolveImports(mainNodes,this.bundles,moduleRefs);
+		this.main = { isLib : false, name : "Main", nodes : mainNodes, exports : mainExports, shared : [], imports : mainImports};
 	}
 	,processModule: function(name) {
 		var g = this.parser.graph;
@@ -599,11 +599,51 @@ Extractor.prototype = {
 			var test = new EReg("^" + parts[1].split(",").join("|"),"");
 			var ret = { isLib : true, name : parts[0], nodes : g.nodes().filter(function(n) {
 				return test.match(n);
-			}), exports : [], shared : []};
+			}), exports : [], shared : [], imports : []};
 			return ret;
 		} else {
-			return { isLib : false, name : name, nodes : graphlib_Alg.preorder(g,name), exports : [name], shared : []};
+			return { isLib : false, name : name, nodes : graphlib_Alg.preorder(g,name), exports : [name], shared : [], imports : []};
 		}
+	}
+	,resolveImports: function(mainNodes,bundles,refs) {
+		var mainImports = [];
+		var mainBundle = { names : "Main", nodes : mainNodes};
+		var _g = 0;
+		var _g1 = Reflect.fields(refs);
+		while(_g < _g1.length) {
+			var $module = _g1[_g];
+			++_g;
+			var names = refs[$module];
+			var _g2 = 0;
+			while(_g2 < bundles.length) {
+				var bundle = bundles[_g2];
+				++_g2;
+				if(this.isReferenced(names,bundle)) {
+					bundle.imports = this.addOnce([$module],bundle.imports);
+				}
+			}
+			if(this.isReferenced(names,mainBundle)) {
+				mainImports = this.addOnce([$module],mainImports);
+			}
+		}
+		return mainImports;
+	}
+	,isReferenced: function(names,bundle) {
+		if(names == null || names.length == 0) {
+			return false;
+		}
+		var _g = 0;
+		while(_g < names.length) {
+			var name = names[_g];
+			++_g;
+			if(bundle.name == name) {
+				return true;
+			}
+			if(bundle.nodes.indexOf(name) >= 0) {
+				return true;
+			}
+		}
+		return false;
 	}
 	,deduplicate: function(bundles,mainNodes,debugMode) {
 		console.log("Extract common chunks..." + (debugMode ? " (fast)" : ""));

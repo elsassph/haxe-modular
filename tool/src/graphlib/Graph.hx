@@ -114,7 +114,7 @@ extern class Alg
 	 * This function performs a postorder traversal of the graph g starting at the
 	 * nodes vs. For each node visited, v, the function callback(v) is called.
 	 */
-	static public function postorder(g:Graph, v:String):Array<String>;
+	static public function postorder(g:Graph, vs:String):Array<String>;
 	/**
 	 * This function performs a preorder traversal of the graph g starting at the
 	 * nodes vs. For each node visited, v, the function callback(v) is called.

@@ -1,13 +1,15 @@
 package;
 
 import graphlib.Graph;
+import haxe.DynamicAccess;
 
 typedef Bundle = {
 	isLib:Bool,
 	name:String,
 	nodes:Array<String>,
 	exports:Array<String>,
-	shared:Array<String>
+	shared:Array<String>,
+	imports:Array<String>
 }
 
 class Extractor
@@ -31,7 +33,8 @@ class Extractor
 				name: 'Main',
 				nodes: [],
 				exports: [],
-				shared: []
+				shared: [],
+				imports: []
 			};
 			return;
 		}
@@ -45,8 +48,11 @@ class Extractor
 			if (modules.indexOf(module) < 0) modules.push(module);
 
 		// create separated sub-trees for main and modules bundles
-		for (module in modules)
+		var moduleRefs:DynamicAccess<Array<String>> = {};
+		for (module in modules) {
+			moduleRefs.set(module, g.predecessors(module));
 			unlink(g, module);
+		}
 
 		// find main nodes
 		var mainNodes = Alg.preorder(g, mainModule);
@@ -62,7 +68,6 @@ class Extractor
 		var dupes = deduplicate(bundles, mainNodes, debugMode);
 		mainNodes = addOnce(mainNodes, dupes.removed);
 		var mainExports = dupes.shared;
-		var mainShared = bundles.filter(function(bundle) return !bundle.isLib).map(function(bundle) return bundle.name);
 
 		for (bundle in bundles) {
 			if (bundle.isLib) {
@@ -72,12 +77,16 @@ class Extractor
 			}
 		}
 
+		// resolve who loads what
+		var mainImports = resolveImports(mainNodes, bundles, moduleRefs);
+
 		main = {
 			isLib: false,
 			name: 'Main',
 			nodes: mainNodes,
 			exports: mainExports,
-			shared: mainShared
+			shared: [],
+			imports: mainImports
 		}
 	}
 
@@ -93,9 +102,9 @@ class Extractor
 				name: parts[0],
 				nodes: g.nodes().filter(function (n) return test.match(n)),
 				exports: [],
-				shared: []
+				shared: [],
+				imports: []
 			};
-			//trace(ret.nodes);
 			return ret;
 		}
 		else return {
@@ -103,8 +112,42 @@ class Extractor
 			name: name,
 			nodes: Alg.preorder(g, name),
 			exports: [name],
-			shared: []
+			shared: [],
+			imports: []
 		}
+	}
+
+	function resolveImports(mainNodes:Array<String>, bundles:Array<Bundle>, refs:DynamicAccess<Array<String>>)
+	{
+		// find if bundles load other bundles
+		var mainImports = [];
+		var mainBundle = cast {
+			names: 'Main',
+			nodes: mainNodes
+		};
+		for (module in refs.keys()) {
+			var names = refs.get(module);
+			for (bundle in bundles) {
+				if (isReferenced(names, bundle)) {
+					bundle.imports = addOnce([module], bundle.imports);
+				}
+			}
+			if (isReferenced(names, mainBundle)) {
+				mainImports = addOnce([module], mainImports);
+			}
+		}
+		return mainImports;
+	}
+
+	function isReferenced(names:Array<String>, bundle:Bundle)
+	{
+		if (names == null || names.length == 0) return false;
+
+		for (name in names) {
+			if (bundle.name == name) return true;
+			if (bundle.nodes.indexOf(name) >= 0) return true;
+		}
+		return false;
 	}
 
 	function deduplicate(bundles:Array<Bundle>, mainNodes:Array<String>, debugMode:Bool)
