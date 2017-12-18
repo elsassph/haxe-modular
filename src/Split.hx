@@ -55,7 +55,7 @@ class Split
 
 		// emit the bundles
 		var options = [
-			#if debug '-debug', #end
+			#if (debug && !modular_nomaps) '-debug', #end
 			#if webpack '-webpack', #end
 			#if modular_dump '-dump', #end
 			#if modular_debugmap '-debugmap', #end

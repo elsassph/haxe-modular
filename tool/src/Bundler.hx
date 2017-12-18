@@ -64,7 +64,7 @@ class Bundler
 	public function generate(src:String, output:String, commonjs:Bool, debugSourceMap:Bool)
 	{
 		this.commonjs = commonjs;
-		this.debugSourceMap = debugSourceMap;
+		this.debugSourceMap = sourceMap != null && debugSourceMap;
 
 		trace('Emit $output');
 		var result = [];
@@ -94,7 +94,7 @@ class Bundler
 
 	function writeMap(output:String, buffer:OutputBuffer)
 	{
-		if (buffer.map == null) return null;
+		if (sourceMap == null || buffer.map == null) return null;
 		return {
 			path: '$output.map',
 			content: sourceMap.emitFile(output, buffer.map).toString()
@@ -120,7 +120,7 @@ class Bundler
 	function emitBundle(src:String, bundle:Bundle, isMain:Bool):OutputBuffer
 	{
 		var output = emitJS(src, bundle, isMain);
-		var map = sourceMap.emitMappings(output.mapNodes, output.mapOffset);
+		var map = sourceMap != null ? sourceMap.emitMappings(output.mapNodes, output.mapOffset) : null;
 		var debugMap = debugSourceMap ? emitDebugMap(output.buffer, bundle, map) : null;
 		return {
 			src:output.buffer,
