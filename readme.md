@@ -67,6 +67,10 @@ Add to your HXML:
 	# Haxe support classes and output rewriting
 	-lib modular
 
+By default, sourcemaps are split, but this process is quite intensive and can be disabled:
+
+	# disable sourcemaps output
+	-D modular_nomaps
 
 ## NPM dependencies bundling (for the browser)
 

@@ -354,7 +354,7 @@ var Bundler = function(parser,sourceMap,extractor) {
 Bundler.prototype = {
 	generate: function(src,output,commonjs,debugSourceMap) {
 		this.commonjs = commonjs;
-		this.debugSourceMap = debugSourceMap;
+		this.debugSourceMap = this.sourceMap != null && debugSourceMap;
 		console.log("Emit " + output);
 		var result = [];
 		var buffer = this.emitBundle(src,this.extractor.main,true);
@@ -372,7 +372,7 @@ Bundler.prototype = {
 		return result;
 	}
 	,writeMap: function(output,buffer) {
-		if(buffer.map == null) {
+		if(this.sourceMap == null || buffer.map == null) {
 			return null;
 		}
 		return { path : "" + output + ".map", content : this.sourceMap.emitFile(output,buffer.map).toString()};
@@ -392,7 +392,7 @@ Bundler.prototype = {
 	}
 	,emitBundle: function(src,bundle,isMain) {
 		var output = this.emitJS(src,bundle,isMain);
-		var map = this.sourceMap.emitMappings(output.mapNodes,output.mapOffset);
+		var map = this.sourceMap != null ? this.sourceMap.emitMappings(output.mapNodes,output.mapOffset) : null;
 		var debugMap = this.debugSourceMap ? this.emitDebugMap(output.buffer,bundle,map) : null;
 		return { src : output.buffer, map : map, debugMap : debugMap};
 	}
@@ -798,7 +798,7 @@ var Main = function() { };
 Main.run = $hx_exports["run"] = function(input,output,modules,debugMode,commonjs,debugSourceMap,dump) {
 	var src = js_node_Fs.readFileSync(input).toString();
 	var parser = new Parser(src);
-	var sourceMap = new SourceMap(input,src);
+	var sourceMap = debugMode ? new SourceMap(input,src) : null;
 	if(dump) {
 		Main.dumpGraph(output,parser);
 	}
@@ -1328,3 +1328,5 @@ Bundler.FRAGMENTS = { MAIN : { EXPORTS : "var $hx_exports = exports, $global = g
 Bundler.generateHtml = global.generateHtml;
 SourceMap.SRC_REF = "//# sourceMappingURL=";
 })(typeof exports != "undefined" ? exports : typeof window != "undefined" ? window : typeof self != "undefined" ? self : this);
+
+//# sourceMappingURL=split.js.map

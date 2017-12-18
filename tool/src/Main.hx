@@ -12,7 +12,7 @@ class Main
 		// parse input
 		var src = Fs.readFileSync(input).toString();
 		var parser = new Parser(src);
-		var sourceMap = new SourceMap(input, src);
+		var sourceMap = debugMode ? new SourceMap(input, src) : null;
 		if (dump) dumpGraph(output, parser);
 
 		// process
