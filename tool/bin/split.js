@@ -848,7 +848,7 @@ var Parser = function(src) {
 };
 Parser.prototype = {
 	processInput: function(src) {
-		var program = acorn_Acorn.parse(src,{ ecmaVersion : 5, locations : true, ranges : true});
+		var program = acorn_Acorn.parse(src,{ ecmaVersion : 5, locations : true});
 		this.walkProgram(program);
 	}
 	,buildGraph: function() {

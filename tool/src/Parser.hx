@@ -35,7 +35,7 @@ class Parser
 
 	function processInput(src:String)
 	{
-		var program = Acorn.parse(src, { ecmaVersion:5, locations:true, ranges:true });
+		var program = Acorn.parse(src, { ecmaVersion:5, locations:true });
 		walkProgram(program);
 	}
 
