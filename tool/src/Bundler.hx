@@ -110,13 +110,6 @@ class Bundler
 		}
 	}
 
-	function hasChanged(output:String, buffer:String)
-	{
-		if (!Fs.statSync(output).isFile()) return true;
-		var original = Fs.readFileSync(output).toString();
-		return original != buffer;
-	}
-
 	function emitBundle(src:String, bundle:Bundle, isMain:Bool):OutputBuffer
 	{
 		var output = emitJS(src, bundle, isMain);

@@ -383,13 +383,6 @@ Bundler.prototype = {
 		}
 		return { path : output, content : buffer};
 	}
-	,hasChanged: function(output,buffer) {
-		if(!js_node_Fs.statSync(output).isFile()) {
-			return true;
-		}
-		var original = js_node_Fs.readFileSync(output).toString();
-		return original != buffer;
-	}
 	,emitBundle: function(src,bundle,isMain) {
 		var output = this.emitJS(src,bundle,isMain);
 		var map = this.sourceMap != null ? this.sourceMap.emitMappings(output.mapNodes,output.mapOffset) : null;
