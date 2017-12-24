@@ -3,8 +3,8 @@
 If you use NPM libraries, it is required to follow a certain pattern and bundle them in
 a separate JavaScript file.
 
-It is nicely in line with the best practice (for compilation speed and better caching)
-that recommends regrouping all the NPM dependencies into a single JavaScript file,
+It is nicely in line with the best practices (for compilation speed and better caching)
+which recommend regrouping all the NPM dependencies into a single JavaScript file,
 traditionally called `vendor.js` or `libs.js`.
 
 **Important:**
@@ -32,11 +32,6 @@ Create a `src/libs.js` file using the following template:
 		'redux': require('redux')
 	});
 
-	if (process.env.NODE_ENV !== 'production') {
-		// enable React hot-reload (optional)
-		require('haxe-modular');
-	}
-
 })(typeof $hx_scope != "undefined" ? $hx_scope : $hx_scope = {});
 ```
 
@@ -50,10 +45,6 @@ Modular to resolve NPM modules.
 It is important to correctly name the keys of the object (eg. `'react'`) to match the
 Haxe require calls (eg. `@:jsRequire('react')`).
 
-Inside the `if (process.env.NODE_ENV !== 'production')` case you can invoke libraries
-only for debug mode. Here for example it includes the hot-module replacement logic which
-will be removed in production.
-
 **Tip:** there is nothing forcing your to register NPM modules, you can register any
 valid JavaScript object here!
 
@@ -61,6 +52,8 @@ valid JavaScript object here!
 
 The library must be "compiled", that is required modules should be injected,
 typically using [Browserify](http://browserify.org/) (small, simple, and fast).
+
+    npm install browserify -g
 
 For development (code with sourcemaps):
 
@@ -91,6 +84,6 @@ Simply reference the library file in your `index.html` in the right order:
 <script src="index.js"></script>
 ```
 
-You can create other libraries, and even use the same lazy loading method to load them
-on demand, just like you will load Haxe modules. If you have a Haxe module with its
-own NPM dependencies, you will load the dependencies first, then the Haxe module.
+You can create other libraries, and even use the same on-demand loading method to load them
+just like you will load Haxe modules.
+See `Require.module` in [Haxe library usage](library-usage.md).

@@ -19,16 +19,16 @@ the LiveReload server.
 
 #### Static mode
 
-It is recommended to simply use the static mode to dynamically injects the livereload
-client API script in HTML pages served:
+It is recommended to simply use the static mode to serve your web app and dynamically
+inject the livereload client API script in the HTML page:
 
 	livereloadx -s bin/
 	open http://localhost:35729
 
 #### Custom server mode
 
-If you need an advanced server, with URL rewriting for instance, you can load the
-LiveReload client script explicitly:
+If you need an advanced server, with URL rewriting for instance, you can run the
+server separately and load the LiveReload client script yourself:
 
 	livereloadx bin/
 

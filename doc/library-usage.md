@@ -46,11 +46,16 @@ Features need to have one entry point class that can be loaded **asynchronously*
 - unless the class is present in the main bundle (it will be shared).
 
 What is a direct reference?
+
 - `new A()`
 - `A.b` / `A.c()`
 - `Std.is(o, A)`
 - `cast(o, A)`
-- ...
+
+What is NOT a direct reference?
+
+- a function returning an object of type `A`
+- `var a:A`
 
 ### Difference between Debug and Release builds
 
@@ -99,22 +104,21 @@ file, `MyAppView.js`, containing the code and dependencies of `MyAppView`.
 `Bundle.load(module:Class):Promise<String>`
 
 - `module`: the entry point class reference,
-- `loadCss`: optionally load a CSS file of the same name.
 - returns a Promise providing the name of the loaded module
 
 (API is identical generally to the "Lazy loading" feature below)
 
-### React-router usage
+### React-router usage (deprecated)
 
-`Bundle.loadRoute(MyAppView)` generates a wrapper function to satisfy React-router 3
-async routes API using [getComponent](https://github.com/ReactTraining/react-router/blob/master/docs/API.md#getcomponentnextstate-callback).
+`Bundle.loadRoute(MyAppView)` does the same job, but creates a wrapper function to satisfy
+React-router 2 & 3 async routes API using getComponent.
 
 ```js
 <Route getComponent=${Bundle.loadRoute(MyAppView)} />
 ```
 
-Magic! `MyAppView` will be extracted in its own bundle and loaded lazily when the
-route is activated.
+Note: React-router 4 doesn't have any async method anymore, async routes require a new
+pattern for which Modular doesn't provide helpers for at the moment.
 
 
 ## Lazy loading
@@ -139,12 +143,10 @@ otherwise, calling the function again will attempt to reload the failed script.
 
 `Require.jsPath`: relative path to JS files (defaults to `./`)
 
-`Require.cssPath`: relative path to CSS files (defaults to `./`)
-
 ## Nodejs
 
 Nodejs is supported, and recognised when `-D nodejs` is set (e.g. when using
 `-lib hxnodejs`); Modular will then emit code specifically for nodejs.
 
-Although the Promise API stays, bundle loading happens *synchronous*; that is it completes
+Although the Promise API stays, bundle loading happens *synchronously*; that is it completes
 immediately, while in the browser it will always complete asynchronously.
