@@ -35,7 +35,7 @@ For complete architecture examples using this technique you can consult:
 Modular recognises a few additional debugging flags:
 
 - `-D modular_dump`: generate an additional `.graph` file to analyse the dependency graph,
-- `-D modular_debugmap`: generate, for each module, an additiona; `.map.html` file
+- `-D modular_debugmap`: generate, for each module, an additional `.map.html` file
   showing a visual representation of the sourcemap.
 
 ### Dynamic instantiation
@@ -47,7 +47,7 @@ classes; even a simple `Array` containing class references.
 ### Magic init
 
 If you don't know what static `__init__` is, don't worry about it!
-([if your're curious](http://old.haxe.org/doc/advanced/magic#initialization-magic))
+([if you're curious](http://old.haxe.org/doc/advanced/magic#initialization-magic))
 
 When using `__init__` you may generate code that will be difficult to attribute to the
 right context:

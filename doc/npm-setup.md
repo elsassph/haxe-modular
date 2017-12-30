@@ -45,7 +45,7 @@ Modular to resolve NPM modules.
 It is important to correctly name the keys of the object (eg. `'react'`) to match the
 Haxe require calls (eg. `@:jsRequire('react')`).
 
-**Tip:** there is nothing forcing your to register NPM modules, you can register any
+**Tip:** there is nothing forcing you to register NPM modules, you can register any
 valid JavaScript object here!
 
 ## Building

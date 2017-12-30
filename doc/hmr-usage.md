@@ -5,12 +5,12 @@
 The feature is based on the [LiveReload](https://livereload.com) API. Haxe API will
 set a listener for `LiveReloadConnect` and register a "reloader plugin" to handle changes.
 
-All you have to is to rebuild the Haxe-JS application and let LiveReload inform our
+All you have to do is to rebuild the Haxe-JS application and let LiveReload inform our
 running application to reload some of the JavaScript files.
 
 Stylesheets and static images will be normally live reloaded.
 
-#### Liverloadx
+#### Livereloadx
 
 [livereloadx](http://nitoyon.github.io/livereloadx/) is a nice nodejs implementation of
 the LiveReload server.
@@ -73,26 +73,31 @@ instances (or patch live instances) of reloaded classes to use the new code,
 
 When using hot-reload for React views you will want to use the handy `autoRefresh` wrapper.
 
-1. Add `-D react_hot` in your compiler options.
+This feature leverages [react-proxy](https://github.com/gaearon/react-proxy/tree/master) and
+and [react-deep-force-update](https://github.com/gaearon/react-deep-force-update) just like
+the "official" React HMR does under the hood.
 
-2. In your NPM `libs.js`, make sure to include (anywhere):
+1. In your NPM `libs.js`, make sure to include the following snippets:
 
     ```javascript
     if (process.env.NODE_ENV !== 'production') {
-        // enable React hot-reload (optional)
+        // enable React HMR proxy
         require('haxe-modular');
     }
     ```
 
-3. And in your Haxe code, where your main `ReadctDOM.render` happens:
+1. Add `-D react_hot` in your Haxe compiler options to generate the HMR hook logic.
+
+3. And in your Haxe code, where your main `ReactDOM.render` happens:
 
     ```haxe
-    var app = ReactDOM.render(...);
+    var rootNode = ReactDOM.render(...);
 
     #if (debug && react_hot)
-    ReactHMR.autoRefresh(app);
+    ReactHMR.autoRefresh(rootNode);
     #end
     ```
 
-The feature leverages [react-proxy](https://github.com/gaearon/react-proxy/tree/master) and
-needs to be enabled by calling , preferably in your NPM modules bundle.
+That's all, but note:
+- HMR only works in `-debug` mode,
+- only components in split bundles will reload.
