@@ -57,8 +57,8 @@ and FP language features. The compiler stays very fast, even with massive codeba
 
 Haxe-JS doesn't include any "magic" features: it gives access to the HTML5 or nodejs APIs.
 
-Haxe transpiles your Haxe code into regular ES5 code (using *protoypes*), and adds a little
-bit of code (up to 8Kb) for the language-specific features.
+Haxe transpiles your Haxe code into regular ES5 code, with polyfills for the 
+language-specific features.
 
 Unlike other compile-to-JS languages, the Haxe compiler doesn't transpile individual files,
 but instead, like Closure compiler or Rollup.js, the compiler outputs one single file.
