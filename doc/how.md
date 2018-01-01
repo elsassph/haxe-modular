@@ -8,6 +8,7 @@ a robust, strictly typed, high level, programming language offering a powerful t
 and FP language features. The compiler stays very fast, even with massive codebases.
 
 The compiler transpiles your Haxe code into regular ES5 code - think like Babel or TypeScript.
+The generated code is very fast, compact and easy to read.
 
 Haxe-JS doesn't include any "magic" features: it gives access to the HTML5 or nodejs APIs.
 
@@ -15,10 +16,10 @@ Haxe-JS doesn't include any "magic" features: it gives access to the HTML5 or no
 import js.Browser.document;
 
 class Example {
-	static function main() {
-		var message = 'Hello world!';
-		document.body.innerHTML = '<h1>$message</h1>';
-	}
+  static function main() {
+    var message = 'Hello world!';
+    document.body.innerHTML = '<h1>$message</h1>';
+  }
 }
 ```
 
@@ -84,5 +85,5 @@ reference from `$hx_scope` in the local `Foobar` variable,
 Always read Haxe's generated JavaScript code; it is very helpful, and not that
 complicated, to understand what is happening.
 
-Haxe Modular keeps the compiler output as-is, just adding the shared scope logic
-- it adds very little code and has zero impact on performance.
+Haxe Modular keeps the compiler output as-is, just adding the shared scope logic:
+it adds very little code and has zero impact on performance.
