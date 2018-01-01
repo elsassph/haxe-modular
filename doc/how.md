@@ -55,23 +55,21 @@ This will emit 2 JS files: `index.js` and `Foobar.js`, which will look a bit lik
 
 ```javascript
 // index.js
-var $s = window.$hx_scope;
 var Foobar;
 function Example() {}
 Example.main = function() {
   loadScript("Foobar.js").then(function() {
-    Foobar = $s.Foobar;
+    Foobar = $hx_scope.Foobar;
     var f = new Foobar();
   })
 }
 Example.main();
 
 // Foobar.js
-var $s = window.$hx_scope;
 function Foobar() {
   console.log("Oh hi!");
 }
-$s.Foobar = Foobar;
+$hx_scope.Foobar = Foobar;
 ```
 
 Hopefully what happens is understandable:
