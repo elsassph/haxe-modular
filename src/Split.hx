@@ -11,12 +11,15 @@ class Split
 
 	static public function modules()
 	{
+		output = absolute(Compiler.getOutput());
+		if (!StringTools.endsWith(output, '.js')) return;
+
+		#if !kha
 		// generate in temp directory for processing
 		if (!FileSystem.exists('.temp')) FileSystem.createDirectory('.temp');
-
-		output = absolute(Compiler.getOutput());
 		tempOutput = absolute('.temp/output.js');
 		Compiler.setOutput(tempOutput);
+		#end
 
 		Context.onAfterGenerate(generated);
 	}
@@ -38,6 +41,14 @@ class Split
 
 	static function generated()
 	{
+		#if kha
+		if (Compiler.getDefine('js-classic') != null) {
+			trace('Worker mode not supported');
+			return;
+		}
+		tempOutput = output;
+		#end
+
 		var args = [tempOutput, output];
 
 		// resolve haxe-split
@@ -59,7 +70,7 @@ class Split
 			#if webpack '-webpack', #end
 			#if modular_dump '-dump', #end
 			#if modular_debugmap '-debugmap', #end
-			#if nodejs '-nodejs', #end
+			#if (nodejs || kha_debug_html5) '-nodejs', #end
 		];
 		args = args.concat(bundles).concat(options);
 		Sys.command(cmd, args);

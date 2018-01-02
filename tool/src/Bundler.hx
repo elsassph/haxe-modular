@@ -36,11 +36,11 @@ class Bundler
 
 	static var FRAGMENTS = {
 		MAIN: {
-			EXPORTS: "var $hx_exports = exports, $global = global;\n",
+			EXPORTS: "var $hx_exports = module.exports, $global = global;\n",
 			SHARED: "var $s = $global.$hx_scope = $global.$hx_scope || {};\n"
 		},
 		CHILD: {
-			EXPORTS: "var $hx_exports = exports, $global = global;\n",
+			EXPORTS: "var $hx_exports = module.exports, $global = global;\n",
 			SHARED: "var $s = $global.$hx_scope;\n"
 		}
 	}
