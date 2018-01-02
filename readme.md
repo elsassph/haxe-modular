@@ -35,13 +35,36 @@ file will be emitted (bundling this class and all its dependencies),
 loaded (once) automatically.
 
 Note: Haxe Modular is NOT a solution for extracting libraries, single files or
-entire packages; it is "usage" based.
+entire packages; it is "usage" based and can slice the biggest libraries to keep only .
 
 ## Where to start?
 
 There are 2 ways to use Haxe Modular, depending on your project/toolchain/goals:
 
 - [standalone Modular](doc/start.md); zero dependencies, drop-in any Haxe-JS project,
-- [Webpack Haxe Loader](https://github.com/jasononeil/webpack-haxe-loader); leverage the famous JS toolchain.
+- [Webpack Haxe Loader](https://github.com/jasononeil/webpack-haxe-loader); leverage 
+the famous JS toolchain.
 
-In both cases, it is advisable to read [how does Haxe compile to JavaScript, and how does on-demand loading work?](doc/how.md).
+In both cases, it is advisable to read about the technical details: 
+[how does Haxe compile to JavaScript, and how does on-demand loading work?](doc/how.md).
+
+### What is the difference?
+
+Both solutions:
+
+- use Modular splitting under the hood.
+- split automatically using a single `hxml` build configuration,
+- support NPM dependencies,
+- allow hot-reloading of code.
+
+### What should I use?
+
+**[Standalone Modular](doc/start.md)** is quite easy to drop in an regular Haxe JS build 
+process - it is very lightweight and unobstrusive, and you don't need to learn Webpack.
+
+Using NPM modules however requires a bit a ceremony: all the NPM dependencies have to be 
+gathered (manually) in a `libs.js` which is loaded upfront.
+
+**[Webpack Haxe Loader](https://github.com/jasononeil/webpack-haxe-loader)** is a more 
+powerful setup but you'll have to learn Webpack. Webpack is a complex and large system 
+offering vast possibilities from the JS ecosystem.
