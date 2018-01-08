@@ -355,21 +355,83 @@ Bundler.prototype = {
 	generate: function(src,output,commonjs,debugSourceMap) {
 		this.commonjs = commonjs;
 		this.debugSourceMap = this.sourceMap != null && debugSourceMap;
-		console.log("Emit " + output);
-		var result = [];
-		var buffer = this.emitBundle(src,this.extractor.main,true);
-		result.push({ name : "Main", map : this.writeMap(output,buffer), source : this.write(output,buffer.src), debugMap : buffer.debugMap});
-		var _g = 0;
-		var _g1 = this.extractor.bundles;
-		while(_g < _g1.length) {
-			var bundle = _g1[_g];
-			++_g;
-			var bundleOutput = js_node_Path.join(js_node_Path.dirname(output),bundle.name + ".js");
-			console.log("Emit " + bundleOutput);
-			buffer = this.emitBundle(src,bundle,false);
-			result.push({ name : bundle.name, map : this.writeMap(bundleOutput,buffer), source : this.write(bundleOutput,buffer.src), debugMap : buffer.debugMap});
+		this.bundles = [this.extractor.main].concat(this.extractor.bundles);
+		this.revMap = { };
+		var len = this.bundles.length;
+		var _g1 = 0;
+		var _g = len;
+		while(_g1 < _g) {
+			var i = _g1++;
+			this.createRevMap(i,this.bundles[i]);
 		}
-		return result;
+		this.buildIndex(src);
+		var results = [];
+		var isMain = true;
+		var _g11 = 0;
+		var _g2 = len;
+		while(_g11 < _g2) {
+			var i1 = _g11++;
+			var bundle = this.bundles[i1];
+			var bundleOutput = isMain ? output : js_node_Path.join(js_node_Path.dirname(output),bundle.name + ".js");
+			console.log("Emit " + bundleOutput);
+			var buffer = this.emitBundle(src,bundle,isMain);
+			results[i1] = { name : bundle.name, map : this.writeMap(bundleOutput,buffer), source : this.write(bundleOutput,buffer.src), debugMap : buffer.debugMap};
+			isMain = false;
+		}
+		return results;
+	}
+	,buildIndex: function(src) {
+		var rev = this.revMap;
+		var body = this.parser.rootBody;
+		var bodyLength = body.length;
+		var bundlesLength = this.bundles.length;
+		var _g1 = 1;
+		var _g = bodyLength;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var node = body[i];
+			if(node.__tag__ == null) {
+				node.__tag__ = "__reserved__";
+				var _g3 = 1;
+				var _g2 = bundlesLength;
+				while(_g3 < _g2) {
+					var j = _g3++;
+					this.bundles[j].indexes.push(i);
+				}
+			} else if(node.__tag__ != "__reserved__") {
+				var list = rev[node.__tag__];
+				if(list == null) {
+					list = [0];
+				}
+				var _g31 = 0;
+				var _g21 = list.length;
+				while(_g31 < _g21) {
+					var j1 = _g31++;
+					var index = list[j1];
+					if(index == 0) {
+						node.__tag__ = "__reserved__";
+					} else {
+						this.bundles[index].indexes.push(i);
+					}
+				}
+			}
+		}
+	}
+	,createRevMap: function(index,bundle) {
+		var rev = this.revMap;
+		var nodes = bundle.nodes;
+		var len = nodes.length;
+		var _g1 = 0;
+		var _g = len;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var list = rev[nodes[i]];
+			if(list != null) {
+				list.push(index);
+			} else {
+				rev[nodes[i]] = [index];
+			}
+		}
 	}
 	,writeMap: function(output,buffer) {
 		if(this.sourceMap == null || buffer.map == null) {
@@ -386,11 +448,14 @@ Bundler.prototype = {
 	,emitBundle: function(src,bundle,isMain) {
 		var output = this.emitJS(src,bundle,isMain);
 		var map = this.sourceMap != null ? this.sourceMap.emitMappings(output.mapNodes,output.mapOffset) : null;
-		var debugMap = this.debugSourceMap ? this.emitDebugMap(output.buffer,bundle,map) : null;
+		var debugMap = this.debugSourceMap && map != null ? this.emitDebugMap(output.buffer,bundle,map) : null;
 		return { src : output.buffer, map : map, debugMap : debugMap};
 	}
 	,emitDebugMap: function(src,bundle,map) {
 		var rawMap = JSON.parse(map.toString());
+		if(rawMap.sources.length == 0) {
+			return null;
+		}
 		var consumer = new sourcemap_SourceMapConsumer(rawMap);
 		var _g = [];
 		var _g1 = 0;
@@ -411,15 +476,16 @@ Bundler.prototype = {
 		var mapOffset = 0;
 		var exports = bundle.exports;
 		var buffer = "";
-		var body = this.parser.rootBody.slice();
-		body.shift();
+		var body = this.parser.rootBody;
+		var hasSourceMap = this.sourceMap != null;
 		if(isMain) {
 			buffer += this.getBeforeBodySrc(src);
-			mapOffset += this.getBeforeBodyOffset();
+			if(hasSourceMap) {
+				mapOffset += this.getBeforeBodyOffset();
+			}
 		} else {
 			++mapOffset;
 		}
-		var run = isMain ? body.pop() : null;
 		var inc = bundle.nodes;
 		var incAll = isMain && bundle.nodes.length == 0;
 		var mapNodes = [];
@@ -459,30 +525,51 @@ Bundler.prototype = {
 			buffer += "var " + tmp1.join(", ") + ";\n";
 			++mapOffset;
 		}
-		var _g3 = 0;
-		while(_g3 < body.length) {
-			var node1 = body[_g3];
-			++_g3;
-			if(!incAll && node1.__tag__ != null && inc.indexOf(node1.__tag__) < 0) {
-				if(!isMain || node1.__tag__ != "__reserved__") {
+		if(isMain) {
+			var len = body.length - 1;
+			var _g11 = 1;
+			var _g3 = len;
+			while(_g11 < _g3) {
+				var i = _g11++;
+				var node1 = body[i];
+				if(!incAll && node1.__tag__ != "__reserved__") {
 					continue;
 				}
+				if(hasSourceMap) {
+					mapNodes.push(node1);
+				}
+				buffer += HxOverrides.substr(src,node1.start,node1.end - node1.start);
+				buffer += "\n";
 			}
-			mapNodes.push(node1);
-			buffer += HxOverrides.substr(src,node1.start,node1.end - node1.start);
-			buffer += "\n";
+		} else {
+			var indexes = bundle.indexes;
+			var len1 = indexes.length;
+			var _g12 = 0;
+			var _g4 = len1;
+			while(_g12 < _g4) {
+				var i1 = _g12++;
+				var node2 = body[indexes[i1]];
+				if(hasSourceMap) {
+					mapNodes.push(node2);
+				}
+				buffer += HxOverrides.substr(src,node2.start,node2.end - node2.start);
+				buffer += "\n";
+			}
 		}
-		buffer += this.emitHot(inc);
+		if(this.parser.isHot != null) {
+			buffer += this.emitHot(inc);
+		}
 		if(exports.length > 0) {
-			var _g4 = 0;
-			while(_g4 < exports.length) {
-				var node2 = exports[_g4];
-				++_g4;
-				buffer += "$" + "s." + node2 + " = " + node2 + "; ";
+			var _g5 = 0;
+			while(_g5 < exports.length) {
+				var node3 = exports[_g5];
+				++_g5;
+				buffer += "$" + "s." + node3 + " = " + node3 + "; ";
 			}
 			buffer += "\n";
 		}
-		if(run != null) {
+		if(isMain) {
+			var run = body[body.length - 1];
 			buffer += HxOverrides.substr(src,run.start,run.end - run.start);
 			buffer += "\n";
 		}
@@ -535,35 +622,44 @@ Extractor.prototype = {
 	process: function(mainModule,modulesList,debugMode) {
 		if(this.parser.typesCount == 0) {
 			console.log("Warning: unable to process (no type metadata)");
-			this.main = { isLib : false, name : "Main", nodes : [], exports : [], shared : [], imports : []};
+			this.main = { isLib : false, name : "Main", nodes : [], indexes : [], exports : [], shared : [], imports : []};
 			return;
 		}
 		console.log("Bundling...");
 		var g = this.parser.graph;
-		var modules = [];
+		var sources = g.sources();
 		var _g = 0;
-		while(_g < modulesList.length) {
-			var $module = modulesList[_g];
+		while(_g < sources.length) {
+			var source = sources[_g];
 			++_g;
+			if(source != mainModule) {
+				g.setEdge(mainModule,source);
+			}
+		}
+		var modules = [];
+		var _g1 = 0;
+		while(_g1 < modulesList.length) {
+			var $module = modulesList[_g1];
+			++_g1;
 			if(modules.indexOf($module) < 0) {
 				modules.push($module);
 			}
 		}
 		var moduleRefs = { };
-		var _g1 = 0;
-		while(_g1 < modules.length) {
-			var module1 = modules[_g1];
-			++_g1;
+		var _g2 = 0;
+		while(_g2 < modules.length) {
+			var module1 = modules[_g2];
+			++_g2;
 			moduleRefs[module1] = g.predecessors(module1);
 			this.unlink(g,module1);
 		}
 		var mainNodes = graphlib_Alg.preorder(g,mainModule);
 		if(debugMode) {
-			var _g2 = 0;
+			var _g3 = 0;
 			var _g11 = Reflect.fields(this.parser.isEnum);
-			while(_g2 < _g11.length) {
-				var key = _g11[_g2];
-				++_g2;
+			while(_g3 < _g11.length) {
+				var key = _g11[_g3];
+				++_g3;
 				mainNodes.push(key);
 			}
 		}
@@ -571,11 +667,11 @@ Extractor.prototype = {
 		var dupes = this.deduplicate(this.bundles,mainNodes,debugMode);
 		mainNodes = this.addOnce(mainNodes,dupes.removed);
 		var mainExports = dupes.shared;
-		var _g3 = 0;
+		var _g4 = 0;
 		var _g12 = this.bundles;
-		while(_g3 < _g12.length) {
-			var bundle = _g12[_g3];
-			++_g3;
+		while(_g4 < _g12.length) {
+			var bundle = _g12[_g4];
+			++_g4;
 			if(bundle.isLib) {
 				mainNodes = this.remove(bundle.nodes,mainNodes);
 				mainExports = this.remove(bundle.nodes,mainExports);
@@ -583,7 +679,7 @@ Extractor.prototype = {
 			}
 		}
 		var mainImports = this.resolveImports(mainNodes,this.bundles,moduleRefs);
-		this.main = { isLib : false, name : "Main", nodes : mainNodes, exports : mainExports, shared : [], imports : mainImports};
+		this.main = { isLib : false, name : "Main", nodes : mainNodes, indexes : [], exports : mainExports, shared : [], imports : mainImports};
 	}
 	,processModule: function(name) {
 		var g = this.parser.graph;
@@ -592,10 +688,10 @@ Extractor.prototype = {
 			var test = new EReg("^" + parts[1].split(",").join("|"),"");
 			var ret = { isLib : true, name : parts[0], nodes : g.nodes().filter(function(n) {
 				return test.match(n);
-			}), exports : [], shared : [], imports : []};
+			}), indexes : [], exports : [], shared : [], imports : []};
 			return ret;
 		} else {
-			return { isLib : false, name : name, nodes : graphlib_Alg.preorder(g,name), exports : [name], shared : [], imports : []};
+			return { isLib : false, name : name, nodes : graphlib_Alg.preorder(g,name), indexes : [], exports : [name], shared : [], imports : []};
 		}
 	}
 	,resolveImports: function(mainNodes,bundles,refs) {
@@ -790,7 +886,7 @@ HxOverrides.substr = function(s,pos,len) {
 var Main = function() { };
 Main.run = $hx_exports["run"] = function(input,output,modules,debugMode,commonjs,debugSourceMap,dump) {
 	var src = js_node_Fs.readFileSync(input).toString();
-	var parser = new Parser(src);
+	var parser = new Parser(src,debugMode);
 	var sourceMap = debugMode ? new SourceMap(input,src) : null;
 	if(dump) {
 		Main.dumpGraph(output,parser);
@@ -835,11 +931,11 @@ Main.dumpGraph = function(output,parser) {
 	}
 	js_node_Fs.writeFileSync(output + ".graph",out);
 };
-var Parser = function(src) {
+var Parser = function(src,withLocation) {
 	this.reservedTypes = { "String" : true, "Math" : true, "Array" : true, "Int" : true, "Float" : true, "Bool" : true, "Class" : true, "Date" : true, "Dynamic" : true, "Enum" : true, __map_reserved : true};
 	this.mainModule = "Main";
 	var t0 = new Date().getTime();
-	this.processInput(src);
+	this.processInput(src,withLocation);
 	var t1 = new Date().getTime();
 	console.log("Parsed in: " + (t1 - t0) + "ms");
 	this.buildGraph();
@@ -847,8 +943,9 @@ var Parser = function(src) {
 	console.log("Graph processed in: " + (t2 - t1) + "ms");
 };
 Parser.prototype = {
-	processInput: function(src) {
-		var program = acorn_Acorn.parse(src,{ ecmaVersion : 5, locations : true});
+	processInput: function(src,withLocation) {
+		var options = withLocation ? { ecmaVersion : 5, locations : true} : { ecmaVersion : 5};
+		var program = acorn_Acorn.parse(src,options);
 		this.walkProgram(program);
 	}
 	,buildGraph: function() {
@@ -894,7 +991,6 @@ Parser.prototype = {
 	}
 	,walkProgram: function(program) {
 		this.types = { };
-		this.isHot = { };
 		this.isEnum = { };
 		this.isRequire = { };
 		var body = this.getBodyNodes(program);
@@ -1013,6 +1109,9 @@ Parser.prototype = {
 		}
 	}
 	,trySetHot: function(name) {
+		if(this.isHot == null) {
+			this.isHot = { };
+		}
 		if(Object.prototype.hasOwnProperty.call(this.isHot,name)) {
 			this.isHot[name] = true;
 		} else {

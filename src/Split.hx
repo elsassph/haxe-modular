@@ -42,7 +42,7 @@ class Split
 
 		// resolve haxe-split
 		#if haxe_split
-		var params = Compiler.getDefine('haxe_split').split(' ');
+		var params = Std.string(Compiler.getDefine('haxe_split')).split(' ');
 		var cmd = params.shift();
 		if (params.length > 0) args = params.concat(args);
 
@@ -62,6 +62,8 @@ class Split
 			#if nodejs '-nodejs', #end
 		];
 		args = args.concat(bundles).concat(options);
+
+		//Sys.println(cmd + ' ' + args.join(' '));
 		Sys.command(cmd, args);
 	}
 }

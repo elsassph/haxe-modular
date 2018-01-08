@@ -7,6 +7,7 @@ typedef Bundle = {
 	isLib:Bool,
 	name:String,
 	nodes:Array<String>,
+	indexes:Array<Int>,
 	exports:Array<String>,
 	shared:Array<String>,
 	imports:Array<String>
@@ -32,6 +33,7 @@ class Extractor
 				isLib: false,
 				name: 'Main',
 				nodes: [],
+				indexes: [],
 				exports: [],
 				shared: [],
 				imports: []
@@ -41,6 +43,12 @@ class Extractor
 
 		trace('Bundling...');
 		var g = parser.graph;
+
+		// link "orphan" classes to main module
+		var sources = g.sources();
+		for (source in sources)
+			if (source != mainModule)
+				g.setEdge(mainModule, source);
 
 		// deduplicate modules
 		var modules = [];
@@ -84,6 +92,7 @@ class Extractor
 			isLib: false,
 			name: 'Main',
 			nodes: mainNodes,
+			indexes: [],
 			exports: mainExports,
 			shared: [],
 			imports: mainImports
@@ -101,6 +110,7 @@ class Extractor
 				isLib: true,
 				name: parts[0],
 				nodes: g.nodes().filter(function (n) return test.match(n)),
+				indexes: [],
 				exports: [],
 				shared: [],
 				imports: []
@@ -111,6 +121,7 @@ class Extractor
 			isLib: false,
 			name: name,
 			nodes: Alg.preorder(g, name),
+			indexes: [],
 			exports: [name],
 			shared: [],
 			imports: []

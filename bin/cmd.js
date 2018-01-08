@@ -25,18 +25,16 @@ const modules = args.slice(4);
 
 const split = require('../tool/bin/split');
 const result = split.run(input, output, modules, debugMode, webpackMode || nodejsMode, debugSourceMap, dump);
-
 for (file of result) {
 	if (!file || !file.source) continue;
 	if (file.map) {
 		writeIfChanged(file.map.path, file.map.content);
 	}
-	if (file.source) {
-		const content = file.map
-			? `${file.source.content}\n//# sourceMappingURL=${path.basename(file.map.path)}`
-			: file.source.content;
-		writeIfChanged(file.source.path, content);
-	}
+	const content = file.map
+		? `${file.source.content}\n//# sourceMappingURL=${path.basename(file.map.path)}`
+		: file.source.content;
+	writeIfChanged(file.source.path, content);
+
 	if (file.debugMap) {
 		writeIfChanged(file.source.path + '.map.html', file.debugMap);
 	}

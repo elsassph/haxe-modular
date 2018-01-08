@@ -21,10 +21,10 @@ class Parser
 
 	var types:DynamicAccess<Array<AstNode>>;
 
-	public function new(src:String)
+	public function new(src:String, withLocation:Bool)
 	{
 		var t0 = Date.now().getTime();
-		processInput(src);
+		processInput(src, withLocation);
 		var t1 = Date.now().getTime();
 		trace('Parsed in: ${t1 - t0}ms');
 
@@ -33,9 +33,10 @@ class Parser
 		trace('Graph processed in: ${t2 - t1}ms');
 	}
 
-	function processInput(src:String)
+	function processInput(src:String, withLocation:Bool)
 	{
-		var program = Acorn.parse(src, { ecmaVersion:5, locations:true });
+		var options:AcornOptions = withLocation ? { ecmaVersion:5, locations:true } : { ecmaVersion:5 };
+		var program = Acorn.parse(src, options);
 		walkProgram(program);
 	}
 
@@ -78,7 +79,6 @@ class Parser
 	function walkProgram(program:AstNode)
 	{
 		types = {};
-		isHot = {};
 		isEnum = {};
 		isRequire = {};
 
@@ -209,6 +209,7 @@ class Parser
 	// Identify types with both `displayName` and `__fileName__` as set-up for hotreload
 	function trySetHot(name:String)
 	{
+		if (isHot == null) isHot = {};
 		// first set isHot to false, then true when both properties are seen
 		if (isHot.exists(name)) isHot.set(name, true);
 		else isHot.set(name, false);
