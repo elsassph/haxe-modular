@@ -884,10 +884,11 @@ HxOverrides.substr = function(s,pos,len) {
 	return s.substr(pos,len);
 };
 var Main = function() { };
-Main.run = $hx_exports["run"] = function(input,output,modules,debugMode,commonjs,debugSourceMap,dump) {
+Main.run = $hx_exports["run"] = function(input,output,modules,debugMode,commonjs,debugSourceMap,dump,astHooks) {
 	var src = js_node_Fs.readFileSync(input).toString();
 	var parser = new Parser(src,debugMode);
 	var sourceMap = debugMode ? new SourceMap(input,src) : null;
+	modules = Main.applyAstHooks(modules,astHooks,parser.graph);
 	if(dump) {
 		Main.dumpGraph(output,parser);
 	}
@@ -896,6 +897,24 @@ Main.run = $hx_exports["run"] = function(input,output,modules,debugMode,commonjs
 	var bundler = new Bundler(parser,sourceMap,extractor);
 	var dir = js_node_Path.dirname(output);
 	return bundler.generate(src,output,commonjs,debugSourceMap);
+};
+Main.applyAstHooks = function(modules,astHooks,graph) {
+	if(astHooks == null || astHooks.length == 0) {
+		return modules;
+	}
+	var _g = 0;
+	while(_g < astHooks.length) {
+		var hook = astHooks[_g];
+		++_g;
+		if(hook == null) {
+			continue;
+		}
+		var addModules = hook(graph);
+		if(addModules != null) {
+			modules = modules.concat(addModules);
+		}
+	}
+	return modules;
 };
 Main.dumpGraph = function(output,parser) {
 	var g = parser.graph;

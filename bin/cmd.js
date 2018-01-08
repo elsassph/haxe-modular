@@ -24,7 +24,9 @@ const output = args[3];
 const modules = args.slice(4);
 
 const split = require('../tool/bin/split');
-const result = split.run(input, output, modules, debugMode, webpackMode || nodejsMode, debugSourceMap, dump);
+const cjsMode = webpackMode || nodejsMode;
+const graphHook = getGraphHook();
+const result = split.run(input, output, modules, debugMode, cjsMode, debugSourceMap, dump, graphHook);
 for (file of result) {
 	if (!file || !file.source) continue;
 	if (file.map) {
@@ -80,4 +82,42 @@ Arguments:
   output.js: path to output JS source
   module-i : qualified Haxe module name to split
 `);
+}
+
+function getGraphHook() {
+	const hookFiles = readHookConfig();
+	return hookFiles ? hookFiles.map(loadHandler) : null;
+}
+
+function loadHandler(fileName) {
+	if (!fs.existsSync(fileName)) {
+		console.log(`[haxe-split] Error: '${hookFile}' does not exist`);
+		return null;
+	}
+
+	const src = fs.readFileSync(fileName);
+	const module = {
+		exports: {}
+	};
+	const evaluator = new Function('module', 'exports', 'global', src);
+	evaluator(module, module.exports, global);
+
+	const handler = module.exports;
+	if (!handler || (typeof handler !== 'function')) {
+		console.log(`[haxe-split] Error: '${fileName}' does not export a function`);
+		return null;
+	}
+	return handler;
+}
+
+function readHookConfig() {
+	if (!fs.existsSync('package.json')) return null;
+
+	const pkg = JSON.parse(fs.readFileSync('package.json'));
+	const config = pkg.config;
+	if (!config) return null;
+	let hookFiles = config['haxe-split-hook'];
+	if (!hookFiles) return null;
+	if (typeof hookFiles === 'string') hookFiles = [hookFiles];
+	return hookFiles;
 }
