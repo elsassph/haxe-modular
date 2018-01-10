@@ -1321,5 +1321,3 @@ Bundler.FRAGMENTS = { MAIN : { EXPORTS : "var $hx_exports = exports, $global = g
 Bundler.generateHtml = global.generateHtml;
 SourceMap.SRC_REF = "//# sourceMappingURL=";
 })(typeof exports != "undefined" ? exports : typeof window != "undefined" ? window : typeof self != "undefined" ? self : this);
-
-//# sourceMappingURL=split.js.map
