@@ -12,7 +12,7 @@ class RouteBundle
 		switch (Context.typeof(reactClassRef))
 		{
 			case Type.TType(_.get() => t, _):
-				var module = t.module.split('.').join('_');
+				var module = t.module.split('_').join('_$').split('.').join('_');
 				Split.register(module);
 				var bridge = macro untyped $i{module} = $p{["$s", module]};
 				#if nodejs

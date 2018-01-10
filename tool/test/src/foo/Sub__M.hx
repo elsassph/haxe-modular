@@ -1,9 +1,9 @@
 package foo;
 
-class Sub
+class Sub__M
 {
 	public function new()
 	{
-		trace('6. Sub');
+		trace('6. Sub__M');
 	}
 }

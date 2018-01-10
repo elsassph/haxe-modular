@@ -11,8 +11,8 @@ class Bar
 		var c = [1, 2, 3];
 		c.push(d);
 
-		Bundle.load(Sub).then(function(_) {
-			var s = new Sub();
+		Bundle.load(Sub__M).then(function(_) {
+			var s = new Sub__M();
 		});
 
 		var g = new Gee();
