@@ -55,6 +55,7 @@ class Bundler
 	var debugSourceMap:Bool;
 	var nodejsMode:Bool;
 	var revMap:DynamicAccess<Array<Int>>;
+	var idMap:DynamicAccess<Bool>;
 	var bundles:Array<Bundle>;
 
 	public function new(parser:Parser, sourceMap:SourceMap, extractor:Extractor)
@@ -104,6 +105,7 @@ class Bundler
 		#if verbose_debug
 		trace('Build index...');
 		#end
+		var ids = idMap = {};
 		var rev = revMap;
 		var body = parser.rootBody;
 		var bodyLength = body.length;
@@ -125,6 +127,7 @@ class Bundler
 			}
 			// Non-reserved nodes go in matching bundle
 			else if (node.__tag__ != '__reserved__') {
+				ids.set(node.__tag__, true);
 				var list = rev.get(node.__tag__);
 				if (list == null) list = [0];
 
@@ -297,7 +300,8 @@ class Bundler
 		if (exports.length > 0)
 		{
 			for (node in exports)
-				buffer += '$$s.$node = $node; ';
+				if (idMap.exists(node))
+					buffer += '$$s.$node = $node; ';
 			buffer += '\n';
 		}
 
