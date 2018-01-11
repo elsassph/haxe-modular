@@ -1,4 +1,4 @@
-console.log('AST hook loaded');
+console.log('[Hook] loaded');
 
 /**
  * Graph post-processor hook
@@ -7,7 +7,7 @@ console.log('AST hook loaded');
  * @return {String[]} Additional modules to split (identifiers)
  */
 module.exports = function(graph, root) {
-    console.log('[AST hook called] with', graph.nodes().length, 'nodes and "' + root + '" entry point');
+    console.log('[Hook] called with', graph.nodes().length, 'nodes and "' + root + '" entry point');
 
     // you can define virtual nodes
     graph.setNode('fakeNode');

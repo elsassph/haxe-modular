@@ -14,8 +14,8 @@ you probably want to:
 Haxe has an excellent, compact and optimised JS output, but it's always a single file; 
 even with good minification / gzip compression it can be a large payload.
 
-**Modular can split Haxe-JS output into load-on-demand features, without size/speed overhead,
-and without losing sourcemaps.**
+*Modular can split gigantic Haxe-JS outputs into load-on-demand features, 
+without size/speed overhead, and without losing sourcemaps.*
 
 ## How?
 
@@ -41,30 +41,33 @@ entire packages; it is "usage" based and can slice the biggest libraries to keep
 
 There are 2 ways to use Haxe Modular, depending on your project/toolchain/goals:
 
-- [standalone Modular](doc/start.md); zero dependencies, drop-in any Haxe-JS project,
-- [Webpack Haxe Loader](https://github.com/jasononeil/webpack-haxe-loader); leverage 
-the famous JS toolchain.
+1. [standalone Modular](doc/start.md); zero dependencies, for any Haxe-JS project,
+2. [Webpack Haxe Loader](https://github.com/jasononeil/webpack-haxe-loader); 
+   leverage the famous JS toolchain.
 
 In both cases, it is advisable to read about the technical details: 
-[how does Haxe compile to JavaScript, and how does on-demand loading work?](doc/how.md).
+
+- [How does Haxe compile to JavaScript, and how does on-demand loading work?](doc/how.md)
+- [How to add advanced control of the splitting logic?](doc/advanced.md)
 
 ### What is the difference?
 
 Both solutions:
 
-- use Modular splitting under the hood.
+- use Modular splitting under the hood,
 - split automatically using a single `hxml` build configuration,
 - support NPM dependencies,
 - allow hot-reloading of code.
 
 ### What should I use?
 
-**[Standalone Modular](doc/start.md)** is quite easy to drop in an regular Haxe JS build 
-process - it is very lightweight and unobstrusive, and you don't need to learn Webpack.
+1. [Standalone Modular](doc/start.md) is an easy, drop-in, addition to a regular 
+   Haxe JS build process - it is very lightweight and unobstrusive, and you don't need 
+   to learn Webpack.
 
-Using NPM modules however requires a bit a ceremony: all the NPM dependencies have to be 
-gathered (manually) in a `libs.js` which is loaded upfront.
+   Using NPM modules however requires a bit of ceremony: all the NPM dependencies have to 
+   be gathered (manually) in a `libs.js` which is loaded upfront.
 
-**[Webpack Haxe Loader](https://github.com/jasononeil/webpack-haxe-loader)** is a more 
-powerful setup but you'll have to learn Webpack. Webpack is a complex and large system 
-offering vast possibilities from the JS ecosystem.
+2. [Webpack Haxe Loader](https://github.com/jasononeil/webpack-haxe-loader) is a more 
+   powerful setup but you'll have to learn Webpack. Webpack is a complex and large system 
+   offering vast possibilities from the JS ecosystem.
