@@ -5,4 +5,6 @@ Main
 
 --macro includeFile('tool/src/generateHtml.js')
 
+#-D verbose_debug
+
 -cmd haxe test.hxml

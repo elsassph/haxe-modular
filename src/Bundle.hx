@@ -31,6 +31,7 @@ class Bundle
 					Require.module($v{module})
 						.then(function(id:String) {
 							$bridge;
+							var _ = untyped $i{module}; // forced reference
 							return id;
 						});
 				}

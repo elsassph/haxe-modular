@@ -3,7 +3,7 @@ package;
 import foo.Bar;
 import js.Browser;
 
-class Main
+class Main extends Shared
 {
 	static function main()
 	{
@@ -12,9 +12,17 @@ class Main
 
 	public function new()
 	{
+		super();
 		trace('new Main');
+		share('Main');
+		trace(Type.resolveClass('Keeped') != null ? '(has Keeped)' : '(uh oh, Keeped is missing)');
+
 		var body = Browser.document.body;
 		body.onclick = click;
+
+		Bundle.load(Unused).then(function(_) {
+			trace('Not doing anything concrete with it');
+		});
 	}
 
 	function click(_)
@@ -27,5 +35,14 @@ class Main
 				trace('still ok');
 			});
 		});
+	}
+}
+
+@:keep
+class Keeped
+{
+	public function new()
+	{
+		trace('This class needs to be kept');
 	}
 }

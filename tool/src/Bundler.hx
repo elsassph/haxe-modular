@@ -1,4 +1,5 @@
 import acorn.Acorn.AstNode;
+import haxe.DynamicAccess;
 import haxe.Json;
 import js.node.Fs;
 import js.node.Path;
@@ -14,7 +15,7 @@ typedef SourceResult = {
 
 typedef BundleResult = {
 	name:String,
-	src:SourceResult,
+	source:SourceResult,
 	map:SourceResult,
 	debugMap:String
 }
@@ -53,6 +54,8 @@ class Bundler
 	var commonjs:Bool;
 	var debugSourceMap:Bool;
 	var nodejsMode:Bool;
+	var revMap:DynamicAccess<Array<Int>>;
+	var bundles:Array<Bundle>;
 
 	public function new(parser:Parser, sourceMap:SourceMap, extractor:Extractor)
 	{
@@ -61,35 +64,108 @@ class Bundler
 		this.extractor = extractor;
 	}
 
-	public function generate(src:String, output:String, commonjs:Bool, debugSourceMap:Bool)
+	public function generate(src:String, output:String, commonjs:Bool, debugSourceMap:Bool):Array<BundleResult>
 	{
 		this.commonjs = commonjs;
 		this.debugSourceMap = sourceMap != null && debugSourceMap;
 
-		trace('Emit $output');
-		var result = [];
-		var buffer = emitBundle(src, extractor.main, true);
-		result.push({
-			name: 'Main',
-			map: writeMap(output, buffer),
-			source: write(output, buffer.src),
-			debugMap: buffer.debugMap
-		});
+		bundles = [extractor.main].concat(extractor.bundles);
 
-		for (bundle in extractor.bundles)
-		{
-			var bundleOutput = Path.join(Path.dirname(output), bundle.name + '.js');
+		// lookup-map between identifiers and bundles
+		revMap = {};
+		var len = bundles.length;
+		for (i in 0...len) createRevMap(i, bundles[i]);
+
+		// filter output nodes for each bundle
+		buildIndex(src);
+
+		// emit
+		var results = [];
+		var isMain = true;
+		for (i in 0...len) {
+			var bundle = bundles[i];
+			var bundleOutput = isMain ? output : Path.join(Path.dirname(output), bundle.name + '.js');
 			trace('Emit $bundleOutput');
-			buffer = emitBundle(src, bundle, false);
-			result.push({
+
+			var buffer = emitBundle(src, bundle, isMain);
+			results[i] = {
 				name: bundle.name,
 				map: writeMap(bundleOutput, buffer),
 				source: write(bundleOutput, buffer.src),
 				debugMap: buffer.debugMap
-			});
+			};
+			isMain = false;
+		}
+		return results;
+	}
+
+	function buildIndex(src:String)
+	{
+		#if verbose_debug
+		trace('Build index...');
+		#end
+		var rev = revMap;
+		var body = parser.rootBody;
+		var bodyLength = body.length;
+		var bundlesLength = bundles.length;
+		for (i in 1...bodyLength)
+		{
+			var node = body[i];
+			// Non-attributed nodes go in all bundles
+			if (node.__tag__ == null) {
+				#if verbose_debug
+				trace('---[' + i + '] <unknown>');
+				trace(src.substr(node.start, node.end - node.start));
+				#end
+
+				node.__tag__ = '__reserved__'; // flag for Main
+				for (j in 1...bundlesLength) {
+					bundles[j].indexes.push(i);
+				}
+			}
+			// Non-reserved nodes go in matching bundle
+			else if (node.__tag__ != '__reserved__') {
+				var list = rev.get(node.__tag__);
+				if (list == null) list = [0];
+
+				#if verbose_debug
+				trace('---[' + i + '] ' + node.__tag__ + ' ' + list);
+				trace(src.substr(node.start, node.end - node.start));
+				#end
+
+				for (j in 0...list.length) {
+					var index = list[j];
+					if (index == 0) node.__tag__ = '__reserved__';
+					else bundles[index].indexes.push(i);
+				}
+			}
+			// Reserved nodes go in Main bundle
 		}
 
-		return result;
+		#if verbose_debug
+		trace('---[EOF]\nBundle indexes:');
+		for (bundle in bundles)
+			if (bundle.name != 'Main')
+				trace('- ' + bundle.name + ': ' + bundle.indexes);
+		trace('Bundle shared:');
+		for (bundle in bundles)
+			trace('- ' + bundle.name + ': ' + bundle.shared);
+		trace('Bundle imported:');
+		for (bundle in bundles)
+			trace('- ' + bundle.name + ': ' + bundle.imports);
+		#end
+	}
+
+	function createRevMap(index:Int, bundle:Bundle)
+	{
+		var rev = revMap;
+		var nodes = bundle.nodes;
+		var len = nodes.length;
+		for (i in 0...len) {
+			var list = rev.get(nodes[i]);
+			if (list != null) list.push(index);
+			else rev.set(nodes[i], [index]);
+		}
 	}
 
 	function writeMap(output:String, buffer:OutputBuffer)
@@ -114,7 +190,7 @@ class Bundler
 	{
 		var output = emitJS(src, bundle, isMain);
 		var map = sourceMap != null ? sourceMap.emitMappings(output.mapNodes, output.mapOffset) : null;
-		var debugMap = debugSourceMap ? emitDebugMap(output.buffer, bundle, map) : null;
+		var debugMap = debugSourceMap && map != null ? emitDebugMap(output.buffer, bundle, map) : null;
 		return {
 			src:output.buffer,
 			map:map,
@@ -125,6 +201,8 @@ class Bundler
 	function emitDebugMap(src:String, bundle:Bundle, map:SourceMapGenerator)
 	{
 		var rawMap:SourceMapFile = Json.parse(map.toString());
+		if (rawMap.sources.length == 0) return null;
+
 		var consumer = new SourceMapConsumer(rawMap);
 		var sources = [for (source in rawMap.sources) {
 			var fileName = source.split('file:///').pop();
@@ -139,18 +217,16 @@ class Bundler
 		var mapOffset = 0;
 		var exports = bundle.exports;
 		var buffer = '';
-		var body = parser.rootBody.copy();
-
-		body.shift(); // "use strict"
+		var body = parser.rootBody;
+		var hasSourceMap = sourceMap != null;
 
 		// include code before HaxeJS output only in main JS
 		if (isMain) {
 			buffer += getBeforeBodySrc(src);
-			mapOffset += getBeforeBodyOffset();
+			if (hasSourceMap) mapOffset += getBeforeBodyOffset();
 		}
 		else mapOffset++;
 
-		var run = isMain ? body.pop() : null;
 		var inc = bundle.nodes;
 		var incAll = isMain && bundle.nodes.length == 0;
 		var mapNodes:Array<AstNode> = [];
@@ -188,19 +264,34 @@ class Bundler
 		}
 
 		// split main content
-		for (node in body)
+		if (isMain)
 		{
-			if (!incAll && node.__tag__ != null && inc.indexOf(node.__tag__) < 0) {
-				if (!isMain || node.__tag__ != '__reserved__')
+			var len = body.length - 1;
+			for (i in 1...len)
+			{
+				var node = body[i];
+				if (!incAll && node.__tag__ != '__reserved__')
 					continue;
+				if (hasSourceMap) mapNodes.push(node);
+				buffer += src.substr(node.start, node.end - node.start);
+				buffer += '\n';
 			}
-			mapNodes.push(node);
-			buffer += src.substr(node.start, node.end - node.start);
-			buffer += '\n';
+		}
+		else
+		{
+			var indexes = bundle.indexes;
+			var len = indexes.length;
+			for (i in 0...len)
+			{
+				var node = body[indexes[i]];
+				if (hasSourceMap) mapNodes.push(node);
+				buffer += src.substr(node.start, node.end - node.start);
+				buffer += '\n';
+			}
 		}
 
 		// hot-reload
-		buffer += emitHot(inc);
+		if (parser.isHot != null) buffer += emitHot(inc);
 
 		// reference shared types
 		if (exports.length > 0)
@@ -211,8 +302,9 @@ class Bundler
 		}
 
 		// entry point
-		if (run != null)
+		if (isMain)
 		{
+			var run = body[body.length - 1];
 			buffer += src.substr(run.start, run.end - run.start);
 			buffer += '\n';
 		}

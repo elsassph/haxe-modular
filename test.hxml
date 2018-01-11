@@ -1,5 +1,3 @@
-# [1] build test web project
-
 # local -lib modular
 -cp src
 extraParams.hxml
@@ -8,6 +6,10 @@ extraParams.hxml
 -D haxe_split=node bin/cmd.js
 
 -cp tool/test/src
+
+--each
+# [1] build test web project
+
 -main Main
 -js tool/test/bin/client/index.js
 
@@ -23,15 +25,8 @@ extraParams.hxml
 # [2] build test node project
 
 -lib hxnodejs
+#-D hxnodejs_no_version_warning
 
-# local -lib modular
--cp src
-extraParams.hxml
-
-# local haxe-split
--D haxe_split=node bin/cmd.js
-
--cp tool/test/src
 -main ServerMain
 -js tool/test/bin/server/index.js
 
