@@ -43,10 +43,10 @@ load(ABFactory).then(function(_) {
 
 Using reflection (e.g. `Type.resolveClass`) is an interesting edge case:
 
-- Using reflection, no visible relationship is available to Modular to 
+- Using reflection, no visible relationship is available to Modular to
   attribute the class to a specific part of the graph.
-  
-- By default, non-attributed classes (and their dependencies) will land in the 
+
+- By default, non-attributed classes (and their dependencies) will land in the
   main bundle. It often can be undesirable.
 
 A simple solution is to somehow add this explicit relationship through code:
@@ -56,6 +56,7 @@ class A {...}
 
 class B {
 	// Not very elegant, but explicit
+	@:keep
 	static private var reflected = [A];
 
 	function new() {
@@ -68,18 +69,18 @@ class B {
 
 ## Controlled bundling
 
-The natural bundling strategy may have limitations that you don't want to 
+The natural bundling strategy may have limitations that you don't want to
 use workaround for, or maybe your project is very large and highly dynamic.
 
 Modular (both [standalone](start.md) or [Webpack Haxe Loader](https://github.com/jasononeil/webpack-haxe-loader))
 allow advanced users to finely control the bundling process.
 
-The approach is to allow you to provide a "hook" script which will have 
+The approach is to allow you to provide a "hook" script which will have
 all freedom to modify the dependency graph.
 
 ### Set up
 
-Hooks are declared in your project's `package.json`, as a single file 
+Hooks are declared in your project's `package.json`, as a single file
 or a list of files.
 
 ```javascript
@@ -107,14 +108,14 @@ or a list of files.
 
 A hook is a simple JavaScript file which should export a function.
 
-The hook runs on **node.js**, so you have access to the entire library 
+The hook runs on **node.js**, so you have access to the entire library
 of node modules.
 
 #### Arguments
 
 This function will receive:
 
-- the graph of your project 
+- the graph of your project
   (see [Graphlib documentation](https://github.com/dagrejs/graphlib/wiki)),
 - the name of the entry point class.
 
@@ -139,7 +140,7 @@ This function can return:
  */
 module.exports = function(graph, root) {
 	console.log(
-		'Hook called with', graph.nodes().length, 
+		'Hook called with', graph.nodes().length,
 		'nodes and "' + root + '" entry point');
 
 	// Modify the graph here.
@@ -167,8 +168,8 @@ If you have any doubt, look inside the generated source code!
 
 ### Solving Reflection limitation
 
-Now we can solve the missing attribution due to reflection and 
-create the link between the dynamicall created class and 
+Now we can solve the missing attribution due to reflection and
+create the link between the dynamicall created class and
 some class of the module it should belong:
 
 ```javascript
@@ -190,11 +191,11 @@ module.exports = function(graph, root) {
 
 	// create a node for the bundle
 	graph.setNode('DynBundle');
-	
+
 	// assign nodes to this bundle
 	graph.setEdge('foo_ReflectedClass1', 'DynBundle');
 	graph.setEdge('foo_ReflectedClass2', 'DynBundle');
-	
+
 	// register the bundle
 	return ['DynBundle'];
 }
