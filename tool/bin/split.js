@@ -381,6 +381,7 @@ Bundler.prototype = {
 		return results;
 	}
 	,buildIndex: function(src) {
+		var ids = this.idMap = { };
 		var rev = this.revMap;
 		var body = this.parser.rootBody;
 		var bodyLength = body.length;
@@ -399,6 +400,7 @@ Bundler.prototype = {
 					this.bundles[j].indexes.push(i);
 				}
 			} else if(node.__tag__ != "__reserved__") {
+				ids[node.__tag__] = true;
 				var list = rev[node.__tag__];
 				if(list == null) {
 					list = [0];
@@ -564,7 +566,9 @@ Bundler.prototype = {
 			while(_g5 < exports.length) {
 				var node3 = exports[_g5];
 				++_g5;
-				buffer += "$" + "s." + node3 + " = " + node3 + "; ";
+				if(Object.prototype.hasOwnProperty.call(this.idMap,node3)) {
+					buffer += "$" + "s." + node3 + " = " + node3 + "; ";
+				}
 			}
 			buffer += "\n";
 		}
@@ -884,21 +888,38 @@ HxOverrides.substr = function(s,pos,len) {
 	return s.substr(pos,len);
 };
 var Main = function() { };
-Main.run = $hx_exports["run"] = function(input,output,modules,debugMode,commonjs,debugSourceMap,dump) {
+Main.run = $hx_exports["run"] = function(input,output,modules,debugMode,commonjs,debugSourceMap,dump,astHooks) {
 	var src = js_node_Fs.readFileSync(input).toString();
 	var parser = new Parser(src,debugMode);
 	var sourceMap = debugMode ? new SourceMap(input,src) : null;
+	modules = Main.applyAstHooks(parser.mainModule,modules,astHooks,parser.graph);
 	if(dump) {
-		Main.dumpGraph(output,parser);
+		Main.dumpGraph(output,parser.graph);
 	}
 	var extractor = new Extractor(parser);
 	extractor.process(parser.mainModule,modules,debugMode);
 	var bundler = new Bundler(parser,sourceMap,extractor);
-	var dir = js_node_Path.dirname(output);
 	return bundler.generate(src,output,commonjs,debugSourceMap);
 };
-Main.dumpGraph = function(output,parser) {
-	var g = parser.graph;
+Main.applyAstHooks = function(mainModule,modules,astHooks,graph) {
+	if(astHooks == null || astHooks.length == 0) {
+		return modules;
+	}
+	var _g = 0;
+	while(_g < astHooks.length) {
+		var hook = astHooks[_g];
+		++_g;
+		if(hook == null) {
+			continue;
+		}
+		var addModules = hook(graph,mainModule);
+		if(addModules != null) {
+			modules = modules.concat(addModules);
+		}
+	}
+	return modules;
+};
+Main.dumpGraph = function(output,g) {
 	console.log("Dump graph: " + output + ".graph");
 	var out = "";
 	var _g = 0;

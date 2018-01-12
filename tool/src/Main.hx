@@ -2,32 +2,47 @@ package;
 
 import js.node.Fs;
 import js.node.Path;
+import graphlib.Graph;
 
 class Main
 {
 	@:expose('run')
 	static function run(input:String, output:String, modules:Array<String>,
-		debugMode:Bool, commonjs:Bool, debugSourceMap:Bool, dump:Bool)
+		debugMode:Bool, commonjs:Bool, debugSourceMap:Bool, dump:Bool,
+		astHooks:Array<Graph->String->Array<String>>)
 	{
 		// parse input
 		var src = Fs.readFileSync(input).toString();
 		var parser = new Parser(src, debugMode);
 		var sourceMap = debugMode ? new SourceMap(input, src) : null;
-		if (dump) dumpGraph(output, parser);
+
+		// external hook
+		modules = applyAstHooks(parser.mainModule, modules, astHooks, parser.graph);
 
 		// process
+		if (dump) dumpGraph(output, parser.graph);
 		var extractor = new Extractor(parser);
 		extractor.process(parser.mainModule, modules, debugMode);
 
 		// emit
 		var bundler = new Bundler(parser, sourceMap, extractor);
-		var dir = Path.dirname(output);
 		return bundler.generate(src, output, commonjs, debugSourceMap);
 	}
 
-	static function dumpGraph(output:String, parser:Parser)
+	static function applyAstHooks(mainModule:String, modules:Array<String>,
+		astHooks:Array<Graph->String->Array<String>>, graph:Graph)
 	{
-		var g = parser.graph;
+		if (astHooks == null || astHooks.length == 0) return modules;
+		for (hook in astHooks) {
+			if (hook == null) continue;
+			var addModules = hook(graph, mainModule);
+			if (addModules != null) modules = modules.concat(addModules);
+		}
+		return modules;
+	}
+
+	static function dumpGraph(output:String, g:Graph)
+	{
 		trace('Dump graph: ${output}.graph');
 		var out = '';
 		for (node in g.nodes()) {
