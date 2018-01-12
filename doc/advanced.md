@@ -11,6 +11,8 @@ using the natural relationship of your code:
 - When splitting a class, it is equivalent to breaking the graph into separate
   graphs; one for your main entry point, and one for each of your modules.
 
+**Reminder**: casting IS an explicit reference (e.g. `cast(a, A)`, `Std.is(a, A)`).
+
 
 ### Splitting several classes in one bundle
 
@@ -61,7 +63,7 @@ class B {
 
 	function new() {
 		// the string 'A' is not enough to establish the relationship
-		var a = Type.createInstance( Type.resolveClass('A') );
+		var a = Type.createInstance(Type.resolveClass('A'), []);
 	}
 }
 
@@ -126,7 +128,6 @@ This function can return:
 - nothing, or
 - an additional list of nodes which should be split.
 
-
 ```javascript
 // my_hook.js
 
@@ -147,6 +148,23 @@ module.exports = function(graph, root) {
 }
 ```
 
+### What can you change in the graph?
+
+The hook can significantly change the graph; you can:
+
+- create nodes (`graph.setNode(n)`);
+  new nodes can be used to virtually regroup classes,
+- create edges (`graph.setEdge(fron, to)`;
+  add directional dependencies between classes,
+- delete edges (`graph.unlink(from, to)`);
+  remove a direction dependency between classes.
+- lookup orphan nodes (`graph.sources()`);
+  this will give you the entry class and all the classes
+  without explicit reference (e.g. reflection).
+
+Modular will automatically "unlink" all the modules **after**
+the hooks have run.
+
 ### Relationship between nodes and Haxe types
 
 Each Haxe type will appear as a node; in the case of a module,
@@ -161,7 +179,6 @@ Type names are transformed in the compilation process:
 com.foo.Bar -> com_foo_Bar
 Pascal_case -> Pascal_$case
 Even__worse -> Even_$_$worse
-
 ```
 
 If you have any doubt, look inside the generated source code!
@@ -184,7 +201,16 @@ module.exports = function(graph, root) {
 
 If you're going to use reflection anyway, you can as well go
 and group these classes together in a single bundle without
-having to create a factory class:
+having to create a factory class.
+
+**Attention:** classes split this way
+
+- CAN be used in type annotations (`var a:A`),
+- CAN be used in soft cast (`var a:A = cast o`),
+- can NOT be used in type inspection (`cast(a, A)`, `Std.is(a, A)`),
+- MUST be referenced through reflection (`Type.resolveClass('A')`),
+- MUST be dynamically instantiated (`Type.createInstance`),
+
 
 ```javascript
 module.exports = function(graph, root) {
@@ -203,11 +229,13 @@ module.exports = function(graph, root) {
 
 Modular will split out the 2 classes and emit `DynBundle.js`.
 
-To load this bundle, use Modular's `Require.module` API:
+To load this bundle, use Modular's `Require.module` API
+(or any mechanism to load the JS file after the main JS):
 
 ```haxe
 Require.module('DynBundle').then(function(_) {
-	var rc1 = Type.createInstance( Type.resolveClass('foo.ReflectedClass1') );
-	// notice that this is the normal qualified Haxe type name:
+	var rc1:ReflectClass1 = Type.createInstance(Type.resolveClass('foo.ReflectedClass1'), []);
+	// notice that `resolveClass` needs the normal qualified Haxe type name
+	// notice that we can type the variable
 })
 ```

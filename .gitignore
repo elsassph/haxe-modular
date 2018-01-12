@@ -1,3 +1,9 @@
 node_modules/
 .temp/
-tool/test/bin/*.js*
+tool/bin/split.js.map
+tool/test/bin/client/*.js
+tool/test/bin/client/*.map
+tool/test/bin/client/*.map.html
+tool/test/bin/server/*.js
+tool/test/bin/server/*.map
+tool/test/bin/server/*.map.html
