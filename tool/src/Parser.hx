@@ -139,7 +139,7 @@ class Parser
 					else
 						inspectIfStatement(node.test, node);
 				default:
-					trace('WARNING: Unexpected ${node.type}, Line ${node.loc.start.line}');
+					trace('WARNING: Unexpected ${node.type}, at character ${node.start}');
 			}
 		}
 	}

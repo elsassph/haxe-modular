@@ -1066,7 +1066,7 @@ Parser.prototype = {
 				this.inspectDeclarations(node.declarations,node);
 				break;
 			default:
-				console.log("WARNING: Unexpected " + node.type + ", Line " + node.loc.start.line);
+				console.log("WARNING: Unexpected " + node.type + ", at character " + node.start);
 			}
 		}
 	}
