@@ -4,7 +4,7 @@ Code splitting and hot-reload for Haxe JavaScript applications.
 
 ## Why?
 
-If you use **Haxe for JavaScript**, directly or indirectly (OpenFl, Kha...), then
+If you use **Haxe for JavaScript**, directly or indirectly (React, OpenFl,...), then
 you probably want to:
 
 - make your web app load instantly,
@@ -34,10 +34,6 @@ file will be emitted (bundling this class and all its dependencies),
 - **at run time**, when the aynchronous reference is evaluated, the additional JS is
 loaded (once) automatically.
 
-Note: Haxe Modular is NOT a solution for extracting libraries, single files or
-entire packages; it is "usage" based and can slice the biggest libraries to keep only
-what you really use, where you really use it.
-
 ## Where to start?
 
 There are 2 ways to use Haxe Modular, depending on your project/toolchain/goals:
@@ -48,8 +44,8 @@ There are 2 ways to use Haxe Modular, depending on your project/toolchain/goals:
 
 In both cases, it is advisable to read about the technical details:
 
-- [How does Haxe compile to JavaScript, and how does on-demand loading work?](doc/how.md)
-- [How to add advanced control of the splitting logic?](doc/advanced.md)
+- [Using Reflection? Need more granular control of bundling?](doc/advanced.md)
+- [How does on-demand loading work at run time?](doc/how.md)
 
 ### What is the difference?
 
@@ -72,3 +68,36 @@ Both solutions:
 2. [Webpack Haxe Loader](https://github.com/jasononeil/webpack-haxe-loader) is a more
    powerful setup but you'll have to learn Webpack. Webpack is a complex and large system
    offering vast possibilities from the JS ecosystem.
+
+### FAQ
+
+Q: Where can I get more help? I have questions / issues...
+
+- Join [haxe-modular chat on Gitter.im](https://gitter.im/haxe-react/haxe-modular)
+
+Q: Is it only for React projects?
+
+- **Of course not**; anything targeting JavaScript can use it.
+- However it does offer React-specific additional features for code hot-reloading.
+
+Q: Is it possible to minify the code?
+
+- **Yes**, you can run a script minifying each of the resulting JS file - for instance 
+  using [Closure Compiler](https://developers.google.com/closure/) in "simple" mode, 
+  or [UglifyJS](https://www.npmjs.com/package/uglify-js), including with the `mangle` 
+  option which rename variables. 
+- However, you can NOT use `-lib closure` which processes the output directly. 
+  Generally, Modular must be the exclusive post-processor of the compiler output.
+
+Q: Can I extract a library/package from my code?
+
+- **No**. For technical reasons, extracting a library (e.g. many classes used across
+  the application) isn't possible yet - it wouldn't work with OpenFl for instance.
+- You normally shouldn't need that! Modular is "usage" based and can slice the biggest 
+  libraries to keep only what you really use, where you really use it.
+
+Q: Can I still use the `includeFile` macro to inject JS code in the output?
+
+- **Yes, but** only when the code is inserted at the top of the file; this is the
+  default position when using `--macro includeFile('my-lib.js')`.
+
