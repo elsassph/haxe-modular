@@ -186,7 +186,7 @@ If you have any doubt, look inside the generated source code!
 ### Solving Reflection limitation
 
 Now we can solve the missing attribution due to reflection and
-create the link between the dynamicall created class and
+create the link between the dynamicall created class and 
 some class of the module it should belong:
 
 ```javascript
@@ -244,4 +244,14 @@ Require.module('DynBundle').then(function(_) {
 
 #### Loading with Webpack Haxe Loader
 
-TODO
+With Webpack it is required to know the virtual name of the bundle.
+A helper function is available:
+
+```haxe
+Webpack.loadModule('DynBundle').then(function(bundleExports) {
+	// Argument is the (optional) @:exposed declarations
+
+	var rc1:ReflectClass1 = Type.createInstance(Type.resolveClass('foo.ReflectedClass1'), []);
+	// notice that `resolveClass` needs the normal qualified Haxe type name
+	// notice that we can type the variable
+});
