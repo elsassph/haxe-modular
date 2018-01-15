@@ -1,4 +1,7 @@
-console.log('[Hook] loaded');
+const path = require('path');
+
+console.log('[Hook]', 'Loaded');
+console.log('[Hook]', __filename, path.isAbsolute(__dirname));
 
 /**
  * Graph post-processor hook
@@ -7,7 +10,7 @@ console.log('[Hook] loaded');
  * @return {String[]} Additional modules to split (identifiers)
  */
 module.exports = function(graph, root) {
-    console.log('[Hook] called with', graph.nodes().length, 'nodes and "' + root + '" entry point');
+    console.log('[Hook]', 'Called with', graph.nodes().length, 'nodes and "' + root + '" entry point');
 
     // you can define virtual nodes
     graph.setNode('fakeNode');

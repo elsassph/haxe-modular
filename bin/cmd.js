@@ -90,21 +90,24 @@ function getGraphHook() {
 }
 
 function loadHandler(fileName) {
-	if (!fs.existsSync(fileName)) {
-		console.log(`[haxe-split] Error: '${hookFile}' does not exist`);
+	const filePath = path.normalize(fileName);
+	const absPath = path.resolve(filePath);
+
+	if (!fs.existsSync(filePath)) {
+		console.error(`[haxe-split] Error: '${filePath}' hook does not exist`);
 		return null;
 	}
 
-	const src = fs.readFileSync(fileName);
+	const src = fs.readFileSync(filePath);
 	const module = {
 		exports: {}
 	};
-	const evaluator = new Function('module', 'exports', 'global', src);
-	evaluator(module, module.exports, global);
+	const evaluator = new Function('module', 'exports', 'global', 'require', '__dirname', '__filename', src);
+	evaluator(module, module.exports, global, require, path.dirname(absPath), absPath);
 
 	const handler = module.exports;
 	if (!handler || (typeof handler !== 'function')) {
-		console.log(`[haxe-split] Error: '${fileName}' does not export a function`);
+		console.error(`[haxe-split] Error: '${filePath}' hook does not export a function`);
 		return null;
 	}
 	return handler;
