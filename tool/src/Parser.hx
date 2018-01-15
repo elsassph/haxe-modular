@@ -231,8 +231,9 @@ class Parser
 							tag(name, def);
 						case 'AssignmentExpression':
 							var right = init.right;
-							if (right.type == 'FunctionExpression') // ctor with export
+							if (right.type == 'FunctionExpression') { // ctor with export
 								tag(name, def);
+							}
 							else if (right.type == 'ObjectExpression') { // enum with export
 								if (isEnumDecl(right))
 									isEnum.set(name, true);
@@ -285,7 +286,7 @@ class Parser
 			types.set(name, [def]);
 		}
 		else types.get(name).push(def);
-		def.__tag__ = name;
+		if (def.__tag__ == null) def.__tag__ = name;
 	}
 
 	inline function isReserved(name:String)

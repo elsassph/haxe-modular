@@ -566,7 +566,7 @@ Bundler.prototype = {
 			while(_g5 < exports.length) {
 				var node3 = exports[_g5];
 				++_g5;
-				if(Object.prototype.hasOwnProperty.call(this.idMap,node3)) {
+				if(node3.charAt(0) == "$" || Object.prototype.hasOwnProperty.call(this.idMap,node3)) {
 					buffer += "$" + "s." + node3 + " = " + node3 + "; ";
 				}
 			}
@@ -657,13 +657,22 @@ Extractor.prototype = {
 			moduleRefs[module1] = g.predecessors(module1);
 			this.unlink(g,module1);
 		}
+		var _g3 = 0;
+		var _g11 = ["$estr","$hxClasses"];
+		while(_g3 < _g11.length) {
+			var enforce = _g11[_g3];
+			++_g3;
+			if(g.hasNode(enforce) && !g.hasEdge(mainModule,enforce)) {
+				g.setEdge(mainModule,enforce);
+			}
+		}
 		var mainNodes = graphlib_Alg.preorder(g,mainModule);
 		if(debugMode) {
-			var _g3 = 0;
-			var _g11 = Reflect.fields(this.parser.isEnum);
-			while(_g3 < _g11.length) {
-				var key = _g11[_g3];
-				++_g3;
+			var _g4 = 0;
+			var _g12 = Reflect.fields(this.parser.isEnum);
+			while(_g4 < _g12.length) {
+				var key = _g12[_g4];
+				++_g4;
 				mainNodes.push(key);
 			}
 		}
@@ -671,11 +680,11 @@ Extractor.prototype = {
 		var dupes = this.deduplicate(this.bundles,mainNodes,debugMode);
 		mainNodes = this.addOnce(mainNodes,dupes.removed);
 		var mainExports = dupes.shared;
-		var _g4 = 0;
-		var _g12 = this.bundles;
-		while(_g4 < _g12.length) {
-			var bundle = _g12[_g4];
-			++_g4;
+		var _g5 = 0;
+		var _g13 = this.bundles;
+		while(_g5 < _g13.length) {
+			var bundle = _g13[_g5];
+			++_g5;
 			if(bundle.isLib) {
 				mainNodes = this.remove(bundle.nodes,mainNodes);
 				mainExports = this.remove(bundle.nodes,mainExports);
@@ -1215,7 +1224,9 @@ Parser.prototype = {
 		} else {
 			this.types[name].push(def);
 		}
-		def.__tag__ = name;
+		if(def.__tag__ == null) {
+			def.__tag__ = name;
+		}
 	}
 	,isReserved: function(name) {
 		return this.reservedTypes[name];
