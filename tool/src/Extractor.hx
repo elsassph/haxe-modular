@@ -62,6 +62,12 @@ class Extractor
 			unlink(g, module);
 		}
 
+		// force some links
+		for (enforce in ["$estr", "$hxClasses"]) {
+			if (g.hasNode(enforce) && !g.hasEdge(mainModule, enforce))
+				g.setEdge(mainModule, enforce);
+		}
+
 		// find main nodes
 		var mainNodes = Alg.preorder(g, mainModule);
 

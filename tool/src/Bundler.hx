@@ -300,7 +300,7 @@ class Bundler
 		if (exports.length > 0)
 		{
 			for (node in exports)
-				if (idMap.exists(node))
+				if (node.charAt(0) == '$' || idMap.exists(node))
 					buffer += '$$s.$node = $node; ';
 			buffer += '\n';
 		}

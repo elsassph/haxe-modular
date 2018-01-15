@@ -22,7 +22,10 @@ class Bar
 	{
 		trace('5. Bar hello');
 		#if !nodejs
+		// verify HTML compat classes
 		var d = new DataView(null);
+		// verify sharing of $estr
+		var estr = untyped __js__("$estr");
 		#end
 	}
 }

@@ -20,6 +20,7 @@ extern class Graph
 
 	public function setNode(v:String, ?label:String):Void;
 	public function node(v:String):String;
+	public function hasNode(v:String):Bool;
 	public function removeNode(v:String):Void;
 	public function nodes():Array<String>;
 	public function nodeCount():Int;
