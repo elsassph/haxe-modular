@@ -40,9 +40,8 @@ Modular recognises a few additional debugging flags:
 
 ### Dynamic instantiation
 
-Modular isn't aware of `@:keep`, and code without explicit reference will be removed.
-If you use `Type.createInstance`, you'll still have to add an explicit link to these
-classes; even a simple `Array` containing class references.
+Using reflection (e.g. `Type.resolveClass`) doesn't create link between classes, so such 
+types will land in the main bundle. [It can be controlled](advanced.md)
 
 ### Magic init
 
