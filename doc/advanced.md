@@ -197,7 +197,7 @@ module.exports = function(graph, root) {
 }
 ```
 
-### Grouping multiple classes in a bundle
+### Grouping multiple classes in a virtual bundle
 
 If you're going to use reflection anyway, you can as well go
 and group these classes together in a single bundle without
@@ -229,6 +229,8 @@ module.exports = function(graph, root) {
 
 Modular will split out the 2 classes and emit `DynBundle.js`.
 
+#### Loading with Standalone Modular
+
 To load this bundle, use Modular's `Require.module` API
 (or any mechanism to load the JS file after the main JS):
 
@@ -239,3 +241,7 @@ Require.module('DynBundle').then(function(_) {
 	// notice that we can type the variable
 })
 ```
+
+#### Loading with Webpack Haxe Loader
+
+TODO
