@@ -1,3 +1,4 @@
+
 # Haxe Modular library
 
 Code splitting requires a different planning than in JavaScript, so **read carefully**!
@@ -56,6 +57,7 @@ What is NOT a direct reference?
 
 - a function returning an object of type `A`
 - `var a:A`
+- `Type.resolveClass('A')`
 
 ### Difference between Debug and Release builds
 
