@@ -64,6 +64,7 @@ class Split
 		args = args.concat(bundles).concat(options);
 
 		//Sys.println(cmd + ' ' + args.join(' '));
-		Sys.command(cmd, args);
+		var code = Sys.command(cmd, args);
+		if (code != 0) Sys.exit(code);
 	}
 }
