@@ -19,6 +19,13 @@ class Extractor
 	public var bundles(default, null):Array<Bundle> = [];
 
 	var parser:Parser;
+	var g:Graph;
+	var hmrMode:Bool;
+	var mainModule:String;
+	var modules:Array<String>;
+	var moduleRefs:DynamicAccess<Array<String>>;
+	var mainNodes:Array<String>;
+	var mainExports:Array<String>;
 
 	public function new(parser:Parser)
 	{
@@ -27,72 +34,41 @@ class Extractor
 
 	public function process(mainModule:String, modulesList:Array<String>, debugMode:Bool)
 	{
+		trace('Bundling...');
+
 		if (parser.typesCount == 0) {
-			trace('Warning: unable to process (no type metadata)');
-			main = {
-				isLib: false,
-				name: 'Main',
-				nodes: [],
-				indexes: [],
-				exports: [],
-				shared: [],
-				imports: []
-			};
+			setEmptyMain();
 			return;
 		}
 
-		trace('Bundling...');
-		var g = parser.graph;
+		// context
+		g = parser.graph;
+		hmrMode = debugMode;
+		this.mainModule = mainModule;
+		uniqueModules(modulesList);
 
-		// link "orphan" classes to main module
-		var sources = g.sources();
-		for (source in sources)
-			if (source != mainModule)
-				g.setEdge(mainModule, source);
+		// apply policy with orphan nodes
+		linkOrphans();
 
-		// deduplicate modules
-		var modules = [];
-		for (module in modulesList)
-			if (modules.indexOf(module) < 0) modules.push(module);
-
-		// create separated sub-trees for main and modules bundles
-		var moduleRefs:DynamicAccess<Array<String>> = {};
-		for (module in modules) {
-			moduleRefs.set(module, g.predecessors(module));
-			unlink(g, module);
-		}
-
-		// force some links
-		for (enforce in ["$estr", "$hxClasses"]) {
-			if (g.hasNode(enforce) && !g.hasEdge(mainModule, enforce))
-				g.setEdge(mainModule, enforce);
-		}
+		// separate modules graphs
+		unlinkModules();
 
 		// find main nodes
-		var mainNodes = Alg.preorder(g, mainModule);
-
-		// /!\ force hoist enums in main bundle to avoid HMR conflicts
-		if (debugMode)
-			for (key in parser.isEnum.keys()) mainNodes.push(key);
+		findMainNodes();
 
 		// find modules nodes
 		bundles = modules.map(processModule);
 
-		// hoist common nodes into main bundle
-		var dupes = deduplicate(bundles, mainNodes, debugMode);
-		mainNodes = addOnce(mainNodes, dupes.removed);
-		var mainExports = dupes.shared;
+		// extract common nodes
+		extractCommonNodes();
 
-		for (bundle in bundles) {
-			if (bundle.isLib) {
-				mainNodes = remove(bundle.nodes, mainNodes);
-				mainExports = remove(bundle.nodes, mainExports);
-				bundle.exports = bundle.nodes.copy();
-			}
-		}
+		finaliseMain();
+	}
 
+	function finaliseMain()
+	{
 		// resolve who loads what
-		var mainImports = resolveImports(mainNodes, bundles, moduleRefs);
+		var mainImports = resolveImports();
 
 		main = {
 			isLib: false,
@@ -105,9 +81,82 @@ class Extractor
 		}
 	}
 
+	function extractCommonNodes()
+	{
+		// hoist common nodes into main bundle
+		var dupes = deduplicate();
+		mainNodes = addOnce(mainNodes, dupes.removed);
+		mainExports = dupes.shared;
+
+		for (bundle in bundles) {
+			if (bundle.isLib) {
+				mainNodes = remove(bundle.nodes, mainNodes);
+				mainExports = remove(bundle.nodes, mainExports);
+				bundle.exports = bundle.nodes.copy();
+			}
+		}
+	}
+
+	function findMainNodes()
+	{
+		// find main nodes
+		mainNodes = Alg.preorder(g, mainModule);
+
+		// /!\ force hoist enums in main bundle to avoid HMR conflicts
+		if (hmrMode)
+			for (key in parser.isEnum.keys()) mainNodes.push(key);
+	}
+
+	function unlinkModules()
+	{
+		// create separated sub-trees for main and modules bundles
+		moduleRefs = {};
+		for (module in modules) {
+			moduleRefs.set(module, g.predecessors(module));
+			unlink(g, module);
+		}
+	}
+
+	function uniqueModules(modulesList:Array<String>)
+	{
+		// deduplicate modules
+		modules = [];
+		for (module in modulesList)
+			if (modules.indexOf(module) < 0) modules.push(module);
+	}
+
+	function linkOrphans()
+	{
+		// link "orphan" classes to main module
+		var sources = g.sources();
+		for (source in sources)
+			if (source != mainModule)
+				g.setEdge(mainModule, source);
+
+		// force some links to main module
+		for (enforce in ["$estr", "$hxClasses"]) {
+			if (g.hasNode(enforce) && !g.hasEdge(mainModule, enforce))
+				g.setEdge(mainModule, enforce);
+		}
+	}
+
+	function setEmptyMain()
+	{
+		trace('Warning: unable to process (no type metadata)');
+		main = {
+			isLib: false,
+			name: 'Main',
+			nodes: [],
+			indexes: [],
+			exports: [],
+			shared: [],
+			imports: []
+		};
+	}
+
 	function processModule(name:String):Bundle
 	{
-		var g = parser.graph;
+		// set up initial bundle objects with needs of used nodes
 		if (name.indexOf('=') > 0) {
 			// package extraction
 			var parts = name.split('=');
@@ -134,7 +183,7 @@ class Extractor
 		}
 	}
 
-	function resolveImports(mainNodes:Array<String>, bundles:Array<Bundle>, refs:DynamicAccess<Array<String>>)
+	function resolveImports()
 	{
 		// find if bundles load other bundles
 		var mainImports = [];
@@ -142,8 +191,8 @@ class Extractor
 			names: 'Main',
 			nodes: mainNodes
 		};
-		for (module in refs.keys()) {
-			var names = refs.get(module);
+		for (module in moduleRefs.keys()) {
+			var names = moduleRefs.get(module);
 			for (bundle in bundles) {
 				if (isReferenced(names, bundle)) {
 					bundle.imports = addOnce([module], bundle.imports);
@@ -167,9 +216,9 @@ class Extractor
 		return false;
 	}
 
-	function deduplicate(bundles:Array<Bundle>, mainNodes:Array<String>, debugMode:Bool)
+	function deduplicate()
 	{
-		trace('Extract common chunks...' + (debugMode ? ' (fast)' : ''));
+		trace('Extract common chunks...' + (hmrMode ? ' (fast)' : ''));
 
 		// map the nodes referenced in several bundles
 		// /!\ in debug mode, only deduplicate nodes in the main bundle to allow HMR of shared components
@@ -182,7 +231,7 @@ class Extractor
 				if (map.exists(node)) {
 					if (dupes.indexOf(node) < 0) dupes.push(node);
 				}
-				else if (bundle.isLib || !debugMode) map.set(node, true);
+				else if (bundle.isLib || !hmrMode) map.set(node, true);
 			}
 		}
 

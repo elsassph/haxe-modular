@@ -624,101 +624,125 @@ var Extractor = function(parser) {
 };
 Extractor.prototype = {
 	process: function(mainModule,modulesList,debugMode) {
+		console.log("Bundling...");
 		if(this.parser.typesCount == 0) {
-			console.log("Warning: unable to process (no type metadata)");
-			this.main = { isLib : false, name : "Main", nodes : [], indexes : [], exports : [], shared : [], imports : []};
+			this.setEmptyMain();
 			return;
 		}
-		console.log("Bundling...");
-		var g = this.parser.graph;
-		var sources = g.sources();
+		this.g = this.parser.graph;
+		this.hmrMode = debugMode;
+		this.mainModule = mainModule;
+		this.uniqueModules(modulesList);
+		this.linkOrphans();
+		this.unlinkModules();
+		this.findMainNodes();
+		this.bundles = this.modules.map($bind(this,this.processModule));
+		this.extractCommonNodes();
+		this.finaliseMain();
+	}
+	,finaliseMain: function() {
+		var mainImports = this.resolveImports();
+		this.main = { isLib : false, name : "Main", nodes : this.mainNodes, indexes : [], exports : this.mainExports, shared : [], imports : mainImports};
+	}
+	,extractCommonNodes: function() {
+		var dupes = this.deduplicate();
+		this.mainNodes = this.addOnce(this.mainNodes,dupes.removed);
+		this.mainExports = dupes.shared;
+		var _g = 0;
+		var _g1 = this.bundles;
+		while(_g < _g1.length) {
+			var bundle = _g1[_g];
+			++_g;
+			if(bundle.isLib) {
+				this.mainNodes = this.remove(bundle.nodes,this.mainNodes);
+				this.mainExports = this.remove(bundle.nodes,this.mainExports);
+				bundle.exports = bundle.nodes.slice();
+			}
+		}
+	}
+	,findMainNodes: function() {
+		this.mainNodes = graphlib_Alg.preorder(this.g,this.mainModule);
+		if(this.hmrMode) {
+			var _g = 0;
+			var _g1 = Reflect.fields(this.parser.isEnum);
+			while(_g < _g1.length) {
+				var key = _g1[_g];
+				++_g;
+				this.mainNodes.push(key);
+			}
+		}
+	}
+	,unlinkModules: function() {
+		this.moduleRefs = { };
+		var _g = 0;
+		var _g1 = this.modules;
+		while(_g < _g1.length) {
+			var $module = _g1[_g];
+			++_g;
+			this.moduleRefs[$module] = this.g.predecessors($module);
+			this.unlink(this.g,$module);
+		}
+	}
+	,uniqueModules: function(modulesList) {
+		this.modules = [];
+		var _g = 0;
+		while(_g < modulesList.length) {
+			var $module = modulesList[_g];
+			++_g;
+			if(this.modules.indexOf($module) < 0) {
+				this.modules.push($module);
+			}
+		}
+	}
+	,linkOrphans: function() {
+		var sources = this.g.sources();
 		var _g = 0;
 		while(_g < sources.length) {
 			var source = sources[_g];
 			++_g;
-			if(source != mainModule) {
-				g.setEdge(mainModule,source);
+			if(source != this.mainModule) {
+				this.g.setEdge(this.mainModule,source);
 			}
 		}
-		var modules = [];
 		var _g1 = 0;
-		while(_g1 < modulesList.length) {
-			var $module = modulesList[_g1];
-			++_g1;
-			if(modules.indexOf($module) < 0) {
-				modules.push($module);
-			}
-		}
-		var moduleRefs = { };
-		var _g2 = 0;
-		while(_g2 < modules.length) {
-			var module1 = modules[_g2];
-			++_g2;
-			moduleRefs[module1] = g.predecessors(module1);
-			this.unlink(g,module1);
-		}
-		var _g3 = 0;
 		var _g11 = ["$estr","$hxClasses"];
-		while(_g3 < _g11.length) {
-			var enforce = _g11[_g3];
-			++_g3;
-			if(g.hasNode(enforce) && !g.hasEdge(mainModule,enforce)) {
-				g.setEdge(mainModule,enforce);
+		while(_g1 < _g11.length) {
+			var enforce = _g11[_g1];
+			++_g1;
+			if(this.g.hasNode(enforce) && !this.g.hasEdge(this.mainModule,enforce)) {
+				this.g.setEdge(this.mainModule,enforce);
 			}
 		}
-		var mainNodes = graphlib_Alg.preorder(g,mainModule);
-		if(debugMode) {
-			var _g4 = 0;
-			var _g12 = Reflect.fields(this.parser.isEnum);
-			while(_g4 < _g12.length) {
-				var key = _g12[_g4];
-				++_g4;
-				mainNodes.push(key);
-			}
-		}
-		this.bundles = modules.map($bind(this,this.processModule));
-		var dupes = this.deduplicate(this.bundles,mainNodes,debugMode);
-		mainNodes = this.addOnce(mainNodes,dupes.removed);
-		var mainExports = dupes.shared;
-		var _g5 = 0;
-		var _g13 = this.bundles;
-		while(_g5 < _g13.length) {
-			var bundle = _g13[_g5];
-			++_g5;
-			if(bundle.isLib) {
-				mainNodes = this.remove(bundle.nodes,mainNodes);
-				mainExports = this.remove(bundle.nodes,mainExports);
-				bundle.exports = bundle.nodes.slice();
-			}
-		}
-		var mainImports = this.resolveImports(mainNodes,this.bundles,moduleRefs);
-		this.main = { isLib : false, name : "Main", nodes : mainNodes, indexes : [], exports : mainExports, shared : [], imports : mainImports};
+	}
+	,setEmptyMain: function() {
+		console.log("Warning: unable to process (no type metadata)");
+		this.main = { isLib : false, name : "Main", nodes : [], indexes : [], exports : [], shared : [], imports : []};
 	}
 	,processModule: function(name) {
-		var g = this.parser.graph;
 		if(name.indexOf("=") > 0) {
 			var parts = name.split("=");
 			var test = new EReg("^" + parts[1].split(",").join("|"),"");
-			var ret = { isLib : true, name : parts[0], nodes : g.nodes().filter(function(n) {
+			var ret = { isLib : true, name : parts[0], nodes : this.g.nodes().filter(function(n) {
 				return test.match(n);
 			}), indexes : [], exports : [], shared : [], imports : []};
 			return ret;
 		} else {
-			return { isLib : false, name : name, nodes : graphlib_Alg.preorder(g,name), indexes : [], exports : [name], shared : [], imports : []};
+			return { isLib : false, name : name, nodes : graphlib_Alg.preorder(this.g,name), indexes : [], exports : [name], shared : [], imports : []};
 		}
 	}
-	,resolveImports: function(mainNodes,bundles,refs) {
+	,resolveImports: function() {
 		var mainImports = [];
-		var mainBundle = { names : "Main", nodes : mainNodes};
+		var mainBundle = { names : "Main", nodes : this.mainNodes};
 		var _g = 0;
-		var _g1 = Reflect.fields(refs);
+		var _g1 = Reflect.fields(this.moduleRefs);
 		while(_g < _g1.length) {
 			var $module = _g1[_g];
 			++_g;
-			var names = refs[$module];
+			var names = this.moduleRefs[$module];
 			var _g2 = 0;
-			while(_g2 < bundles.length) {
-				var bundle = bundles[_g2];
+			var _g3 = this.bundles;
+			while(_g2 < _g3.length) {
+				var bundle = _g3[_g2];
 				++_g2;
 				if(this.isReferenced(names,bundle)) {
 					bundle.imports = this.addOnce([$module],bundle.imports);
@@ -747,12 +771,13 @@ Extractor.prototype = {
 		}
 		return false;
 	}
-	,deduplicate: function(bundles,mainNodes,debugMode) {
-		console.log("Extract common chunks..." + (debugMode ? " (fast)" : ""));
+	,deduplicate: function() {
+		console.log("Extract common chunks..." + (this.hmrMode ? " (fast)" : ""));
 		var map = new haxe_ds_StringMap();
 		var _g = 0;
-		while(_g < mainNodes.length) {
-			var node = mainNodes[_g];
+		var _g1 = this.mainNodes;
+		while(_g < _g1.length) {
+			var node = _g1[_g];
 			++_g;
 			if(__map_reserved[node] != null) {
 				map.setReserved(node,true);
@@ -761,20 +786,21 @@ Extractor.prototype = {
 			}
 		}
 		var dupes = [];
-		var _g1 = 0;
-		while(_g1 < bundles.length) {
-			var bundle = bundles[_g1];
-			++_g1;
-			var _g11 = 0;
-			var _g2 = bundle.nodes;
-			while(_g11 < _g2.length) {
-				var node1 = _g2[_g11];
-				++_g11;
+		var _g2 = 0;
+		var _g11 = this.bundles;
+		while(_g2 < _g11.length) {
+			var bundle = _g11[_g2];
+			++_g2;
+			var _g21 = 0;
+			var _g3 = bundle.nodes;
+			while(_g21 < _g3.length) {
+				var node1 = _g3[_g21];
+				++_g21;
 				if(__map_reserved[node1] != null ? map.existsReserved(node1) : map.h.hasOwnProperty(node1)) {
 					if(dupes.indexOf(node1) < 0) {
 						dupes.push(node1);
 					}
-				} else if(bundle.isLib || !debugMode) {
+				} else if(bundle.isLib || !this.hmrMode) {
 					if(__map_reserved[node1] != null) {
 						map.setReserved(node1,true);
 					} else {
@@ -785,10 +811,10 @@ Extractor.prototype = {
 		}
 		var shared = [];
 		var g = this.parser.graph;
-		var _g3 = 0;
-		while(_g3 < dupes.length) {
-			var node2 = dupes[_g3];
-			++_g3;
+		var _g4 = 0;
+		while(_g4 < dupes.length) {
+			var node2 = dupes[_g4];
+			++_g4;
 			var pre = g.predecessors(node2).filter(function(preNode) {
 				return dupes.indexOf(preNode) < 0;
 			});
@@ -796,10 +822,11 @@ Extractor.prototype = {
 				shared.push(node2);
 			}
 		}
-		var _g4 = 0;
-		while(_g4 < bundles.length) {
-			var bundle1 = [bundles[_g4]];
-			++_g4;
+		var _g5 = 0;
+		var _g12 = this.bundles;
+		while(_g5 < _g12.length) {
+			var bundle1 = [_g12[_g5]];
+			++_g5;
 			if(!bundle1[0].isLib) {
 				var bundle2 = bundle1[0].nodes;
 				var tmp = (function(bundle3) {

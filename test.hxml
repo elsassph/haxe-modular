@@ -7,8 +7,9 @@ extraParams.hxml
 
 -cp tool/test/src
 
+
 --each
-# [1] build test web project
+# [1] build test web project (debug)
 
 -main Main
 -js tool/test/bin/client/index.js
@@ -21,8 +22,9 @@ extraParams.hxml
 # manual splitting command, incorrectly passing a module multiple times
 -cmd node bin/cmd.js .temp/output.js -webpack -debug -debugmap .temp/index.js foo_Bar foo_Bar foo_Bar
 
+
 --next
-# [2] build test node project
+# [2] build test node project (debug)
 
 -lib hxnodejs
 #-D hxnodejs_no_version_warning
@@ -33,5 +35,32 @@ extraParams.hxml
 -debug
 -D modular_debugmap
 
-# [3] run node
+
+# [3] run node (debug)
 -cmd node tool/test/bin/server/index.js
+
+
+--next
+# [4] build test web project (release)
+
+-main Main
+-js tool/test/bin/client_release/index.js
+
+--macro includeFile('tool/test/src/test.js')
+
+# manual splitting command, incorrectly passing a module multiple times
+-cmd node bin/cmd.js .temp/output.js -webpack .temp/index.js foo_Bar foo_Bar foo_Bar
+
+
+--next
+# [5] build test node project (release)
+
+-lib hxnodejs
+#-D hxnodejs_no_version_warning
+
+-main ServerMain
+-js tool/test/bin/server_release/index.js
+
+
+# [6] run node (release)
+-cmd node tool/test/bin/server_release/index.js
