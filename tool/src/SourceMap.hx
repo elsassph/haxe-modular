@@ -7,6 +7,7 @@ import js.node.Path;
 import sourcemap.SourceMapConsumer;
 import sourcemap.SourceMapGenerator;
 import sourcemap.SourceMapGenerator.DefMapping;
+import sys.FileSystem;
 
 typedef SourceMapFile = {
 	version:Int,
@@ -32,6 +33,7 @@ class SourceMap
 		if (p < 0) return;
 		fileName = StringTools.trim(src.substr(p + SRC_REF.length));
 		fileName = Path.join(Path.dirname(input), fileName);
+		if (!FileSystem.exists(fileName)) return;
 		var raw:SourceMapFile = Json.parse(Fs.readFileSync(fileName).toString());
 		source = new SourceMapConsumer(raw);
 	}

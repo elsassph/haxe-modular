@@ -1287,6 +1287,9 @@ var SourceMap = function(input,src) {
 	}
 	this.fileName = StringTools.trim(HxOverrides.substr(src,p + "//# sourceMappingURL=".length,null));
 	this.fileName = js_node_Path.join(js_node_Path.dirname(input),this.fileName);
+	if(!sys_FileSystem.exists(this.fileName)) {
+		return;
+	}
 	var raw = JSON.parse(js_node_Fs.readFileSync(this.fileName).toString());
 	this.source = new sourcemap_SourceMapConsumer(raw);
 };
@@ -1439,6 +1442,15 @@ var js_node_Path = require("path");
 var js_node_buffer_Buffer = require("buffer").Buffer;
 var sourcemap_SourceMapConsumer = require("source-map").SourceMapConsumer;
 var sourcemap_SourceMapGenerator = require("source-map").SourceMapGenerator;
+var sys_FileSystem = function() { };
+sys_FileSystem.exists = function(path) {
+	try {
+		js_node_Fs.accessSync(path);
+		return true;
+	} catch( _ ) {
+		return false;
+	}
+};
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
 var __map_reserved = {};
@@ -1448,7 +1460,7 @@ Bundler.GLOBAL = "typeof window != \"undefined\" ? window : typeof global != \"u
 Bundler.FUNCTION_START = "(function ($hx_exports, $global) { \"use-strict\";\n";
 Bundler.FUNCTION_END = "})(" + "typeof exports != \"undefined\" ? exports : typeof window != \"undefined\" ? window : typeof self != \"undefined\" ? self : this" + ", " + "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this" + ");\n";
 Bundler.WP_START = "/* eslint-disable */ \"use strict\"\n";
-Bundler.FRAGMENTS = { MAIN : { EXPORTS : "var $hx_exports = exports, $global = global;\n", SHARED : "var $s = $global.$hx_scope = $global.$hx_scope || {};\n"}, CHILD : { EXPORTS : "var $hx_exports = exports, $global = global;\n", SHARED : "var $s = $global.$hx_scope;\n"}};
+Bundler.FRAGMENTS = { MAIN : { EXPORTS : "var $hx_exports = module.exports, $global = global;\n", SHARED : "var $s = $global.$hx_scope = $global.$hx_scope || {};\n"}, CHILD : { EXPORTS : "var $hx_exports = module.exports, $global = global;\n", SHARED : "var $s = $global.$hx_scope;\n"}};
 Bundler.generateHtml = global.generateHtml;
 SourceMap.SRC_REF = "//# sourceMappingURL=";
 })(typeof exports != "undefined" ? exports : typeof window != "undefined" ? window : typeof self != "undefined" ? self : this);
