@@ -1,0 +1,83 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Main",
+    "nodes": [
+      "Test2",
+      "$hxClasses",
+      "Type",
+      "Require",
+      "haxe_ds_StringMap",
+      "haxe_IMap",
+      "DepAB",
+      "DepDepAB",
+      "Bundle",
+      "js_Boot"
+    ],
+    "indexes": [],
+    "exports": {
+      "DepAB": true,
+      "$hxClasses": true
+    },
+    "shared": {
+      "CaseA": true,
+      "CaseB": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseA",
+    "nodes": [
+      "CaseA"
+    ],
+    "indexes": [
+      5,
+      6,
+      7,
+      55
+    ],
+    "exports": {
+      "CaseA": true
+    },
+    "shared": {},
+    "imports": {
+      "DepAB": true,
+      "$hxClasses": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseB",
+    "nodes": [
+      "CaseB",
+      "DepB",
+      "DepDepB"
+    ],
+    "indexes": [
+      8,
+      9,
+      10,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      55
+    ],
+    "exports": {
+      "CaseB": true
+    },
+    "shared": {},
+    "imports": {
+      "DepAB": true,
+      "$hxClasses": true
+    }
+  }
+]

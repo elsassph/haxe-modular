@@ -13,10 +13,10 @@ module.exports = function(graph, root) {
     console.log('[Hook]', 'Called with', graph.nodes().length, 'nodes and "' + root + '" entry point');
 
     // you can define virtual nodes
-    graph.setNode('fakeNode');
+    // graph.setNode('fakeNode');
     // you can link/unlink nodes
-    graph.setEdge(root, 'fakeNode');
-    graph.setEdge('foo_Bar', 'fakeNode');
+    // graph.setEdge(root, 'fakeNode');
+    // graph.setEdge('foo_Bar', 'fakeNode');
 
     // you can return additional modules to split
     // return ['Keeped'];
