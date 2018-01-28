@@ -7,4 +7,4 @@ Main
 
 #-D verbose_debug
 
--cmd haxe test.hxml
+-cmd node tool/test/test-suite.js

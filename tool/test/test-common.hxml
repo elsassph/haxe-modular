@@ -1,0 +1,12 @@
+# local -lib modular
+-cp src
+extraParams.hxml
+
+# local haxe-split
+-D haxe_split=node bin/cmd.js
+
+# options
+-D modular_dump
+-D modular_debugmap
+
+-cp tool/test/src

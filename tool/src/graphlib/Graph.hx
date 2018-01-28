@@ -2,7 +2,8 @@ package graphlib;
 
 typedef Edge = {
 	v:String,
-	w:String
+	w:String,
+	?label:String
 }
 
 @:jsRequire('graphlib', 'Graph')
@@ -19,6 +20,7 @@ extern class Graph
 	public function graph():String;
 
 	public function setNode(v:String, ?label:String):Void;
+	/** Returns node's label **/
 	public function node(v:String):String;
 	public function hasNode(v:String):Bool;
 	public function removeNode(v:String):Void;

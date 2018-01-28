@@ -84,9 +84,9 @@ class Bundler
 
 		// emit
 		var results = [];
-		var isMain = true;
 		for (i in 0...len) {
 			var bundle = bundles[i];
+			var isMain = bundle.isMain;
 			var bundleOutput = isMain ? output : Path.join(Path.dirname(output), bundle.name + '.js');
 			trace('Emit $bundleOutput');
 
@@ -150,7 +150,7 @@ class Bundler
 		#if verbose_debug
 		trace('---[EOF]\nBundle indexes:');
 		for (bundle in bundles)
-			if (bundle.name != 'Main')
+			if (!bundle.isMain)
 				trace('- ' + bundle.name + ': ' + bundle.indexes);
 		trace('Bundle shared:');
 		for (bundle in bundles)
@@ -221,7 +221,9 @@ class Bundler
 	function emitJS(src:String, bundle:Bundle, isMain:Bool)
 	{
 		var mapOffset = 0;
-		var exports = bundle.exports;
+		var imports = bundle.imports.keys();
+		var shared = bundle.shared.keys();
+		var exports = bundle.exports.keys();
 		var buffer = '';
 		var body = parser.rootBody;
 		var hasSourceMap = sourceMap != null;
@@ -260,11 +262,9 @@ class Bundler
 			buffer += REQUIRE;
 			mapOffset++;
 		}
-		if (bundle.imports.length > 0 || bundle.shared.length > 0)
+		if (imports.length > 0 || shared.length > 0)
 		{
-			var tmp = bundle.imports.concat(isMain
-				? bundle.shared
-				: [for (node in bundle.shared) '$node = $$s.$node']);
+			var tmp = shared.concat([for (node in imports) '$node = $$s.$node']);
 			buffer += 'var ${tmp.join(', ')};\n';
 			mapOffset++;
 		}
@@ -308,12 +308,24 @@ class Bundler
 			buffer += '\n';
 		}
 
-		// entry point
 		if (isMain)
 		{
+			// entry point
 			var run = body[body.length - 1];
 			buffer += src.substr(run.start, run.end - run.start);
 			buffer += '\n';
+
+			// main libs bridge
+			for (bundle in extractor.bundles) {
+				if (!bundle.isLib) continue;
+				var match = '"${bundle.name}__BRIDGE__"';
+				var bridge = exports
+					.filter(function(node) return shared.indexOf(node) >= 0)
+					.map(function(node) return '$node = $$s.$node')
+					.join(', ');
+				if (bridge == '') bridge = '0';
+				buffer = buffer.split(match).join('($bridge)');
+			}
 		}
 
 		if (!commonjs) buffer += FUNCTION_END;
