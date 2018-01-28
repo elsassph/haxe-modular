@@ -4,6 +4,16 @@ tool/bin/split.js.map
 tool/test/bin/client/*.js
 tool/test/bin/client/*.map
 tool/test/bin/client/*.map.html
+tool/test/bin/client/*.graph
 tool/test/bin/server/*.js
 tool/test/bin/server/*.map
 tool/test/bin/server/*.map.html
+tool/test/bin/server/*.graph
+tool/test/bin/client_release/*.js
+tool/test/bin/client_release/*.map
+tool/test/bin/client_release/*.map.html
+tool/test/bin/client_release/*.graph
+tool/test/bin/server_release/*.js
+tool/test/bin/server_release/*.map
+tool/test/bin/server_release/*.map.html
+tool/test/bin/server_release/*.graph
