@@ -1,29 +1,31 @@
 import acorn.Acorn.AstNode;
 import haxe.DynamicAccess;
-import haxe.Json;
 import js.node.Fs;
 import js.node.Path;
-import sourcemap.SourceMapConsumer;
-import sourcemap.SourceMapGenerator;
 import SourceMap;
 import Extractor;
 
-typedef SourceResult = {
+typedef SourceResult<T> = {
 	path:String,
-	content:String
+	content:T
 }
 
 typedef BundleResult = {
 	name:String,
-	source:SourceResult,
-	map:SourceResult,
+	source:SourceResult<String>,
+	map:SourceResult<SourceMapFile>,
 	debugMap:String
 }
 
 typedef OutputBuffer = {
 	src:String,
-	map:SourceMapGenerator,
+	map:SourceMapFile,
 	?debugMap:String
+}
+
+@:jsRequire('source-map', 'SourceMapConsumer')
+extern class SourceMapConsumer {
+	public function new(map:SourceMapFile);
 }
 
 class Bundler
@@ -171,16 +173,16 @@ class Bundler
 		}
 	}
 
-	function writeMap(output:String, buffer:OutputBuffer)
+	function writeMap(output:String, buffer:OutputBuffer):SourceResult<SourceMapFile>
 	{
 		if (sourceMap == null || buffer.map == null) return null;
 		return {
 			path: '$output.map',
-			content: sourceMap.emitFile(output, buffer.map).toString()
+			content: sourceMap.emitFile(output, buffer.map)
 		};
 	}
 
-	function write(output:String, buffer:String):SourceResult
+	function write(output:String, buffer:String):SourceResult<String>
 	{
 		if (buffer == null) return null;
 		return {
@@ -201,16 +203,17 @@ class Bundler
 		}
 	}
 
-	function emitDebugMap(src:String, bundle:Bundle, map:SourceMapGenerator)
+	function emitDebugMap(src:String, bundle:Bundle, rawMap:SourceMapFile)
 	{
-		var rawMap:SourceMapFile = Json.parse(map.toString());
 		if (rawMap.sources.length == 0) return null;
 
 		var consumer = new SourceMapConsumer(rawMap);
 		var sources = [for (source in rawMap.sources) {
-			var fileName = source.split('file:///').pop();
-			if (Sys.systemName() != 'Windows') fileName = '/' + fileName;
-			Fs.readFileSync(fileName).toString();
+			if (source == null) '';
+			else {
+				var fileName = source.split('file://').pop();
+				Fs.readFileSync(fileName).toString();
+			}
 		}];
 		return generateHtml(consumer, src, sources);
 	}

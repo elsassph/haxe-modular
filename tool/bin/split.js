@@ -346,6 +346,7 @@ function $extend(from, fields) {
 	if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
 	return proto;
 }
+var SourceMapConsumer = require("source-map").SourceMapConsumer;
 var Bundler = function(parser,sourceMap,extractor) {
 	this.parser = parser;
 	this.sourceMap = sourceMap;
@@ -439,7 +440,7 @@ Bundler.prototype = {
 		if(this.sourceMap == null || buffer.map == null) {
 			return null;
 		}
-		return { path : "" + output + ".map", content : this.sourceMap.emitFile(output,buffer.map).toString()};
+		return { path : "" + output + ".map", content : this.sourceMap.emitFile(output,buffer.map)};
 	}
 	,write: function(output,buffer) {
 		if(buffer == null) {
@@ -453,23 +454,25 @@ Bundler.prototype = {
 		var debugMap = this.debugSourceMap && map != null ? this.emitDebugMap(output.buffer,bundle,map) : null;
 		return { src : output.buffer, map : map, debugMap : debugMap};
 	}
-	,emitDebugMap: function(src,bundle,map) {
-		var rawMap = JSON.parse(map.toString());
+	,emitDebugMap: function(src,bundle,rawMap) {
 		if(rawMap.sources.length == 0) {
 			return null;
 		}
-		var consumer = new sourcemap_SourceMapConsumer(rawMap);
+		var consumer = new SourceMapConsumer(rawMap);
 		var _g = [];
 		var _g1 = 0;
 		var _g2 = rawMap.sources;
 		while(_g1 < _g2.length) {
 			var source = _g2[_g1];
 			++_g1;
-			var fileName = source.split("file:///").pop();
-			if(Sys.systemName() != "Windows") {
-				fileName = "/" + fileName;
+			var tmp;
+			if(source == null) {
+				tmp = "";
+			} else {
+				var fileName = source.split("file://").pop();
+				tmp = js_node_Fs.readFileSync(fileName).toString();
 			}
-			_g.push(js_node_Fs.readFileSync(fileName).toString());
+			_g.push(tmp);
 		}
 		var sources = _g;
 		return Bundler.generateHtml(consumer,src,sources);
@@ -881,29 +884,6 @@ Extractor.prototype = {
 	}
 };
 var HxOverrides = function() { };
-HxOverrides.strDate = function(s) {
-	var _g = s.length;
-	switch(_g) {
-	case 8:
-		var k = s.split(":");
-		var d = new Date();
-		d["setTime"](0);
-		d["setUTCHours"](k[0]);
-		d["setUTCMinutes"](k[1]);
-		d["setUTCSeconds"](k[2]);
-		return d;
-	case 10:
-		var k1 = s.split("-");
-		return new Date(k1[0],k1[1] - 1,k1[2],0,0,0);
-	case 19:
-		var k2 = s.split(" ");
-		var y = k2[0].split("-");
-		var t = k2[1].split(":");
-		return new Date(y[0],y[1] - 1,y[2],t[0],t[1],t[2]);
-	default:
-		throw new js__$Boot_HaxeError("Invalid date format : " + s);
-	}
-};
 HxOverrides.cca = function(s,index) {
 	var x = s.charCodeAt(index);
 	if(x != x) {
@@ -1310,6 +1290,7 @@ Reflect.fields = function(o) {
 	}
 	return a;
 };
+var SM = require("@elsassph/fast-source-map");
 var SourceMap = function(input,src) {
 	var p = src.lastIndexOf("//# sourceMappingURL=");
 	if(p < 0) {
@@ -1317,8 +1298,7 @@ var SourceMap = function(input,src) {
 	}
 	this.fileName = StringTools.trim(HxOverrides.substr(src,p + "//# sourceMappingURL=".length,null));
 	this.fileName = js_node_Path.join(js_node_Path.dirname(input),this.fileName);
-	var raw = JSON.parse(js_node_Fs.readFileSync(this.fileName).toString());
-	this.source = new sourcemap_SourceMapConsumer(raw);
+	this.source = SM.decodeFile(this.fileName);
 };
 SourceMap.prototype = {
 	emitMappings: function(nodes,offset) {
@@ -1338,32 +1318,61 @@ SourceMap.prototype = {
 				inc[i] = line++;
 			}
 		}
-		var output = new sourcemap_SourceMapGenerator();
-		var sourceFiles = { };
+		var output = [];
+		var map = { version : 3, file : "", sourceRoot : "", sources : [], sourcesContent : [], names : [], mappings : null};
+		var usedSources = [];
 		try {
-			this.source.eachMapping(function(mapping) {
-				if(!isNaN(inc[mapping.generatedLine])) {
-					sourceFiles[mapping.source] = true;
-					var mapLine = inc[mapping.generatedLine];
-					var column = mapping.originalColumn >= 0 ? mapping.originalColumn : 0;
-					output.addMapping({ source : mapping.source, original : { line : mapping.originalLine, column : column}, generated : { line : mapLine, column : mapping.generatedColumn}});
-				}
-			});
-			var _g3 = 0;
-			var _g11 = Reflect.fields(sourceFiles);
-			while(_g3 < _g11.length) {
-				var sourceName = _g11[_g3];
-				++_g3;
-				var src = this.source.sourceContentFor(sourceName,true);
-				if(src != null) {
-					output.setSourceContent(sourceName,src);
+			var mappings = this.source.mappings;
+			var srcLength = mappings.length;
+			var maxLine = 0;
+			var _g11 = 0;
+			var _g3 = srcLength;
+			while(_g11 < _g3) {
+				var i1 = _g11++;
+				var mapping = mappings[i1];
+				if(!isNaN(inc[i1])) {
+					var _g21 = 0;
+					while(_g21 < mapping.length) {
+						var m = mapping[_g21];
+						++_g21;
+						usedSources[m.src] = true;
+					}
+					var mapLine = inc[i1];
+					output[mapLine] = mapping;
+					if(mapLine > maxLine) {
+						maxLine = mapLine;
+					} else {
+						maxLine = maxLine;
+					}
 				}
 			}
-			return output;
+			var _g12 = 0;
+			var _g4 = maxLine;
+			while(_g12 < _g4) {
+				var i2 = _g12++;
+				if(output[i2] == null) {
+					output[i2] = [];
+				}
+			}
+			var _g13 = 0;
+			var _g5 = this.source.sources.length;
+			while(_g13 < _g5) {
+				var i3 = _g13++;
+				map.sources[i3] = usedSources[i3] ? this.formatPath(this.source.sources[i3]) : null;
+			}
+			map.mappings = output;
+			return SM.encode(map);
 		} catch( err ) {
 			console.log("Invalid source-map");
+			return null;
 		}
-		return output;
+	}
+	,formatPath: function(path) {
+		if(path.indexOf("file://") < 0) {
+			return "file://" + path;
+		} else {
+			return path;
+		}
 	}
 	,emitFile: function(output,map) {
 		if(map == null) {
@@ -1404,23 +1413,6 @@ StringTools.rtrim = function(s) {
 };
 StringTools.trim = function(s) {
 	return StringTools.ltrim(StringTools.rtrim(s));
-};
-var Sys = function() { };
-Sys.systemName = function() {
-	var _g = process.platform;
-	switch(_g) {
-	case "darwin":
-		return "Mac";
-	case "freebsd":
-		return "BSD";
-	case "linux":
-		return "Linux";
-	case "win32":
-		return "Windows";
-	default:
-		var other = _g;
-		return other;
-	}
 };
 var acorn_Acorn = require("acorn");
 var acorn_Walk = require("acorn/dist/walk");
@@ -1467,8 +1459,6 @@ js__$Boot_HaxeError.prototype = $extend(Error.prototype,{
 var js_node_Fs = require("fs");
 var js_node_Path = require("path");
 var js_node_buffer_Buffer = require("buffer").Buffer;
-var sourcemap_SourceMapConsumer = require("source-map").SourceMapConsumer;
-var sourcemap_SourceMapGenerator = require("source-map").SourceMapGenerator;
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
 var __map_reserved = {};
