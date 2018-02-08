@@ -989,7 +989,7 @@ Main.dumpGraph = function(output,g) {
 	js_node_Fs.writeFileSync(output + ".graph",out);
 };
 var Parser = function(src,withLocation) {
-	this.reservedTypes = { "String" : true, "Math" : true, "Array" : true, "Int" : true, "Float" : true, "Bool" : true, "Class" : true, "Date" : true, "Dynamic" : true, "Enum" : true, __map_reserved : true};
+	this.reservedTypes = { "String" : true, "Math" : true, "Array" : true, "Date" : true, "Number" : true, "Boolean" : true, __map_reserved : true};
 	this.mainModule = "Main";
 	var t0 = new Date().getTime();
 	this.processInput(src,withLocation);
@@ -1188,12 +1188,15 @@ Parser.prototype = {
 					switch(_g1) {
 					case "AssignmentExpression":
 						var right = init.right;
-						if(right.type == "FunctionExpression") {
+						var type = right.type;
+						if(type == "FunctionExpression") {
 							this.tag(name,def);
-						} else if(right.type == "ObjectExpression") {
+						} else if(type == "ObjectExpression") {
 							if(this.isEnumDecl(right)) {
 								this.isEnum[name] = true;
 							}
+							this.tag(name,def);
+						} else if(type == "Identifier") {
 							this.tag(name,def);
 						}
 						break;

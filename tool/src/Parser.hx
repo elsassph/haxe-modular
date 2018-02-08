@@ -14,8 +14,7 @@ class Parser
 	public var mainModule:String = 'Main';
 
 	var reservedTypes = {
-		'String':true, 'Math':true, 'Array':true, 'Int':true, 'Float':true,
-		'Bool':true, 'Class':true, 'Date':true, 'Dynamic':true, 'Enum': true,
+		'String':true, 'Math':true, 'Array':true, 'Date':true, 'Number':true, 'Boolean':true,
 		__map_reserved:true
 	};
 
@@ -231,12 +230,16 @@ class Parser
 							tag(name, def);
 						case 'AssignmentExpression':
 							var right = init.right;
-							if (right.type == 'FunctionExpression') { // ctor with export
+							var type = right.type;
+							if (type == 'FunctionExpression') { // ctor with export
 								tag(name, def);
 							}
-							else if (right.type == 'ObjectExpression') { // enum with export
+							else if (type == 'ObjectExpression') { // enum with export
 								if (isEnumDecl(right))
 									isEnum.set(name, true);
+								tag(name, def);
+							}
+							else if (type == 'Identifier') { // var Float = Number
 								tag(name, def);
 							}
 						case 'ObjectExpression': // enum
@@ -289,7 +292,7 @@ class Parser
 		if (def.__tag__ == null) def.__tag__ = name;
 	}
 
-	inline function isReserved(name:String)
+	inline function isReserved(name:String):Bool
 	{
 		return untyped reservedTypes[name];
 	}
