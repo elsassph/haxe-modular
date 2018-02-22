@@ -26,11 +26,11 @@ const suites = [{
 
 const suitesInterop = [{
 	name: 'web-debug',
-	params: '-debug --macro \'includeFile("tool/test/src/test.js")\'',
+	params: '-debug tool/test/test-interop.hxml',
 	isNode: false
 }, {
 	name: 'web-release',
-	params: '--macro \'includeFile("tool/test/src/test.js")\'',
+	params: 'tool/test/test-interop.hxml',
 	isNode: false
 }];
 
@@ -78,7 +78,9 @@ function runAllTests(suite, params, isNode, callback) {
 function execTest(className, name, params, isNode, callback) {
 	const folder = `tool/test/bin/${name}`;
 	if (useLib[className]) params += ' -D uselib';
-	exec(`haxe tool/test/test-common.hxml -main ${className} -js ${folder}/index.js ${params}`, (err, stdout, stderr) => {
+	var cmd = `haxe tool/test/test-common.hxml -main ${className} -js ${folder}/index.js ${params}`;
+	//console.log(cmd);
+	exec(cmd, (err, stdout, stderr) => {
 		if (err) {
 			console.log(stderr);
 			callback(err);
