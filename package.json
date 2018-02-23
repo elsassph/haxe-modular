@@ -18,7 +18,8 @@
   "author": "Philippe Elsass",
   "license": "ISC",
   "dependencies": {
-    "acorn": "^5.2.1",
+    "acorn": "^4.0.3",
+    "@elsassph/fast-source-map": "^0.3.0",
     "graphlib": "^2.1.1",
     "react-deep-force-update": "^2.0.1",
     "react-proxy": "^2.0.8",

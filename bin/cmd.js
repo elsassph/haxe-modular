@@ -31,7 +31,7 @@ const result = split.run(input, output, modules, debugMode, cjsMode, debugSource
 for (file of result) {
 	if (!file || !file.source) continue;
 	if (file.map) {
-		writeIfChanged(file.map.path, file.map.content);
+		writeIfChanged(file.map.path, JSON.stringify(file.map.content));
 	}
 	const content = file.map
 		? `${file.source.content}\n//# sourceMappingURL=${path.basename(file.map.path)}`

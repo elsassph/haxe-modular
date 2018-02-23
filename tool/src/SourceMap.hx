@@ -1,12 +1,7 @@
 package;
 
 import acorn.Acorn.AstNode;
-import haxe.Json;
-import js.node.Fs;
 import js.node.Path;
-import sourcemap.SourceMapConsumer;
-import sourcemap.SourceMapGenerator;
-import sourcemap.SourceMapGenerator.DefMapping;
 
 typedef SourceMapFile = {
 	version:Int,
@@ -18,12 +13,40 @@ typedef SourceMapFile = {
 	mappings:String
 }
 
+typedef Mapping = {
+	col: Int,
+	name: Int,
+	src: Int,
+	srcCol: Int,
+	srcLine: Int,
+}
+
+typedef LineMapping = Array<Mapping>;
+
+typedef DecodedSourceMapFile = {
+	version:Int,
+	file:String,
+	sourceRoot:String,
+	sources:Array<String>,
+	sourcesContent:Array<String>,
+	names:Array<String>,
+	mappings:Array<LineMapping>
+}
+
+@:jsRequire('@elsassph/fast-source-map')
+extern class SM {
+	public static function decode(map:SourceMapFile):DecodedSourceMapFile;
+	public static function decodeFile(path:String):DecodedSourceMapFile;
+	public static function encode(map:DecodedSourceMapFile):SourceMapFile;
+	public static function encodeFile(path:String):SourceMapFile;
+}
+
 class SourceMap
 {
 	static public inline var SRC_REF = '//# sourceMappingURL=';
 
 	var fileName:String;
-	var source:SourceMapConsumer;
+	var source:DecodedSourceMapFile;
 	var lines:Array<String>;
 
 	public function new(input:String, src:String)
@@ -32,14 +55,13 @@ class SourceMap
 		if (p < 0) return;
 		fileName = StringTools.trim(src.substr(p + SRC_REF.length));
 		fileName = Path.join(Path.dirname(input), fileName);
-		var raw:SourceMapFile = Json.parse(Fs.readFileSync(fileName).toString());
-		source = new SourceMapConsumer(raw);
+		source = SM.decodeFile(fileName);
 	}
 
 	/**
 	 * Copy mappings from original sourcemap for the included code
 	 */
-	public function emitMappings(nodes:Array<AstNode>, offset:Int):SourceMapGenerator
+	public function emitMappings(nodes:Array<AstNode>, offset:Int):SourceMapFile
 	{
 		if (nodes.length == 0 || source == null) return null;
 
@@ -53,44 +75,60 @@ class SourceMap
 		}
 
 		// new sourcemap
-		var output = new SourceMapGenerator();
-		var sourceFiles = {};
+		var output:Array<LineMapping> = [];
+		var map:DecodedSourceMapFile = {
+			version: 3,
+			file: '',
+			sourceRoot: '',
+			sources: [],
+			sourcesContent: [],
+			names: [],
+			mappings: null
+		};
+		var usedSources:Array<Bool> = [];
 		try {
 			// filter mappings by flagged lines
-			source.eachMapping(function(mapping:EachMapping) {
-				if (!Math.isNaN(inc[mapping.generatedLine]))
+			var mappings = source.mappings;
+			var srcLength = mappings.length;
+			var maxLine = 0;
+			for (i in 0...srcLength) {
+				var mapping:LineMapping = mappings[i];
+				if (!Math.isNaN(inc[i]))
 				{
-					Reflect.setField(sourceFiles, mapping.source, true);
-
-					var mapLine = inc[mapping.generatedLine];
-					var column = mapping.originalColumn >= 0 ? mapping.originalColumn : 0;
-					output.addMapping({
-						source:mapping.source,
-						original:{ line:mapping.originalLine, column:column },
-						generated:{ line:mapLine, column:mapping.generatedColumn }
-					});
+					for (m in mapping) usedSources[m.src] = true;
+					var mapLine = inc[i];
+					output[mapLine] = mapping;
+					maxLine = mapLine > maxLine ? mapLine : maxLine;
 				}
-			});
-
-			// copy sourceContent if present
-			for (sourceName in Reflect.fields(sourceFiles))
-			{
-				var src = source.sourceContentFor(sourceName, true);
-				if (src != null) output.setSourceContent(sourceName, src);
+			}
+			// fill the holes (it works without, but what will be faster?)
+			for (i in 0...maxLine) {
+				if (output[i] == null) output[i] = [];
 			}
 
-			return output;
+			// set used sources
+			for (i in 0...source.sources.length)
+				map.sources[i] = usedSources[i] ? formatPath(source.sources[i]) : null;
+			map.mappings = output;
+
+			// encode mappings
+			return SM.encode(map);
 		}
 		catch (err:Dynamic) {
 			trace('Invalid source-map');
+			return null;
 		}
-		return output;
+	}
+
+	function formatPath(path:String)
+	{
+		return path.indexOf('file://') < 0 ? 'file://' + path : path;
 	}
 
 	/**
 	 * Set sourcemap's filename and serialize
 	 */
-	public function emitFile(output:String, map:SourceMapGenerator):SourceMapGenerator
+	public function emitFile(output:String, map:SourceMapFile):SourceMapFile
 	{
 		if (map == null) return null;
 
