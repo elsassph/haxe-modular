@@ -226,8 +226,8 @@ class Extractor
 
 	function commonParent(b1:Bundle, b2:Bundle)
 	{
-		var p1 = parentsOf(b1.name);
-		var p2 = parentsOf(b2.name);
+		var p1 = parentsOf(b1.name, {});
+		var p2 = parentsOf(b2.name, {});
 		var i1 = p1.length - 1;
 		var i2 = p2.length - 1;
 		var parent = mainModule;
@@ -239,12 +239,14 @@ class Extractor
 		return parent;
 	}
 
-	function parentsOf(module:String)
+	function parentsOf(module:String, visited:DynamicAccess<Bool>)
 	{
 		var pred = parenting.predecessors(module);
 		var best:Array<String> = null;
 		for (p in pred) {
-			var parents = parentsOf(p);
+			if (visited.exists(p)) continue;
+			visited.set(p, true);
+			var parents = parentsOf(p, visited);
 			if (best == null) best = parents;
 			else if (parents.length < best.length) best = parents;
 		}

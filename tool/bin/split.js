@@ -780,8 +780,8 @@ Extractor.prototype = {
 			return;
 		}
 		var $module = bundle.name;
-		var root = stack.pop();
-		var succ = this.g.successors(root);
+		var target = stack.pop();
+		var succ = this.g.successors(target);
 		var _g = 0;
 		while(_g < succ.length) {
 			var node = succ[_g];
@@ -829,8 +829,8 @@ Extractor.prototype = {
 		}
 	}
 	,commonParent: function(b1,b2) {
-		var p1 = this.parentsOf(b1.name);
-		var p2 = this.parentsOf(b2.name);
+		var p1 = this.parentsOf(b1.name,{ });
+		var p2 = this.parentsOf(b2.name,{ });
 		var i1 = p1.length - 1;
 		var i2 = p2.length - 1;
 		var parent = this.mainModule;
@@ -841,14 +841,18 @@ Extractor.prototype = {
 		}
 		return parent;
 	}
-	,parentsOf: function(module) {
+	,parentsOf: function(module,visited) {
 		var pred = this.parenting.predecessors(module);
 		var best = null;
 		var _g = 0;
 		while(_g < pred.length) {
 			var p = pred[_g];
 			++_g;
-			var parents = this.parentsOf(p);
+			if(Object.prototype.hasOwnProperty.call(visited,p)) {
+				continue;
+			}
+			visited[p] = true;
+			var parents = this.parentsOf(p,visited);
 			if(best == null) {
 				best = parents;
 			} else if(parents.length < best.length) {
