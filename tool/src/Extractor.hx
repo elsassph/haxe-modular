@@ -154,7 +154,7 @@ class Extractor
 				var test = libTest.filter(function(it) return it != lib);
 				if (parents.exists(node)) continue;
 				parents.set(node, lib.bundle.name);
-				walkGraph(lib.bundle, node, test, parents, children);
+				walkGraph(lib.bundle, [node], test, parents, children);
 			}
 		}
 	}
@@ -166,15 +166,17 @@ class Extractor
 			if (module.indexOf('=') > 0) continue;
 			var mod = createBundle(module);
 			parents.set(module, module);
-			walkGraph(mod, module, libTest, parents, children);
+			walkGraph(mod, [module], libTest, parents, children);
 		}
 		if (children.length > 0) recurseVisit(children, libTest, parents);
 	}
 
-	function walkGraph(bundle:Bundle, root:String, libTest:Array<LibTest>, parents:DynamicAccess<String>, children:Array<String>)
+	function walkGraph(bundle:Bundle, stack:Array<String>, libTest:Array<LibTest>, parents:DynamicAccess<String>, children:Array<String>)
 	{
+		if (stack.length == 0) return;
 		var module = bundle.name;
-		var succ = g.successors(root);
+		var target = stack.pop();
+		var succ = g.successors(target);
 		for (node in succ) {
 			// reached sub modules
 			if (moduleTest.exists(node)) {
@@ -201,8 +203,9 @@ class Extractor
 			}
 			// tag and recurse
 			parents.set(node, module);
-			walkGraph(bundle, node, libTest, parents, children);
+			stack.push(node);
 		}
+		walkGraph(bundle, stack, libTest, parents, children);
 	}
 
 	function shareGraph(toBundle:Bundle, fromBundle:Bundle, root:String, parents:DynamicAccess<String>)
