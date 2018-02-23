@@ -1,0 +1,118 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Main",
+    "nodes": [
+      "Test5",
+      "$hxClasses",
+      "Type",
+      "DepMain",
+      "DepDepMain",
+      "Require",
+      "haxe_ds_StringMap",
+      "haxe_IMap",
+      "DepAB",
+      "DepDepAB",
+      "Bundle",
+      "js_Boot"
+    ],
+    "indexes": [],
+    "exports": {
+      "$hxClasses": true,
+      "DepAB": true
+    },
+    "shared": {
+      "lib_Lib2": true,
+      "CaseA": true,
+      "CaseB": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": true,
+    "name": "lib",
+    "nodes": [
+      "lib_Lib2",
+      "lib_DepLib",
+      "lib_Lib"
+    ],
+    "indexes": [
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      70
+    ],
+    "exports": {
+      "lib_Lib2": true,
+      "lib_Lib": true
+    },
+    "shared": {},
+    "imports": {
+      "$hxClasses": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseA",
+    "nodes": [
+      "CaseA"
+    ],
+    "indexes": [
+      5,
+      6,
+      7,
+      70
+    ],
+    "exports": {
+      "CaseA": true
+    },
+    "shared": {},
+    "imports": {
+      "DepAB": true,
+      "lib_Lib": true,
+      "$hxClasses": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseB",
+    "nodes": [
+      "CaseB",
+      "DepB",
+      "DepDepB"
+    ],
+    "indexes": [
+      8,
+      9,
+      10,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      70
+    ],
+    "exports": {
+      "CaseB": true
+    },
+    "shared": {},
+    "imports": {
+      "DepAB": true,
+      "$hxClasses": true,
+      "lib_Lib2": true
+    }
+  }
+]

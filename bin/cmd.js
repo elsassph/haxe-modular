@@ -24,6 +24,8 @@ const input = args[2];
 const output = args[3];
 const modules = args.slice(4);
 
+try { fs.mkdirSync(path.dirname(output)); } catch (_) { }
+
 const split = require('../tool/bin/split');
 const cjsMode = webpackMode || nodejsMode;
 const graphHook = hooks.getGraphHooks();
@@ -31,7 +33,7 @@ const result = split.run(input, output, modules, debugMode, cjsMode, debugSource
 for (file of result) {
 	if (!file || !file.source) continue;
 	if (file.map) {
-		writeIfChanged(file.map.path, file.map.content);
+		writeIfChanged(file.map.path, JSON.stringify(file.map.content));
 	}
 	const content = file.map
 		? `${file.source.content}\n//# sourceMappingURL=${path.basename(file.map.path)}`
@@ -65,7 +67,6 @@ function hasChanged(output, content) {
 function writeIfChanged(output, content) {
 	if (hasChanged(output, content)) {
 		console.log('Write ' + output);
-		try { fs.mkdirSync(path.dirname(output)); } catch (_) { }
 		fs.writeFileSync(output, content);
 	}
 }

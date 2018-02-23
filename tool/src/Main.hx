@@ -1,5 +1,6 @@
 package;
 
+import haxe.Json;
 import js.node.Fs;
 import js.node.Path;
 import graphlib.Graph;
@@ -26,7 +27,10 @@ class Main
 
 		// emit
 		var bundler = new Bundler(parser, sourceMap, extractor);
-		return bundler.generate(src, output, commonjs, debugSourceMap);
+		var result = bundler.generate(src, output, commonjs, debugSourceMap);
+
+		if (dump) dumpModules(output, extractor);
+		return result;
 	}
 
 	static function applyAstHooks(mainModule:String, modules:Array<String>,
@@ -39,6 +43,14 @@ class Main
 			if (addModules != null) modules = modules.concat(addModules);
 		}
 		return modules;
+	}
+
+	static function dumpModules(output:String, extractor:Extractor)
+	{
+		trace('Dump bundles: ${output}.json');
+		var bundles = [extractor.main].concat(extractor.bundles);
+		var out = Json.stringify(bundles, '  ');
+		Fs.writeFileSync(output + '.json', out);
 	}
 
 	static function dumpGraph(output:String, g:Graph)

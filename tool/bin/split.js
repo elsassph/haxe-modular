@@ -346,6 +346,7 @@ function $extend(from, fields) {
 	if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
 	return proto;
 }
+var SourceMapConsumer = require("source-map").SourceMapConsumer;
 var Bundler = function(parser,sourceMap,extractor) {
 	this.parser = parser;
 	this.sourceMap = sourceMap;
@@ -366,12 +367,12 @@ Bundler.prototype = {
 		}
 		this.buildIndex(src);
 		var results = [];
-		var isMain = true;
 		var _g11 = 0;
 		var _g2 = len;
 		while(_g11 < _g2) {
 			var i1 = _g11++;
 			var bundle = this.bundles[i1];
+			var isMain = bundle.isMain;
 			var bundleOutput = isMain ? output : js_node_Path.join(js_node_Path.dirname(output),bundle.name + ".js");
 			console.log("Emit " + bundleOutput);
 			var buffer = this.emitBundle(src,bundle,isMain);
@@ -439,7 +440,7 @@ Bundler.prototype = {
 		if(this.sourceMap == null || buffer.map == null) {
 			return null;
 		}
-		return { path : "" + output + ".map", content : this.sourceMap.emitFile(output,buffer.map).toString()};
+		return { path : "" + output + ".map", content : this.sourceMap.emitFile(output,buffer.map)};
 	}
 	,write: function(output,buffer) {
 		if(buffer == null) {
@@ -453,30 +454,34 @@ Bundler.prototype = {
 		var debugMap = this.debugSourceMap && map != null ? this.emitDebugMap(output.buffer,bundle,map) : null;
 		return { src : output.buffer, map : map, debugMap : debugMap};
 	}
-	,emitDebugMap: function(src,bundle,map) {
-		var rawMap = JSON.parse(map.toString());
+	,emitDebugMap: function(src,bundle,rawMap) {
 		if(rawMap.sources.length == 0) {
 			return null;
 		}
-		var consumer = new sourcemap_SourceMapConsumer(rawMap);
+		var consumer = new SourceMapConsumer(rawMap);
 		var _g = [];
 		var _g1 = 0;
 		var _g2 = rawMap.sources;
 		while(_g1 < _g2.length) {
 			var source = _g2[_g1];
 			++_g1;
-			var fileName = source.split("file:///").pop();
-			if(Sys.systemName() != "Windows") {
-				fileName = "/" + fileName;
+			var tmp;
+			if(source == null) {
+				tmp = "";
+			} else {
+				var fileName = source.split("file://").pop();
+				tmp = js_node_Fs.readFileSync(fileName).toString();
 			}
-			_g.push(js_node_Fs.readFileSync(fileName).toString());
+			_g.push(tmp);
 		}
 		var sources = _g;
 		return Bundler.generateHtml(consumer,src,sources);
 	}
 	,emitJS: function(src,bundle,isMain) {
 		var mapOffset = 0;
-		var exports = bundle.exports;
+		var imports = Reflect.fields(bundle.imports);
+		var shared = Reflect.fields(bundle.shared);
+		var exports = Reflect.fields(bundle.exports);
 		var buffer = "";
 		var body = this.parser.rootBody;
 		var hasSourceMap = this.sourceMap != null;
@@ -507,31 +512,23 @@ Bundler.prototype = {
 			buffer += "var require = (function(r){ return function require(m) { return r[m]; } })($s.__registry__);\n";
 			++mapOffset;
 		}
-		if(bundle.imports.length > 0 || bundle.shared.length > 0) {
-			var bundle1 = bundle.imports;
-			var tmp;
-			if(isMain) {
-				tmp = bundle.shared;
-			} else {
-				var _g = [];
-				var _g1 = 0;
-				var _g2 = bundle.shared;
-				while(_g1 < _g2.length) {
-					var node = _g2[_g1];
-					++_g1;
-					_g.push("" + node + " = $" + "s." + node);
-				}
-				tmp = _g;
+		if(imports.length > 0 || shared.length > 0) {
+			var _g = [];
+			var _g1 = 0;
+			while(_g1 < imports.length) {
+				var node = imports[_g1];
+				++_g1;
+				_g.push("" + node + " = $" + "s." + node);
 			}
-			var tmp1 = bundle1.concat(tmp);
-			buffer += "var " + tmp1.join(", ") + ";\n";
+			var tmp = shared.concat(_g);
+			buffer += "var " + tmp.join(", ") + ";\n";
 			++mapOffset;
 		}
 		if(isMain) {
 			var len = body.length - 1;
 			var _g11 = 1;
-			var _g3 = len;
-			while(_g11 < _g3) {
+			var _g2 = len;
+			while(_g11 < _g2) {
 				var i = _g11++;
 				var node1 = body[i];
 				if(!incAll && node1.__tag__ != "__reserved__") {
@@ -547,8 +544,8 @@ Bundler.prototype = {
 			var indexes = bundle.indexes;
 			var len1 = indexes.length;
 			var _g12 = 0;
-			var _g4 = len1;
-			while(_g12 < _g4) {
+			var _g3 = len1;
+			while(_g12 < _g3) {
 				var i1 = _g12++;
 				var node2 = body[indexes[i1]];
 				if(hasSourceMap) {
@@ -562,10 +559,10 @@ Bundler.prototype = {
 			buffer += this.emitHot(inc);
 		}
 		if(exports.length > 0) {
-			var _g5 = 0;
-			while(_g5 < exports.length) {
-				var node3 = exports[_g5];
-				++_g5;
+			var _g4 = 0;
+			while(_g4 < exports.length) {
+				var node3 = exports[_g4];
+				++_g4;
 				if(node3.charAt(0) == "$" || Object.prototype.hasOwnProperty.call(this.idMap,node3)) {
 					buffer += "$" + "s." + node3 + " = " + node3 + "; ";
 				}
@@ -576,6 +573,25 @@ Bundler.prototype = {
 			var run = body[body.length - 1];
 			buffer += HxOverrides.substr(src,run.start,run.end - run.start);
 			buffer += "\n";
+			var _g5 = 0;
+			var _g13 = this.extractor.bundles;
+			while(_g5 < _g13.length) {
+				var bundle1 = _g13[_g5];
+				++_g5;
+				if(!bundle1.isLib) {
+					continue;
+				}
+				var match = "\"" + bundle1.name + "__BRIDGE__\"";
+				var bridge = exports.filter(function(node4) {
+					return shared.indexOf(node4) >= 0;
+				}).map(function(node5) {
+					return "" + node5 + " = $" + "s." + node5;
+				}).join(", ");
+				if(bridge == "") {
+					bridge = "0";
+				}
+				buffer = buffer.split(match).join("(" + bridge + ")");
+			}
 		}
 		if(!this.commonjs) {
 			buffer += "})(" + "typeof exports != \"undefined\" ? exports : typeof window != \"undefined\" ? window : typeof self != \"undefined\" ? self : this" + ", " + "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this" + ");\n";
@@ -619,69 +635,248 @@ EReg.prototype = {
 	}
 };
 var Extractor = function(parser) {
-	this.bundles = [];
 	this.parser = parser;
 };
 Extractor.prototype = {
 	process: function(mainModule,modulesList,debugMode) {
+		var t0 = new Date().getTime();
 		console.log("Bundling...");
+		this.moduleMap = { };
+		this.parenting = new graphlib_Graph();
+		this.moduleTest = { };
 		if(this.parser.typesCount == 0) {
-			this.setEmptyMain();
+			console.log("Warning: unable to process (no type metadata)");
+			this.main = this.createBundle("Main");
+			this.bundles = [this.main];
 			return;
 		}
 		this.g = this.parser.graph;
 		this.hmrMode = debugMode;
 		this.mainModule = mainModule;
 		this.uniqueModules(modulesList);
+		var _g = 0;
+		while(_g < modulesList.length) {
+			var $module = modulesList[_g];
+			++_g;
+			this.moduleTest[$module] = true;
+		}
 		this.linkOrphans();
-		this.unlinkModules();
-		this.findMainNodes();
-		this.bundles = this.modules.map($bind(this,this.processModule));
-		this.extractCommonNodes();
-		this.finaliseMain();
+		if(debugMode) {
+			this.linkEnums(mainModule,Reflect.fields(this.parser.isEnum));
+		}
+		var libTest = this.expandLibs();
+		var parents = { };
+		this.recurseVisit([mainModule],libTest,parents);
+		this.walkLibs(libTest,parents);
+		this.populateBundles(mainModule,parents);
+		this.main = this.moduleMap[mainModule];
+		this.main.name = "Main";
+		var _g1 = [];
+		var _g11 = 0;
+		var _g2 = this.modules;
+		while(_g11 < _g2.length) {
+			var module1 = _g2[_g11];
+			++_g11;
+			var name = module1.indexOf("=") > 0 ? module1.split("=")[0] : module1;
+			_g1.push(this.moduleMap[name]);
+		}
+		this.bundles = _g1;
+		var t1 = new Date().getTime();
+		console.log("Graph processed in: " + (t1 - t0) + "ms");
 	}
-	,finaliseMain: function() {
-		var mainImports = this.resolveImports();
-		this.main = { isLib : false, name : "Main", nodes : this.mainNodes, indexes : [], exports : this.mainExports, shared : [], imports : mainImports};
-	}
-	,extractCommonNodes: function() {
-		var dupes = this.deduplicate();
-		this.mainNodes = this.addOnce(this.mainNodes,dupes.removed);
-		this.mainExports = dupes.shared;
+	,deduplicate: function(a) {
+		if(a.length <= 1) {
+			return a;
+		}
+		var b = [];
+		var known = { };
 		var _g = 0;
-		var _g1 = this.bundles;
-		while(_g < _g1.length) {
-			var bundle = _g1[_g];
+		while(_g < a.length) {
+			var s = a[_g];
 			++_g;
-			if(bundle.isLib) {
-				this.mainNodes = this.remove(bundle.nodes,this.mainNodes);
-				this.mainExports = this.remove(bundle.nodes,this.mainExports);
-				bundle.exports = bundle.nodes.slice();
+			if(!Object.prototype.hasOwnProperty.call(known,s)) {
+				b.push(s);
+				known[s] = true;
+			}
+		}
+		b.sort(null);
+		return b;
+	}
+	,populateBundles: function(mainModule,parents) {
+		var bundle = this.moduleMap[mainModule];
+		this.recursePopulate(bundle,mainModule,parents,{ });
+	}
+	,recursePopulate: function(bundle,root,parents,visited) {
+		bundle.nodes.push(root);
+		var $module = bundle.name;
+		var succ = this.g.successors(root);
+		var parent;
+		var _g = 0;
+		while(_g < succ.length) {
+			var node = succ[_g];
+			++_g;
+			var parentModule = parents[node];
+			if(parentModule == $module) {
+				parent = bundle;
+			} else {
+				parent = this.moduleMap[parentModule];
+				if(node == parentModule || bundle.isMain) {
+					bundle.shared[node] = true;
+				} else {
+					bundle.imports[node] = true;
+				}
+				parent.exports[node] = true;
+			}
+			if(Object.prototype.hasOwnProperty.call(visited,node)) {
+				continue;
+			}
+			visited[node] = true;
+			this.recursePopulate(parent,node,parents,visited);
+		}
+	}
+	,walkLibs: function(libTest,parents) {
+		var children = [];
+		var _g = 0;
+		while(_g < libTest.length) {
+			var lib = [libTest[_g]];
+			++_g;
+			var _g1 = 0;
+			var _g2 = Reflect.fields(lib[0].roots);
+			while(_g1 < _g2.length) {
+				var node = _g2[_g1];
+				++_g1;
+				var test = libTest.filter((function(lib1) {
+					return function(it) {
+						return it != lib1[0];
+					};
+				})(lib));
+				if(Object.prototype.hasOwnProperty.call(parents,node)) {
+					continue;
+				}
+				parents[node] = lib[0].bundle.name;
+				this.walkGraph(lib[0].bundle,[node],test,parents,children);
 			}
 		}
 	}
-	,findMainNodes: function() {
-		this.mainNodes = graphlib_Alg.preorder(this.g,this.mainModule);
-		if(this.hmrMode) {
-			var _g = 0;
-			var _g1 = Reflect.fields(this.parser.isEnum);
-			while(_g < _g1.length) {
-				var key = _g1[_g];
-				++_g;
-				this.mainNodes.push(key);
+	,recurseVisit: function(modules,libTest,parents) {
+		var children = [];
+		var _g = 0;
+		while(_g < modules.length) {
+			var $module = modules[_g];
+			++_g;
+			if($module.indexOf("=") > 0) {
+				continue;
+			}
+			var mod = this.createBundle($module);
+			parents[$module] = $module;
+			this.walkGraph(mod,[$module],libTest,parents,children);
+		}
+		if(children.length > 0) {
+			this.recurseVisit(children,libTest,parents);
+		}
+	}
+	,walkGraph: function(bundle,stack,libTest,parents,children) {
+		if(stack.length == 0) {
+			return;
+		}
+		var $module = bundle.name;
+		var target = stack.pop();
+		var succ = this.g.successors(target);
+		var _g = 0;
+		while(_g < succ.length) {
+			var node = succ[_g];
+			++_g;
+			if(Object.prototype.hasOwnProperty.call(this.moduleTest,node)) {
+				var childModule = node;
+				this.parenting.setEdge($module,childModule);
+				children.push(childModule);
+				continue;
+			}
+			if(this.isInLib(bundle,node,libTest)) {
+				continue;
+			}
+			if(Object.prototype.hasOwnProperty.call(parents,node)) {
+				var ownerModule = parents[node];
+				if(ownerModule == $module) {
+					continue;
+				}
+				var owner = this.moduleMap[ownerModule];
+				if(!owner.isMain) {
+					var parentModule = this.commonParent(bundle,owner);
+					var parent = this.moduleMap[parentModule];
+					this.shareGraph(parent,owner,node,parents);
+				}
+				continue;
+			}
+			parents[node] = $module;
+			stack.push(node);
+		}
+		this.walkGraph(bundle,stack,libTest,parents,children);
+	}
+	,shareGraph: function(toBundle,fromBundle,root,parents) {
+		var toModule = toBundle.name;
+		var fromModule = fromBundle.name;
+		parents[root] = toModule;
+		var succ = this.g.successors(root);
+		var _g = 0;
+		while(_g < succ.length) {
+			var node = succ[_g];
+			++_g;
+			var current = parents[node];
+			if(current == fromModule) {
+				this.shareGraph(toBundle,fromBundle,node,parents);
 			}
 		}
 	}
-	,unlinkModules: function() {
-		this.moduleRefs = { };
-		var _g = 0;
-		var _g1 = this.modules;
-		while(_g < _g1.length) {
-			var $module = _g1[_g];
-			++_g;
-			this.moduleRefs[$module] = this.g.predecessors($module);
-			this.unlink(this.g,$module);
+	,commonParent: function(b1,b2) {
+		var p1 = this.parentsOf(b1.name,{ });
+		var p2 = this.parentsOf(b2.name,{ });
+		var i1 = p1.length - 1;
+		var i2 = p2.length - 1;
+		var parent = this.mainModule;
+		while(p1[i1] == p2[i2]) {
+			parent = p1[i1];
+			--i1;
+			--i2;
 		}
+		return parent;
+	}
+	,parentsOf: function(module,visited) {
+		var pred = this.parenting.predecessors(module);
+		var best = null;
+		var _g = 0;
+		while(_g < pred.length) {
+			var p = pred[_g];
+			++_g;
+			if(Object.prototype.hasOwnProperty.call(visited,p)) {
+				continue;
+			}
+			visited[p] = true;
+			var parents = this.parentsOf(p,visited);
+			if(best == null) {
+				best = parents;
+			} else if(parents.length < best.length) {
+				best = parents;
+			}
+		}
+		if(best == null) {
+			best = [this.mainModule];
+		} else {
+			best.unshift(module);
+		}
+		return best;
+	}
+	,isInLib: function(bundle,node,libTest) {
+		var _g = 0;
+		while(_g < libTest.length) {
+			var lib = libTest[_g];
+			++_g;
+			if(lib.test.match(node)) {
+				lib.roots[node] = true;
+				return true;
+			}
+		}
+		return false;
 	}
 	,uniqueModules: function(modulesList) {
 		this.modules = [];
@@ -692,6 +887,14 @@ Extractor.prototype = {
 			if(this.modules.indexOf($module) < 0) {
 				this.modules.push($module);
 			}
+		}
+	}
+	,linkEnums: function(root,list) {
+		var _g = 0;
+		while(_g < list.length) {
+			var node = list[_g];
+			++_g;
+			this.g.setEdge(root,node);
 		}
 	}
 	,linkOrphans: function() {
@@ -705,151 +908,48 @@ Extractor.prototype = {
 			}
 		}
 		var _g1 = 0;
-		var _g11 = ["$estr","$hxClasses"];
+		var _g11 = ["$estr","$hxClasses","Std"];
 		while(_g1 < _g11.length) {
 			var enforce = _g11[_g1];
 			++_g1;
-			if(this.g.hasNode(enforce) && !this.g.hasEdge(this.mainModule,enforce)) {
+			if(!this.g.hasNode(enforce)) {
+				continue;
+			}
+			if(!this.g.hasEdge(this.mainModule,enforce)) {
 				this.g.setEdge(this.mainModule,enforce);
 			}
 		}
 	}
-	,setEmptyMain: function() {
-		console.log("Warning: unable to process (no type metadata)");
-		this.main = { isLib : false, name : "Main", nodes : [], indexes : [], exports : [], shared : [], imports : []};
-	}
-	,processModule: function(name) {
-		if(name.indexOf("=") > 0) {
-			var parts = name.split("=");
-			var test = new EReg("^" + parts[1].split(",").join("|"),"");
-			var ret = { isLib : true, name : parts[0], nodes : this.g.nodes().filter(function(n) {
-				return test.match(n);
-			}), indexes : [], exports : [], shared : [], imports : []};
-			return ret;
-		} else {
-			return { isLib : false, name : name, nodes : graphlib_Alg.preorder(this.g,name), indexes : [], exports : [name], shared : [], imports : []};
+	,createBundle: function(name,isLib) {
+		if(isLib == null) {
+			isLib = false;
 		}
+		var bundle = { isMain : name == this.mainModule, isLib : isLib, name : name, nodes : [], indexes : [], exports : { }, shared : { }, imports : { }};
+		if(!this.parenting.hasNode(name)) {
+			this.parenting.setNode(name);
+		}
+		this.moduleMap[name] = bundle;
+		return bundle;
 	}
-	,resolveImports: function() {
-		var mainImports = [];
-		var mainBundle = { names : "Main", nodes : this.mainNodes};
+	,expandLibs: function() {
+		var libTest = [];
 		var _g = 0;
-		var _g1 = Reflect.fields(this.moduleRefs);
+		var _g1 = this.modules;
 		while(_g < _g1.length) {
 			var $module = _g1[_g];
 			++_g;
-			var names = this.moduleRefs[$module];
-			var _g2 = 0;
-			var _g3 = this.bundles;
-			while(_g2 < _g3.length) {
-				var bundle = _g3[_g2];
-				++_g2;
-				if(this.isReferenced(names,bundle)) {
-					bundle.imports = this.addOnce([$module],bundle.imports);
-				}
-			}
-			if(this.isReferenced(names,mainBundle)) {
-				mainImports = this.addOnce([$module],mainImports);
+			if($module.indexOf("=") > 0) {
+				libTest.push(this.resolveLib($module));
 			}
 		}
-		return mainImports;
+		return libTest;
 	}
-	,isReferenced: function(names,bundle) {
-		if(names == null || names.length == 0) {
-			return false;
-		}
-		var _g = 0;
-		while(_g < names.length) {
-			var name = names[_g];
-			++_g;
-			if(bundle.name == name) {
-				return true;
-			}
-			if(bundle.nodes.indexOf(name) >= 0) {
-				return true;
-			}
-		}
-		return false;
-	}
-	,deduplicate: function() {
-		console.log("Extract common chunks..." + (this.hmrMode ? " (fast)" : ""));
-		var map = new haxe_ds_StringMap();
-		var _g = 0;
-		var _g1 = this.mainNodes;
-		while(_g < _g1.length) {
-			var node = _g1[_g];
-			++_g;
-			if(__map_reserved[node] != null) {
-				map.setReserved(node,true);
-			} else {
-				map.h[node] = true;
-			}
-		}
-		var dupes = [];
-		var _g2 = 0;
-		var _g11 = this.bundles;
-		while(_g2 < _g11.length) {
-			var bundle = _g11[_g2];
-			++_g2;
-			var _g21 = 0;
-			var _g3 = bundle.nodes;
-			while(_g21 < _g3.length) {
-				var node1 = _g3[_g21];
-				++_g21;
-				if(__map_reserved[node1] != null ? map.existsReserved(node1) : map.h.hasOwnProperty(node1)) {
-					if(dupes.indexOf(node1) < 0) {
-						dupes.push(node1);
-					}
-				} else if(bundle.isLib || !this.hmrMode) {
-					if(__map_reserved[node1] != null) {
-						map.setReserved(node1,true);
-					} else {
-						map.h[node1] = true;
-					}
-				}
-			}
-		}
-		var shared = [];
-		var g = this.parser.graph;
-		var _g4 = 0;
-		while(_g4 < dupes.length) {
-			var node2 = dupes[_g4];
-			++_g4;
-			var pre = g.predecessors(node2).filter(function(preNode) {
-				return dupes.indexOf(preNode) < 0;
-			});
-			if(pre.length > 0) {
-				shared.push(node2);
-			}
-		}
-		var _g5 = 0;
-		var _g12 = this.bundles;
-		while(_g5 < _g12.length) {
-			var bundle1 = [_g12[_g5]];
-			++_g5;
-			if(!bundle1[0].isLib) {
-				var bundle2 = bundle1[0].nodes;
-				var tmp = (function(bundle3) {
-					return function(node3) {
-						if(dupes.indexOf(node3) < 0) {
-							return true;
-						}
-						if(shared.indexOf(node3) >= 0) {
-							bundle3[0].shared.push(node3);
-						}
-						return false;
-					};
-				})(bundle1);
-				bundle1[0].nodes = bundle2.filter(tmp);
-			}
-		}
-		console.log("Moved " + dupes.length + " common chunks (" + shared.length + " shared)");
-		return { removed : dupes, shared : shared};
-	}
-	,remove: function(source,target) {
-		return source.filter(function(node) {
-			return target.indexOf(node) < 0;
-		});
+	,resolveLib: function(name) {
+		var parts = name.split("=");
+		var newName = parts[0];
+		var test = new EReg("^" + parts[1],"");
+		var tmp = this.createBundle(newName,true);
+		return { test : test, roots : { }, bundle : tmp};
 	}
 	,addOnce: function(source,target) {
 		var temp = target.slice();
@@ -863,47 +963,8 @@ Extractor.prototype = {
 		}
 		return temp;
 	}
-	,unlink: function(g,name) {
-		if(name.indexOf("=") > 0) {
-			return;
-		}
-		var pred = g.predecessors(name);
-		if(pred == null) {
-			console.log("Cannot unlink " + name);
-			return;
-		}
-		var _g = 0;
-		while(_g < pred.length) {
-			var p = pred[_g];
-			++_g;
-			g.removeEdge(p,name);
-		}
-	}
 };
 var HxOverrides = function() { };
-HxOverrides.strDate = function(s) {
-	var _g = s.length;
-	switch(_g) {
-	case 8:
-		var k = s.split(":");
-		var d = new Date();
-		d["setTime"](0);
-		d["setUTCHours"](k[0]);
-		d["setUTCMinutes"](k[1]);
-		d["setUTCSeconds"](k[2]);
-		return d;
-	case 10:
-		var k1 = s.split("-");
-		return new Date(k1[0],k1[1] - 1,k1[2],0,0,0);
-	case 19:
-		var k2 = s.split(" ");
-		var y = k2[0].split("-");
-		var t = k2[1].split(":");
-		return new Date(y[0],y[1] - 1,y[2],t[0],t[1],t[2]);
-	default:
-		throw new js__$Boot_HaxeError("Invalid date format : " + s);
-	}
-};
 HxOverrides.cca = function(s,index) {
 	var x = s.charCodeAt(index);
 	if(x != x) {
@@ -935,7 +996,11 @@ Main.run = $hx_exports["run"] = function(input,output,modules,debugMode,commonjs
 	var extractor = new Extractor(parser);
 	extractor.process(parser.mainModule,modules,debugMode);
 	var bundler = new Bundler(parser,sourceMap,extractor);
-	return bundler.generate(src,output,commonjs,debugSourceMap);
+	var result = bundler.generate(src,output,commonjs,debugSourceMap);
+	if(dump) {
+		Main.dumpModules(output,extractor);
+	}
+	return result;
 };
 Main.applyAstHooks = function(mainModule,modules,astHooks,graph) {
 	if(astHooks == null || astHooks.length == 0) {
@@ -954,6 +1019,12 @@ Main.applyAstHooks = function(mainModule,modules,astHooks,graph) {
 		}
 	}
 	return modules;
+};
+Main.dumpModules = function(output,extractor) {
+	console.log("Dump bundles: " + output + ".json");
+	var bundles = [extractor.main].concat(extractor.bundles);
+	var out = JSON.stringify(bundles,null,"  ");
+	js_node_Fs.writeFileSync(output + ".json",out);
 };
 Main.dumpGraph = function(output,g) {
 	console.log("Dump graph: " + output + ".graph");
@@ -997,7 +1068,7 @@ var Parser = function(src,withLocation) {
 	console.log("Parsed in: " + (t1 - t0) + "ms");
 	this.buildGraph();
 	var t2 = new Date().getTime();
-	console.log("Graph processed in: " + (t2 - t1) + "ms");
+	console.log("AST processed in: " + (t2 - t1) + "ms");
 };
 Parser.prototype = {
 	processInput: function(src,withLocation) {
@@ -1310,6 +1381,7 @@ Reflect.fields = function(o) {
 	}
 	return a;
 };
+var SM = require("@elsassph/fast-source-map");
 var SourceMap = function(input,src) {
 	var p = src.lastIndexOf("//# sourceMappingURL=");
 	if(p < 0) {
@@ -1317,8 +1389,7 @@ var SourceMap = function(input,src) {
 	}
 	this.fileName = StringTools.trim(HxOverrides.substr(src,p + "//# sourceMappingURL=".length,null));
 	this.fileName = js_node_Path.join(js_node_Path.dirname(input),this.fileName);
-	var raw = JSON.parse(js_node_Fs.readFileSync(this.fileName).toString());
-	this.source = new sourcemap_SourceMapConsumer(raw);
+	this.source = SM.decodeFile(this.fileName);
 };
 SourceMap.prototype = {
 	emitMappings: function(nodes,offset) {
@@ -1338,32 +1409,61 @@ SourceMap.prototype = {
 				inc[i] = line++;
 			}
 		}
-		var output = new sourcemap_SourceMapGenerator();
-		var sourceFiles = { };
+		var output = [];
+		var map = { version : 3, file : "", sourceRoot : "", sources : [], sourcesContent : [], names : [], mappings : null};
+		var usedSources = [];
 		try {
-			this.source.eachMapping(function(mapping) {
-				if(!isNaN(inc[mapping.generatedLine])) {
-					sourceFiles[mapping.source] = true;
-					var mapLine = inc[mapping.generatedLine];
-					var column = mapping.originalColumn >= 0 ? mapping.originalColumn : 0;
-					output.addMapping({ source : mapping.source, original : { line : mapping.originalLine, column : column}, generated : { line : mapLine, column : mapping.generatedColumn}});
-				}
-			});
-			var _g3 = 0;
-			var _g11 = Reflect.fields(sourceFiles);
-			while(_g3 < _g11.length) {
-				var sourceName = _g11[_g3];
-				++_g3;
-				var src = this.source.sourceContentFor(sourceName,true);
-				if(src != null) {
-					output.setSourceContent(sourceName,src);
+			var mappings = this.source.mappings;
+			var srcLength = mappings.length;
+			var maxLine = 0;
+			var _g11 = 0;
+			var _g3 = srcLength;
+			while(_g11 < _g3) {
+				var i1 = _g11++;
+				var mapping = mappings[i1];
+				if(!isNaN(inc[i1])) {
+					var _g21 = 0;
+					while(_g21 < mapping.length) {
+						var m = mapping[_g21];
+						++_g21;
+						usedSources[m.src] = true;
+					}
+					var mapLine = inc[i1];
+					output[mapLine] = mapping;
+					if(mapLine > maxLine) {
+						maxLine = mapLine;
+					} else {
+						maxLine = maxLine;
+					}
 				}
 			}
-			return output;
+			var _g12 = 0;
+			var _g4 = maxLine;
+			while(_g12 < _g4) {
+				var i2 = _g12++;
+				if(output[i2] == null) {
+					output[i2] = [];
+				}
+			}
+			var _g13 = 0;
+			var _g5 = this.source.sources.length;
+			while(_g13 < _g5) {
+				var i3 = _g13++;
+				map.sources[i3] = usedSources[i3] ? this.formatPath(this.source.sources[i3]) : null;
+			}
+			map.mappings = output;
+			return SM.encode(map);
 		} catch( err ) {
 			console.log("Invalid source-map");
+			return null;
 		}
-		return output;
+	}
+	,formatPath: function(path) {
+		if(path.indexOf("file://") < 0) {
+			return "file://" + path;
+		} else {
+			return path;
+		}
 	}
 	,emitFile: function(output,map) {
 		if(map == null) {
@@ -1405,46 +1505,12 @@ StringTools.rtrim = function(s) {
 StringTools.trim = function(s) {
 	return StringTools.ltrim(StringTools.rtrim(s));
 };
-var Sys = function() { };
-Sys.systemName = function() {
-	var _g = process.platform;
-	switch(_g) {
-	case "darwin":
-		return "Mac";
-	case "freebsd":
-		return "BSD";
-	case "linux":
-		return "Linux";
-	case "win32":
-		return "Windows";
-	default:
-		var other = _g;
-		return other;
-	}
-};
 var acorn_Acorn = require("acorn");
 var acorn_Walk = require("acorn/dist/walk");
 var graphlib_Graph = require("graphlib").Graph;
-var graphlib_Alg = require("graphlib/lib/alg");
 var haxe_IMap = function() { };
-var haxe_ds_StringMap = function() {
-	this.h = { };
-};
+var haxe_ds_StringMap = function() { };
 haxe_ds_StringMap.__interfaces__ = [haxe_IMap];
-haxe_ds_StringMap.prototype = {
-	setReserved: function(key,value) {
-		if(this.rh == null) {
-			this.rh = { };
-		}
-		this.rh["$" + key] = value;
-	}
-	,existsReserved: function(key) {
-		if(this.rh == null) {
-			return false;
-		}
-		return this.rh.hasOwnProperty("$" + key);
-	}
-};
 var haxe_io_Bytes = function() { };
 var js__$Boot_HaxeError = function(val) {
 	Error.call(this);
@@ -1467,10 +1533,6 @@ js__$Boot_HaxeError.prototype = $extend(Error.prototype,{
 var js_node_Fs = require("fs");
 var js_node_Path = require("path");
 var js_node_buffer_Buffer = require("buffer").Buffer;
-var sourcemap_SourceMapConsumer = require("source-map").SourceMapConsumer;
-var sourcemap_SourceMapGenerator = require("source-map").SourceMapGenerator;
-var $_, $fid = 0;
-function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
 var __map_reserved = {};
 Bundler.REQUIRE = "var require = (function(r){ return function require(m) { return r[m]; } })($s.__registry__);\n";
 Bundler.SCOPE = "typeof exports != \"undefined\" ? exports : typeof window != \"undefined\" ? window : typeof self != \"undefined\" ? self : this";
