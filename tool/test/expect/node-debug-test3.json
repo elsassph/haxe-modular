@@ -1,0 +1,117 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Main",
+    "nodes": [
+      "Test3",
+      "$hxClasses",
+      "Type",
+      "DepMain",
+      "DepDepMain",
+      "Bundle"
+    ],
+    "indexes": [],
+    "exports": {
+      "DepMain": true,
+      "$hxClasses": true
+    },
+    "shared": {
+      "CaseC": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseC",
+    "nodes": [
+      "CaseC"
+    ],
+    "indexes": [
+      5,
+      6,
+      7
+    ],
+    "exports": {
+      "CaseC": true
+    },
+    "shared": {
+      "DepC": true
+    },
+    "imports": {
+      "$hxClasses": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "DepC",
+    "nodes": [
+      "DepC",
+      "DepSubC"
+    ],
+    "indexes": [
+      8,
+      9,
+      10,
+      21,
+      22,
+      23
+    ],
+    "exports": {
+      "DepC": true,
+      "DepSubC": true
+    },
+    "shared": {
+      "SubC": true,
+      "SubC2": true
+    },
+    "imports": {
+      "DepMain": true,
+      "$hxClasses": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "SubC",
+    "nodes": [
+      "SubC"
+    ],
+    "indexes": [
+      18,
+      19,
+      20
+    ],
+    "exports": {
+      "SubC": true
+    },
+    "shared": {},
+    "imports": {
+      "DepSubC": true,
+      "$hxClasses": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "SubC2",
+    "nodes": [
+      "SubC2"
+    ],
+    "indexes": [
+      24,
+      25,
+      26
+    ],
+    "exports": {
+      "SubC2": true
+    },
+    "shared": {},
+    "imports": {
+      "DepSubC": true,
+      "$hxClasses": true
+    }
+  }
+]

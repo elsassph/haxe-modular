@@ -1,0 +1,127 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Main",
+    "nodes": [
+      "Test3",
+      "$hxClasses",
+      "Type",
+      "DepMain",
+      "DepDepMain",
+      "Require",
+      "haxe_ds_StringMap",
+      "haxe_IMap",
+      "Bundle"
+    ],
+    "indexes": [],
+    "exports": {
+      "Require": true,
+      "DepMain": true,
+      "$hxClasses": true
+    },
+    "shared": {
+      "CaseC": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseC",
+    "nodes": [
+      "CaseC"
+    ],
+    "indexes": [
+      5,
+      6,
+      7,
+      52
+    ],
+    "exports": {
+      "CaseC": true
+    },
+    "shared": {
+      "DepC": true
+    },
+    "imports": {
+      "Require": true,
+      "$hxClasses": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "DepC",
+    "nodes": [
+      "DepC",
+      "DepSubC"
+    ],
+    "indexes": [
+      8,
+      9,
+      10,
+      25,
+      26,
+      27,
+      52
+    ],
+    "exports": {
+      "DepC": true,
+      "DepSubC": true
+    },
+    "shared": {
+      "SubC": true,
+      "SubC2": true
+    },
+    "imports": {
+      "Require": true,
+      "DepMain": true,
+      "$hxClasses": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "SubC",
+    "nodes": [
+      "SubC"
+    ],
+    "indexes": [
+      22,
+      23,
+      24,
+      52
+    ],
+    "exports": {
+      "SubC": true
+    },
+    "shared": {},
+    "imports": {
+      "DepSubC": true,
+      "$hxClasses": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "SubC2",
+    "nodes": [
+      "SubC2"
+    ],
+    "indexes": [
+      28,
+      29,
+      30,
+      52
+    ],
+    "exports": {
+      "SubC2": true
+    },
+    "shared": {},
+    "imports": {
+      "DepSubC": true,
+      "$hxClasses": true
+    }
+  }
+]

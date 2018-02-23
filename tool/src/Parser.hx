@@ -29,7 +29,7 @@ class Parser
 
 		buildGraph();
 		var t2 = Date.now().getTime();
-		trace('Graph processed in: ${t2 - t1}ms');
+		trace('AST processed in: ${t2 - t1}ms');
 	}
 
 	function processInput(src:String, withLocation:Bool)

@@ -4,19 +4,23 @@ import graphlib.Graph;
 import haxe.DynamicAccess;
 
 typedef Bundle = {
+	isMain:Bool,
 	isLib:Bool,
 	name:String,
 	nodes:Array<String>,
 	indexes:Array<Int>,
-	exports:Array<String>,
-	shared:Array<String>,
-	imports:Array<String>
+	exports:DynamicAccess<Bool>,
+	shared:DynamicAccess<Bool>,
+	imports:DynamicAccess<Bool>
 }
+
+typedef LibTest = { test:EReg, roots:DynamicAccess<Bool>, bundle:Bundle };
 
 class Extractor
 {
 	public var main(default, null):Bundle;
-	public var bundles(default, null):Array<Bundle> = [];
+	public var bundles(default, null):Array<Bundle>;
+	public var mainLibs:Map<String, Array<String>>;
 
 	var parser:Parser;
 	var g:Graph;
@@ -25,7 +29,13 @@ class Extractor
 	var modules:Array<String>;
 	var moduleRefs:DynamicAccess<Array<String>>;
 	var mainNodes:Array<String>;
+	var mainImports:Array<String>;
 	var mainExports:Array<String>;
+	var libsNodes:Array<String>;
+	var libMap:DynamicAccess<String>;
+	var moduleTest:DynamicAccess<Bool>;
+	var parenting:Graph;
+	var moduleMap:DynamicAccess<Bundle>;
 
 	public function new(parser:Parser)
 	{
@@ -34,10 +44,16 @@ class Extractor
 
 	public function process(mainModule:String, modulesList:Array<String>, debugMode:Bool)
 	{
+		var t0 = Date.now().getTime();
 		trace('Bundling...');
+		moduleMap = {};
+		parenting = new Graph();
+		moduleTest = {};
 
 		if (parser.typesCount == 0) {
-			setEmptyMain();
+			trace('Warning: unable to process (no type metadata)');
+			main = createBundle('Main');
+			bundles = [main];
 			return;
 		}
 
@@ -46,75 +62,203 @@ class Extractor
 		hmrMode = debugMode;
 		this.mainModule = mainModule;
 		uniqueModules(modulesList);
+		for (module in modulesList) moduleTest.set(module, true);
 
 		// apply policy with orphan nodes
 		linkOrphans();
 
-		// separate modules graphs
-		unlinkModules();
+		// apply policy of debug mode
+		if (debugMode) linkEnums(mainModule, parser.isEnum.keys());
 
-		// find main nodes
-		findMainNodes();
 
-		// find modules nodes
-		bundles = modules.map(processModule);
+		// find libs
+		var libTest:Array<LibTest> = expandLibs();
 
-		// extract common nodes
-		extractCommonNodes();
+		// process graph
+		var parents = {};
+		recurseVisit([mainModule], libTest, parents);
+		walkLibs(libTest, parents);
+		populateBundles(mainModule, parents);
 
-		finaliseMain();
+		// format results
+		main = moduleMap.get(mainModule);
+		main.name = 'Main';
+		bundles = [for (module in modules) {
+			var name = module.indexOf('=') > 0 ? module.split('=')[0] : module;
+			moduleMap.get(name);
+		}];
+
+		var t1 = Date.now().getTime();
+		trace('Graph processed in: ${t1 - t0}ms');
+		#if debug
+		trace(main);
+		trace(bundles);
+		#end
 	}
 
-	function finaliseMain()
+	function deduplicate(a:Array<String>)
 	{
-		// resolve who loads what
-		var mainImports = resolveImports();
+		if (a.length <= 1) return a;
+		var b = [];
+		var known:DynamicAccess<Bool> = {};
+		for (s in a) {
+			if (!known.exists(s)) {
+				b.push(s);
+				known.set(s, true);
+			}
+		}
+		b.sort(null);
+		return b;
+	}
 
-		main = {
-			isLib: false,
-			name: 'Main',
-			nodes: mainNodes,
-			indexes: [],
-			exports: mainExports,
-			shared: [],
-			imports: mainImports
+	function populateBundles(mainModule:String, parents:DynamicAccess<String>)
+	{
+		// Now that nodes having attributed to bundles,
+		// re-walk the graph to populate bundles' nodes/exports/imports/shared
+		var bundle = moduleMap.get(mainModule);
+		recursePopulate(bundle, mainModule, parents, {});
+	}
+
+	function recursePopulate(bundle:Bundle, root:String, parents:DynamicAccess<String>, visited:DynamicAccess<Bool>)
+	{
+		bundle.nodes.push(root);
+		var module = bundle.name;
+		var succ = g.successors(root);
+		var parent:Bundle;
+		for (node in succ) {
+			// find node owner
+			var parentModule = parents.get(node);
+			if (parentModule == module) {
+				parent = bundle;
+			}
+			else {
+				// node is owned by another bundle - bridge the bundles
+				parent = moduleMap.get(parentModule);
+				if (node == parentModule || bundle.isMain) bundle.shared.set(node, true);
+				else bundle.imports.set(node, true);
+				parent.exports.set(node, true);
+			}
+			// tag and recurse
+			if (visited.exists(node)) continue;
+			visited.set(node, true);
+			recursePopulate(parent, node, parents, visited);
 		}
 	}
 
-	function extractCommonNodes()
+	function walkLibs(libTest:Array<LibTest>, parents:DynamicAccess<String>)
 	{
-		// hoist common nodes into main bundle
-		var dupes = deduplicate();
-		mainNodes = addOnce(mainNodes, dupes.removed);
-		mainExports = dupes.shared;
-
-		for (bundle in bundles) {
-			if (bundle.isLib) {
-				mainNodes = remove(bundle.nodes, mainNodes);
-				mainExports = remove(bundle.nodes, mainExports);
-				bundle.exports = bundle.nodes.copy();
+		// libs don't have a single root, any number of disconnected classes can be referenced
+		var children = [];
+		for (lib in libTest) {
+			for (node in lib.roots.keys()) {
+				var test = libTest.filter(function(it) return it != lib);
+				if (parents.exists(node)) continue;
+				parents.set(node, lib.bundle.name);
+				walkGraph(lib.bundle, node, test, parents, children);
 			}
 		}
 	}
 
-	function findMainNodes()
+	function recurseVisit(modules:Array<String>, libTest:Array<LibTest>, parents:DynamicAccess<String>)
 	{
-		// find main nodes
-		mainNodes = Alg.preorder(g, mainModule);
-
-		// /!\ force hoist enums in main bundle to avoid HMR conflicts
-		if (hmrMode)
-			for (key in parser.isEnum.keys()) mainNodes.push(key);
+		var children = [];
+		for (module in modules) {
+			if (module.indexOf('=') > 0) continue;
+			var mod = createBundle(module);
+			parents.set(module, module);
+			walkGraph(mod, module, libTest, parents, children);
+		}
+		if (children.length > 0) recurseVisit(children, libTest, parents);
 	}
 
-	function unlinkModules()
+	function walkGraph(bundle:Bundle, root:String, libTest:Array<LibTest>, parents:DynamicAccess<String>, children:Array<String>)
 	{
-		// create separated sub-trees for main and modules bundles
-		moduleRefs = {};
-		for (module in modules) {
-			moduleRefs.set(module, g.predecessors(module));
-			unlink(g, module);
+		var module = bundle.name;
+		var succ = g.successors(root);
+		for (node in succ) {
+			// reached sub modules
+			if (moduleTest.exists(node)) {
+				var childModule = node;
+				parenting.setEdge(module, childModule);
+				children.push(childModule);
+				continue;
+			}
+			// reached lib
+			if (isInLib(bundle, node, libTest)) {
+				continue;
+			}
+			// deduplicate
+			if (parents.exists(node)) {
+				var ownerModule = parents.get(node);
+				if (ownerModule == module) continue;
+				var owner = moduleMap.get(ownerModule);
+				if (!owner.isMain) {
+					var parentModule = commonParent(bundle, owner);
+					var parent = moduleMap.get(parentModule);
+					shareGraph(parent, owner, node, parents);
+				}
+				continue;
+			}
+			// tag and recurse
+			parents.set(node, module);
+			walkGraph(bundle, node, libTest, parents, children);
 		}
+	}
+
+	function shareGraph(toBundle:Bundle, fromBundle:Bundle, root:String, parents:DynamicAccess<String>)
+	{
+		// A node was found to be referenced by 2 bundles:
+		// it should be hoisted in the parent bundle, along with its children
+		var toModule = toBundle.name;
+		var fromModule = fromBundle.name;
+		parents.set(root, toModule);
+		var succ = g.successors(root);
+		for (node in succ) {
+			var current = parents.get(node);
+			if (current == fromModule) {
+				shareGraph(toBundle, fromBundle, node, parents);
+			}
+		}
+	}
+
+	function commonParent(b1:Bundle, b2:Bundle)
+	{
+		var p1 = parentsOf(b1.name);
+		var p2 = parentsOf(b2.name);
+		var i1 = p1.length - 1;
+		var i2 = p2.length - 1;
+		var parent = mainModule;
+		while (p1[i1] == p2[i2]) {
+			parent = p1[i1];
+			i1--;
+			i2--;
+		}
+		return parent;
+	}
+
+	function parentsOf(module:String)
+	{
+		var pred = parenting.predecessors(module);
+		var best:Array<String> = null;
+		for (p in pred) {
+			var parents = parentsOf(p);
+			if (best == null) best = parents;
+			else if (parents.length < best.length) best = parents;
+		}
+		if (best == null) best = [mainModule];
+		else best.unshift(module);
+		return best;
+	}
+
+	function isInLib(bundle:Bundle, node:String, libTest:Array<LibTest>)
+	{
+		for (lib in libTest) {
+			if (lib.test.match(node)) {
+				lib.roots.set(node, true);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	function uniqueModules(modulesList:Array<String>)
@@ -123,6 +267,13 @@ class Extractor
 		modules = [];
 		for (module in modulesList)
 			if (modules.indexOf(module) < 0) modules.push(module);
+	}
+
+	function linkEnums(root:String, list:Array<String>)
+	{
+		// force enums in main bundle in debug mode to allow hot-code reload
+		for (node in list)
+			g.setEdge(root, node);
 	}
 
 	function linkOrphans()
@@ -134,140 +285,52 @@ class Extractor
 				g.setEdge(mainModule, source);
 
 		// force some links to main module
-		for (enforce in ["$estr", "$hxClasses"]) {
-			if (g.hasNode(enforce) && !g.hasEdge(mainModule, enforce))
+		for (enforce in ["$estr", "$hxClasses", "Std"]) {
+			if (!g.hasNode(enforce)) continue;
+			if (!g.hasEdge(mainModule, enforce))
 				g.setEdge(mainModule, enforce);
 		}
 	}
 
-	function setEmptyMain()
+	function createBundle(name:String, isLib:Bool = false)
 	{
-		trace('Warning: unable to process (no type metadata)');
-		main = {
-			isLib: false,
-			name: 'Main',
+		var bundle:Bundle = {
+			isMain: name == mainModule,
+			isLib: isLib,
+			name: name,
 			nodes: [],
 			indexes: [],
-			exports: [],
-			shared: [],
-			imports: []
+			exports: {},
+			shared: {},
+			imports: {}
 		};
+		if (!parenting.hasNode(name)) parenting.setNode(name);
+		moduleMap.set(name, bundle);
+		return bundle;
 	}
 
-	function processModule(name:String):Bundle
+	function expandLibs()
 	{
-		// set up initial bundle objects with needs of used nodes
-		if (name.indexOf('=') > 0) {
-			// package extraction
-			var parts = name.split('=');
-			var test = new EReg('^${parts[1].split(",").join("|")}', '');
-			var ret = {
-				isLib: true,
-				name: parts[0],
-				nodes: g.nodes().filter(function (n) return test.match(n)),
-				indexes: [],
-				exports: [],
-				shared: [],
-				imports: []
-			};
-			return ret;
+		var libTest:Array<LibTest> = [];
+		for (module in modules) {
+			if (module.indexOf('=') > 0) {
+				libTest.push(resolveLib(module));
+			}
 		}
-		else return {
-			isLib: false,
-			name: name,
-			nodes: Alg.preorder(g, name),
-			indexes: [],
-			exports: [name],
-			shared: [],
-			imports: []
-		}
+		return libTest;
 	}
 
-	function resolveImports()
+	function resolveLib(name:String)
 	{
-		// find if bundles load other bundles
-		var mainImports = [];
-		var mainBundle = cast {
-			names: 'Main',
-			nodes: mainNodes
-		};
-		for (module in moduleRefs.keys()) {
-			var names = moduleRefs.get(module);
-			for (bundle in bundles) {
-				if (isReferenced(names, bundle)) {
-					bundle.imports = addOnce([module], bundle.imports);
-				}
-			}
-			if (isReferenced(names, mainBundle)) {
-				mainImports = addOnce([module], mainImports);
-			}
-		}
-		return mainImports;
-	}
-
-	function isReferenced(names:Array<String>, bundle:Bundle)
-	{
-		if (names == null || names.length == 0) return false;
-
-		for (name in names) {
-			if (bundle.name == name) return true;
-			if (bundle.nodes.indexOf(name) >= 0) return true;
-		}
-		return false;
-	}
-
-	function deduplicate()
-	{
-		trace('Extract common chunks...' + (hmrMode ? ' (fast)' : ''));
-
-		// map the nodes referenced in several bundles
-		// /!\ in debug mode, only deduplicate nodes in the main bundle to allow HMR of shared components
-		var map = new Map<String, Bool>();
-		for (node in mainNodes) map.set(node, true);
-		var dupes = [];
-		for (bundle in bundles)
-		{
-			for (node in bundle.nodes) {
-				if (map.exists(node)) {
-					if (dupes.indexOf(node) < 0) dupes.push(node);
-				}
-				else if (bundle.isLib || !hmrMode) map.set(node, true);
-			}
-		}
-
-		// find dependencies to share
-		var shared = [];
-		var g = parser.graph;
-		for (node in dupes)
-		{
-			// a node should be shared if not a transitive dependency of a shared node
-			var pre = g.predecessors(node)
-				.filter(function(preNode) return dupes.indexOf(preNode) < 0);
-			if (pre.length > 0) shared.push(node);
-		}
-
-		// remove common nodes from bundles and mark them as shared
-		for (bundle in bundles)
-		{
-			if (!bundle.isLib) {
-				bundle.nodes = bundle.nodes.filter(function(node) {
-					if (dupes.indexOf(node) < 0) return true;
-					if (shared.indexOf(node) >= 0) bundle.shared.push(node);
-					return false;
-				});
-			}
-		}
-
-		trace('Moved ${dupes.length} common chunks (${shared.length} shared)');
+		// libname=pattern
+		var parts = name.split('=');
+		var newName = parts[0];
+		var test = new EReg('^${parts[1]}', '');
 		return {
-			removed:dupes,
-			shared:shared
-		}
-	}
-
-	function remove(source:Array<String>, target:Array<String>)
-	{
-		return source.filter(function(node) return target.indexOf(node) < 0);
+			test: test,
+			roots: ({} :DynamicAccess<Bool>),
+			bundle: createBundle(newName, true)
+		};
 	}
 
 	function addOnce(source:Array<String>, target:Array<String>)
@@ -276,18 +339,5 @@ class Extractor
 		for (node in source)
 			if (target.indexOf(node) < 0) temp.push(node);
 		return temp;
-	}
-
-	function unlink(g:Graph, name:String)
-	{
-		if (name.indexOf('=') > 0) return;
-
-		var pred = g.predecessors(name);
-		if (pred == null) {
-			trace('Cannot unlink $name');
-			return;
-		}
-		for (p in pred)
-			g.removeEdge(p, name);
 	}
 }
