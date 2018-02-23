@@ -44,6 +44,7 @@ There are 2 ways to use Haxe Modular, depending on your project/toolchain/goals:
 
 In both cases, it is advisable to read about the technical details:
 
+- [How to extract/split whole libraries?](doc/libraries.md)
 - [Using Reflection? Need more granular control of bundling?](doc/advanced.md)
 - [How does on-demand loading work at run time?](doc/how.md)
 
@@ -91,10 +92,8 @@ Q: Is it possible to minify the code?
 
 Q: Can I extract a library/package from my code?
 
-- **No**. For technical reasons, extracting a library (e.g. many classes used across
-  the application) isn't possible yet - it wouldn't work with OpenFl for instance.
-- You normally shouldn't need that! Modular is "usage" based and can slice the biggest 
-  libraries to keep only what you really use, where you really use it.
+- **Yes**: [you can split libraries](doc/libraries.md), but for technical reasons, 
+  extracting a library (e.g. many classes used across the application) has some limitations.
 
 Q: Can I still use the `includeFile` macro to inject JS code in the output?
 

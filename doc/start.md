@@ -14,7 +14,7 @@ For complete architecture examples using this technique you can consult:
 
 	- [Set up NPM dependencies](npm-setup.md)
 
-2. Haxe-JS code and source-maps splitting, and lazy-loading
+2. Haxe-JS code and sourcemaps splitting, and lazy-loading
 
 	Code splitting works by identifying features which can be asynchronously loaded at
 	run time. JS bundles can be created automatically when using Modular's async API.
