@@ -52,7 +52,7 @@ class Extractor
 
 		if (parser.typesCount == 0) {
 			trace('Warning: unable to process (no type metadata)');
-			main = createBundle('Main');
+			main = createBundle(mainModule);
 			bundles = [main];
 			return;
 		}
@@ -81,7 +81,6 @@ class Extractor
 
 		// format results
 		main = moduleMap.get(mainModule);
-		main.name = 'Main';
 		bundles = modules.map(function(module) {
 			var name = module.indexOf('=') > 0 ? module.split('=')[0] : module;
 			return moduleMap.get(name);

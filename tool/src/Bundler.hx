@@ -53,6 +53,7 @@ class Bundler
 	var parser:Parser;
 	var sourceMap:SourceMap;
 	var extractor:Extractor;
+	var reporter:Reporter;
 	var commonjs:Bool;
 	var debugSourceMap:Bool;
 	var nodejsMode:Bool;
@@ -60,11 +61,12 @@ class Bundler
 	var idMap:DynamicAccess<Bool>;
 	var bundles:Array<Bundle>;
 
-	public function new(parser:Parser, sourceMap:SourceMap, extractor:Extractor)
+	public function new(parser:Parser, sourceMap:SourceMap, extractor:Extractor, reporter:Reporter)
 	{
 		this.parser = parser;
 		this.sourceMap = sourceMap;
 		this.extractor = extractor;
+		this.reporter = reporter;
 	}
 
 	public function generate(src:String, output:String, commonjs:Bool, debugSourceMap:Bool):Array<BundleResult>
@@ -122,7 +124,7 @@ class Bundler
 				trace(src.substr(node.start, node.end - node.start));
 				#end
 
-				node.__tag__ = '__reserved__'; // flag for Main
+				node.__main__ = true;
 				for (j in 1...bundlesLength) {
 					bundles[j].indexes.push(i);
 				}
@@ -140,11 +142,12 @@ class Bundler
 
 				for (j in 0...list.length) {
 					var index = list[j];
-					if (index == 0) node.__tag__ = '__reserved__';
+					if (index == 0) node.__main__ = true;
 					else bundles[index].indexes.push(i);
 				}
 			}
 			// Reserved nodes go in Main bundle
+			else node.__main__ = true;
 		}
 
 		#if verbose_debug
@@ -220,6 +223,8 @@ class Bundler
 
 	function emitJS(src:String, bundle:Bundle, isMain:Bool)
 	{
+		reporter.start(bundle);
+
 		var mapOffset = 0;
 		var imports = bundle.imports.keys();
 		var shared = bundle.shared.keys();
@@ -276,10 +281,12 @@ class Bundler
 			for (i in 1...len)
 			{
 				var node = body[i];
-				if (!incAll && node.__tag__ != '__reserved__')
+				if (!incAll && !node.__main__)
 					continue;
 				if (hasSourceMap) mapNodes.push(node);
-				buffer += src.substr(node.start, node.end - node.start);
+				var chunk = src.substr(node.start, node.end - node.start);
+				reporter.add(node.__tag__, chunk.length);
+				buffer += chunk;
 				buffer += '\n';
 			}
 		}
@@ -291,7 +298,9 @@ class Bundler
 			{
 				var node = body[indexes[i]];
 				if (hasSourceMap) mapNodes.push(node);
-				buffer += src.substr(node.start, node.end - node.start);
+				var chunk = src.substr(node.start, node.end - node.start);
+				reporter.add(node.__tag__, chunk.length);
+				buffer += chunk;
 				buffer += '\n';
 			}
 		}
@@ -344,7 +353,9 @@ class Bundler
 
 	function getBeforeBodySrc(src:String)
 	{
-		return src.substr(0, parser.rootExpr.start);
+		var chunk = src.substr(0, parser.rootExpr.start);
+		reporter.includedBefore(chunk.length);
+		return chunk;
 	}
 
 	function emitHot(inc:Array<String>)

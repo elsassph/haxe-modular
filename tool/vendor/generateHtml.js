@@ -2,7 +2,7 @@
 
 // From: https://github.com/sokra/source-map-visualization
 
-// app.less
+// PATCH: app.less
 var CSS = `
 * {
 	font-family: Monaco,Menlo,Consolas,Courier New,monospace;
@@ -56,7 +56,7 @@ tr, td {
 	width: 33%;
 }`;
 
-// app.js, after HTML generation
+// PATCH: app.js, after HTML generation
 var SCRIPT = `
 	$("body").delegate(".original-item, .generated-item, .mapping-item", "mouseenter", function() {
 		$(".selected").removeClass("selected");
@@ -80,7 +80,7 @@ var SCRIPT = `
 `;
 
 
-// generateHtml.js
+// Original: generateHtml.js
 var SourceMap = require("source-map");
 var LINESTYLES = 5;
 var MAX_LINES = 5000;

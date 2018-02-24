@@ -2,10 +2,9 @@ package;
 
 import haxe.Json;
 import js.node.Fs;
-import js.node.Path;
 import graphlib.Graph;
 
-class Main
+class HxSplit
 {
 	@:expose('run')
 	static function run(input:String, output:String, modules:Array<String>,
@@ -21,15 +20,17 @@ class Main
 		modules = applyAstHooks(parser.mainModule, modules, astHooks, parser.graph);
 
 		// process
-		if (dump) dumpGraph(output, parser.graph);
+		if (debugSourceMap) dumpGraph(output, parser.graph);
 		var extractor = new Extractor(parser);
 		extractor.process(parser.mainModule, modules, debugMode);
 
 		// emit
-		var bundler = new Bundler(parser, sourceMap, extractor);
+		var reporter = new Reporter(dump);
+		var bundler = new Bundler(parser, sourceMap, extractor, reporter);
 		var result = bundler.generate(src, output, commonjs, debugSourceMap);
 
-		if (dump) dumpModules(output, extractor);
+		if (debugSourceMap) dumpModules(output, extractor);
+		if (dump) reporter.save(output);
 		return result;
 	}
 

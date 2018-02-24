@@ -28,19 +28,29 @@ For complete architecture examples using this technique you can consult:
 	- [Hot module replacement](hmr-usage.md)
 
 
-## Known limitations
+## Size reporting
 
-### Troubleshooting
+Add `-D modular_dump` to your Haxe compiler arguments to generate a size report as an extra
+`<output>.stats.json`, and an interactive visualisation of this report, as an extra `<output>.stats.html`.
 
-Modular recognises a few additional debugging flags:
+Viewer usage: click a group to reveal more details, press Escape or click the Back button to navigate back.
 
-- `-D modular_dump`: generate an additional `.graph` file to analyse the dependency graph,
-- `-D modular_debugmap`: generate, for each module, an additional `.map.html` file
-  showing a visual representation of the sourcemap.
+![Stats viewer](stats.png)
+
+
+## Troubleshooting & known limitations
+
+### Compiler options
+
+Modular recognises a few additional flags:
+
+- `-D modular_nomaps`: disable sourcemaps processing,
+- `-D modular_debugmap`: generate additional debugging file (`<output>.json`, `<output>.graph`),
+  and for each module, an extra `.map.html` file showing a visual representation of the sourcemap.
 
 ### Dynamic instantiation
 
-Using reflection (e.g. `Type.resolveClass`) doesn't create link between classes, so such 
+Using reflection (e.g. `Type.resolveClass`) doesn't create link between classes, so such
 types will land in the main bundle. [It can be controlled](advanced.md)
 
 ### Magic init
