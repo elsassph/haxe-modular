@@ -82,10 +82,10 @@ class Extractor
 		// format results
 		main = moduleMap.get(mainModule);
 		main.name = 'Main';
-		bundles = [for (module in modules) {
+		bundles = modules.map(function(module) {
 			var name = module.indexOf('=') > 0 ? module.split('=')[0] : module;
-			moduleMap.get(name);
-		}];
+			return moduleMap.get(name);
+		}).filter(function(bundle) return bundle != null);
 
 		var t1 = Date.now().getTime();
 		trace('Graph processed in: ${t1 - t0}ms');

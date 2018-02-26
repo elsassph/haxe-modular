@@ -1,0 +1,16 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Main",
+    "nodes": [
+      "Test8",
+      "$hxClasses",
+      "Type"
+    ],
+    "indexes": [],
+    "exports": {},
+    "shared": {},
+    "imports": {}
+  }
+]

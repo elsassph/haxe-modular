@@ -1,0 +1,51 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Main",
+    "nodes": [
+      "Test6",
+      "$hxClasses",
+      "Type",
+      "js__$Boot_HaxeError",
+      "$extend",
+      "Reflected"
+    ],
+    "indexes": [],
+    "exports": {
+      "$hxClasses": true
+    },
+    "shared": {
+      "CaseA": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseA",
+    "nodes": [
+      "CaseA",
+      "DepAB",
+      "DepDepAB"
+    ],
+    "indexes": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "exports": {
+      "CaseA": true
+    },
+    "shared": {},
+    "imports": {
+      "$hxClasses": true
+    }
+  }
+]

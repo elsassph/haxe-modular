@@ -1,3 +1,5 @@
+// Test5 -> lib / (CaseA, CaseB)
+// Test5, CaseA and CaseB use classes from lib
 class Test5 {
 	static function main() {
 		trace('Suite ' + Type.getClassName(Type.resolveClass('Test5')));

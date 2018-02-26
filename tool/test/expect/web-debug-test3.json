@@ -14,8 +14,7 @@
       "Std",
       "js_Boot",
       "haxe_ds_StringMap",
-      "haxe_IMap",
-      "Bundle"
+      "haxe_IMap"
     ],
     "indexes": [],
     "exports": {
@@ -36,10 +35,10 @@
       "CaseC"
     ],
     "indexes": [
-      5,
-      6,
-      7,
-      69
+      2,
+      3,
+      4,
+      66
     ],
     "exports": {
       "CaseC": true
@@ -61,13 +60,13 @@
       "DepSubC"
     ],
     "indexes": [
-      8,
-      9,
-      10,
-      33,
-      34,
-      35,
-      69
+      5,
+      6,
+      7,
+      30,
+      31,
+      32,
+      66
     ],
     "exports": {
       "DepC": true,
@@ -91,10 +90,10 @@
       "SubC"
     ],
     "indexes": [
-      30,
-      31,
-      32,
-      69
+      27,
+      28,
+      29,
+      66
     ],
     "exports": {
       "SubC": true
@@ -113,10 +112,10 @@
       "SubC2"
     ],
     "indexes": [
-      36,
-      37,
-      38,
-      69
+      33,
+      34,
+      35,
+      66
     ],
     "exports": {
       "SubC2": true

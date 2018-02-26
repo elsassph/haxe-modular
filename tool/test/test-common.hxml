@@ -10,3 +10,5 @@ extraParams.hxml
 -D modular_debugmap
 
 -cp tool/test/src
+
+-dce full

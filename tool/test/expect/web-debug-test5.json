@@ -6,19 +6,19 @@
     "nodes": [
       "Test5",
       "$hxClasses",
+      "js_Boot",
       "Type",
       "DepMain",
       "DepDepMain",
       "Require",
       "haxe_Timer",
       "Std",
-      "js_Boot",
       "haxe_ds_StringMap",
       "haxe_IMap",
       "DepAB",
       "DepDepAB",
       "DepDepB",
-      "Bundle"
+      "$estr"
     ],
     "indexes": [],
     "exports": {
@@ -43,6 +43,7 @@
       "lib_Lib"
     ],
     "indexes": [
+      69,
       70,
       71,
       72,
@@ -51,8 +52,7 @@
       75,
       76,
       77,
-      78,
-      83
+      82
     ],
     "exports": {
       "lib_Lib2": true,
@@ -71,10 +71,10 @@
       "CaseA"
     ],
     "indexes": [
-      5,
-      6,
-      7,
-      83
+      2,
+      3,
+      4,
+      82
     ],
     "exports": {
       "CaseA": true
@@ -95,13 +95,13 @@
       "DepB"
     ],
     "indexes": [
-      8,
-      9,
-      10,
-      17,
-      18,
-      19,
-      83
+      5,
+      6,
+      7,
+      14,
+      15,
+      16,
+      82
     ],
     "exports": {
       "CaseB": true
