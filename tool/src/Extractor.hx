@@ -70,7 +70,6 @@ class Extractor
 		// apply policy of debug mode
 		if (debugMode) linkEnums(mainModule, parser.isEnum.keys());
 
-
 		// find libs
 		var libTest:Array<LibTest> = expandLibs();
 
@@ -163,7 +162,7 @@ class Extractor
 	{
 		var children = [];
 		for (module in modules) {
-			if (module.indexOf('=') > 0) continue;
+			if (module.indexOf('=') > 0 || moduleMap.exists(module)) continue;
 			var mod = createBundle(module);
 			parents.set(module, module);
 			walkGraph(mod, [module], libTest, parents, children);

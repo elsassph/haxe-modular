@@ -764,7 +764,7 @@ Extractor.prototype = {
 		while(_g < modules.length) {
 			var $module = modules[_g];
 			++_g;
-			if($module.indexOf("=") > 0) {
+			if($module.indexOf("=") > 0 || Object.prototype.hasOwnProperty.call(this.moduleMap,$module)) {
 				continue;
 			}
 			var mod = this.createBundle($module);
