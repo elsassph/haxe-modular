@@ -225,7 +225,7 @@ class StatsViewer
 			clearTip();
 			return;
 		}
-		var label = '<b>${pathOf(o)}</b><br/> Size: ${o.size} bytes<br/>';
+		var label = '<b>${pathOf(o)}</b><br/><br/> Size: ${formatSize(o.size)}<br/>';
 		if (o.parent != null) {
 			if (o.parent.parent != null) label += 'Package percents: ${o.weight}%<br/>';
 			label += 'Bundle percents: ${round(o.size, moduleSizeOf(o))}%<br/>';
@@ -235,6 +235,11 @@ class StatsViewer
 		tip.style.visibility = 'visible';
 		tipWidth = tip.offsetWidth;
 		tipHeight = tip.offsetHeight;
+	}
+
+	function formatSize(size:Int)
+	{
+		return '<b>${Math.round(10 * size / 1024) / 10} Kb</b>';
 	}
 
 	function clearTip()

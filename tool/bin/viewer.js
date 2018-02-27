@@ -402,7 +402,7 @@ StatsViewer.prototype = {
 			this.clearTip();
 			return;
 		}
-		var label = "<b>" + this.pathOf(o) + "</b><br/> Size: " + o.size + " bytes<br/>";
+		var label = "<b>" + this.pathOf(o) + "</b><br/><br/> Size: " + this.formatSize(o.size) + "<br/>";
 		if(o.parent != null) {
 			if(o.parent.parent != null) {
 				label += "Package percents: " + o.weight + "%<br/>";
@@ -414,6 +414,9 @@ StatsViewer.prototype = {
 		this.tip.style.visibility = "visible";
 		this.tipWidth = this.tip.offsetWidth;
 		this.tipHeight = this.tip.offsetHeight;
+	}
+	,formatSize: function(size) {
+		return "<b>" + Math.round(10 * size / 1024) / 10 + " Kb</b>";
 	}
 	,clearTip: function() {
 		this.tip.style.visibility = "hidden";
