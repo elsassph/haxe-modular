@@ -2,7 +2,7 @@
   {
     "isMain": true,
     "isLib": false,
-    "name": "Main",
+    "name": "TestInterop",
     "nodes": [
       "TestInterop",
       "js_Boot",

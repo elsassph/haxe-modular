@@ -53,6 +53,7 @@ typedef AstSourceLocation = {
 
 typedef AstNode = {
 	__tag__: String,
+	__main__: Bool,
 	type: String,
 	loc: AstSourceLocation,
 	source: String,

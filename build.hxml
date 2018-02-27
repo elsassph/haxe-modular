@@ -1,9 +1,15 @@
+-cp tool/src
+-main StatsViewer
+-js tool/bin/viewer.js
+--macro includeFile('tool/vendor/carrotsearch.foamtree.js')
+
+--next
+
 -lib hxnodejs
 -cp tool/src
-Main
+HxSplit
 -js tool/bin/split.js
-
---macro includeFile('tool/src/generateHtml.js')
+--macro includeFile('tool/vendor/generateHtml.js')
 
 #-D verbose_debug
 

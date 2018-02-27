@@ -4,7 +4,7 @@ if (process.version < "v4.0.0") console.warn("Module " + (typeof(module) == "und
 
 // From: https://github.com/sokra/source-map-visualization
 
-// app.less
+// PATCH: app.less
 var CSS = `
 * {
 	font-family: Monaco,Menlo,Consolas,Courier New,monospace;
@@ -58,7 +58,7 @@ tr, td {
 	width: 33%;
 }`;
 
-// app.js, after HTML generation
+// PATCH: app.js, after HTML generation
 var SCRIPT = `
 	$("body").delegate(".original-item, .generated-item, .mapping-item", "mouseenter", function() {
 		$(".selected").removeClass("selected");
@@ -82,7 +82,7 @@ var SCRIPT = `
 `;
 
 
-// generateHtml.js
+// Original: generateHtml.js
 var SourceMap = require("source-map");
 var LINESTYLES = 5;
 var MAX_LINES = 5000;
@@ -347,11 +347,13 @@ function $extend(from, fields) {
 	return proto;
 }
 var SourceMapConsumer = require("source-map").SourceMapConsumer;
-var Bundler = function(parser,sourceMap,extractor) {
+var Bundler = function(parser,sourceMap,extractor,reporter) {
 	this.parser = parser;
 	this.sourceMap = sourceMap;
 	this.extractor = extractor;
+	this.reporter = reporter;
 };
+Bundler.__name__ = true;
 Bundler.prototype = {
 	generate: function(src,output,commonjs,debugSourceMap) {
 		this.commonjs = commonjs;
@@ -393,7 +395,7 @@ Bundler.prototype = {
 			var i = _g1++;
 			var node = body[i];
 			if(node.__tag__ == null) {
-				node.__tag__ = "__reserved__";
+				node.__main__ = true;
 				var _g3 = 1;
 				var _g2 = bundlesLength;
 				while(_g3 < _g2) {
@@ -412,11 +414,13 @@ Bundler.prototype = {
 					var j1 = _g31++;
 					var index = list[j1];
 					if(index == 0) {
-						node.__tag__ = "__reserved__";
+						node.__main__ = true;
 					} else {
 						this.bundles[index].indexes.push(i);
 					}
 				}
+			} else {
+				node.__main__ = true;
 			}
 		}
 	}
@@ -478,6 +482,7 @@ Bundler.prototype = {
 		return Bundler.generateHtml(consumer,src,sources);
 	}
 	,emitJS: function(src,bundle,isMain) {
+		this.reporter.start(bundle);
 		var mapOffset = 0;
 		var imports = Reflect.fields(bundle.imports);
 		var shared = Reflect.fields(bundle.shared);
@@ -531,13 +536,15 @@ Bundler.prototype = {
 			while(_g11 < _g2) {
 				var i = _g11++;
 				var node1 = body[i];
-				if(!incAll && node1.__tag__ != "__reserved__") {
+				if(!incAll && !node1.__main__) {
 					continue;
 				}
 				if(hasSourceMap) {
 					mapNodes.push(node1);
 				}
-				buffer += HxOverrides.substr(src,node1.start,node1.end - node1.start);
+				var chunk = HxOverrides.substr(src,node1.start,node1.end - node1.start);
+				this.reporter.add(node1.__tag__,chunk.length);
+				buffer += chunk;
 				buffer += "\n";
 			}
 		} else {
@@ -551,7 +558,9 @@ Bundler.prototype = {
 				if(hasSourceMap) {
 					mapNodes.push(node2);
 				}
-				buffer += HxOverrides.substr(src,node2.start,node2.end - node2.start);
+				var chunk1 = HxOverrides.substr(src,node2.start,node2.end - node2.start);
+				this.reporter.add(node2.__tag__,chunk1.length);
+				buffer += chunk1;
 				buffer += "\n";
 			}
 		}
@@ -602,7 +611,9 @@ Bundler.prototype = {
 		return this.parser.rootExpr.loc.start.line;
 	}
 	,getBeforeBodySrc: function(src) {
-		return HxOverrides.substr(src,0,this.parser.rootExpr.start);
+		var chunk = HxOverrides.substr(src,0,this.parser.rootExpr.start);
+		this.reporter.includedBefore(chunk.length);
+		return chunk;
 	}
 	,emitHot: function(inc) {
 		var names = [];
@@ -624,6 +635,7 @@ Bundler.prototype = {
 var EReg = function(r,opt) {
 	this.r = new RegExp(r,opt.split("u").join(""));
 };
+EReg.__name__ = true;
 EReg.prototype = {
 	match: function(s) {
 		if(this.r.global) {
@@ -637,6 +649,7 @@ EReg.prototype = {
 var Extractor = function(parser) {
 	this.parser = parser;
 };
+Extractor.__name__ = true;
 Extractor.prototype = {
 	process: function(mainModule,modulesList,debugMode) {
 		var _gthis = this;
@@ -647,7 +660,7 @@ Extractor.prototype = {
 		this.moduleTest = { };
 		if(this.parser.typesCount == 0) {
 			console.log("Warning: unable to process (no type metadata)");
-			this.main = this.createBundle("Main");
+			this.main = this.createBundle(mainModule);
 			this.bundles = [this.main];
 			return;
 		}
@@ -671,7 +684,6 @@ Extractor.prototype = {
 		this.walkLibs(libTest,parents);
 		this.populateBundles(mainModule,parents);
 		this.main = this.moduleMap[mainModule];
-		this.main.name = "Main";
 		this.bundles = this.modules.map(function(module1) {
 			var name = module1.indexOf("=") > 0 ? module1.split("=")[0] : module1;
 			return _gthis.moduleMap[name];
@@ -962,6 +974,7 @@ Extractor.prototype = {
 	}
 };
 var HxOverrides = function() { };
+HxOverrides.__name__ = true;
 HxOverrides.cca = function(s,index) {
 	var x = s.charCodeAt(index);
 	if(x != x) {
@@ -981,25 +994,30 @@ HxOverrides.substr = function(s,pos,len) {
 	}
 	return s.substr(pos,len);
 };
-var Main = function() { };
-Main.run = $hx_exports["run"] = function(input,output,modules,debugMode,commonjs,debugSourceMap,dump,astHooks) {
+var HxSplit = function() { };
+HxSplit.__name__ = true;
+HxSplit.run = $hx_exports["run"] = function(input,output,modules,debugMode,commonjs,debugSourceMap,dump,astHooks) {
 	var src = js_node_Fs.readFileSync(input).toString();
 	var parser = new Parser(src,debugMode);
 	var sourceMap = debugMode ? new SourceMap(input,src) : null;
-	modules = Main.applyAstHooks(parser.mainModule,modules,astHooks,parser.graph);
-	if(dump) {
-		Main.dumpGraph(output,parser.graph);
+	modules = HxSplit.applyAstHooks(parser.mainModule,modules,astHooks,parser.graph);
+	if(debugSourceMap) {
+		HxSplit.dumpGraph(output,parser.graph);
 	}
 	var extractor = new Extractor(parser);
 	extractor.process(parser.mainModule,modules,debugMode);
-	var bundler = new Bundler(parser,sourceMap,extractor);
+	var reporter = new Reporter(dump);
+	var bundler = new Bundler(parser,sourceMap,extractor,reporter);
 	var result = bundler.generate(src,output,commonjs,debugSourceMap);
+	if(debugSourceMap) {
+		HxSplit.dumpModules(output,extractor);
+	}
 	if(dump) {
-		Main.dumpModules(output,extractor);
+		reporter.save(output);
 	}
 	return result;
 };
-Main.applyAstHooks = function(mainModule,modules,astHooks,graph) {
+HxSplit.applyAstHooks = function(mainModule,modules,astHooks,graph) {
 	if(astHooks == null || astHooks.length == 0) {
 		return modules;
 	}
@@ -1017,13 +1035,13 @@ Main.applyAstHooks = function(mainModule,modules,astHooks,graph) {
 	}
 	return modules;
 };
-Main.dumpModules = function(output,extractor) {
+HxSplit.dumpModules = function(output,extractor) {
 	console.log("Dump bundles: " + output + ".json");
 	var bundles = [extractor.main].concat(extractor.bundles);
 	var out = JSON.stringify(bundles,null,"  ");
 	js_node_Fs.writeFileSync(output + ".json",out);
 };
-Main.dumpGraph = function(output,g) {
+HxSplit.dumpGraph = function(output,g) {
 	console.log("Dump graph: " + output + ".graph");
 	var out = "";
 	var _g = 0;
@@ -1056,6 +1074,7 @@ Main.dumpGraph = function(output,g) {
 	}
 	js_node_Fs.writeFileSync(output + ".graph",out);
 };
+Math.__name__ = true;
 var Parser = function(src,withLocation) {
 	this.reservedTypes = { "String" : true, "Math" : true, "Array" : true, "Date" : true, "Number" : true, "Boolean" : true, __map_reserved : true};
 	this.mainModule = "Main";
@@ -1067,6 +1086,7 @@ var Parser = function(src,withLocation) {
 	var t2 = new Date().getTime();
 	console.log("AST processed in: " + (t2 - t1) + "ms");
 };
+Parser.__name__ = true;
 Parser.prototype = {
 	processInput: function(src,withLocation) {
 		var options = withLocation ? { ecmaVersion : 5, locations : true} : { ecmaVersion : 5};
@@ -1366,6 +1386,7 @@ Parser.prototype = {
 	}
 };
 var Reflect = function() { };
+Reflect.__name__ = true;
 Reflect.fields = function(o) {
 	var a = [];
 	if(o != null) {
@@ -1378,6 +1399,110 @@ Reflect.fields = function(o) {
 	}
 	return a;
 };
+var Reporter = function(enabled) {
+	this.enabled = enabled;
+	this.stats = { };
+};
+Reporter.__name__ = true;
+Reporter.prototype = {
+	save: function(output) {
+		if(!this.enabled) {
+			return;
+		}
+		this.calculate_rec(this.stats);
+		var raw = JSON.stringify(this.stats,null,"  ");
+		js_node_Fs.writeFileSync(output + ".stats.json",raw);
+		var src = js_node_Fs.readFileSync(js_node_Path.join(__dirname,"viewer.js"));
+		var viewer = "<!DOCTYPE html><body><script>var __STATS__ = " + raw + ";\n" + Std.string(src) + "</script></body>";
+		js_node_Fs.writeFileSync(output + ".stats.html",viewer);
+	}
+	,calculate_rec: function(group) {
+		var total = 0;
+		var _g = 0;
+		var _g1 = Reflect.fields(group);
+		while(_g < _g1.length) {
+			var key = _g1[_g];
+			++_g;
+			total += group[key].size;
+		}
+		var _g2 = 0;
+		var _g11 = Reflect.fields(group);
+		while(_g2 < _g11.length) {
+			var key1 = _g11[_g2];
+			++_g2;
+			var node = group[key1];
+			node.rel = Math.round(1000 * node.size / total) / 10;
+			if(node.group != null) {
+				this.calculate_rec(node.group);
+			}
+		}
+	}
+	,includedBefore: function(size) {
+		if(!this.enabled || size < 50) {
+			return;
+		}
+		this.current.size += size;
+		this.current.group["INCLUDE"] = { size : size, rel : 0};
+	}
+	,start: function(bundle) {
+		if(!this.enabled) {
+			return;
+		}
+		this.current = { size : 0, rel : 0, group : { }};
+		this.stats[bundle.name + ".js"] = this.current;
+	}
+	,add: function(tag,size) {
+		if(!this.enabled) {
+			return;
+		}
+		this.current.size += size;
+		if(tag == null || tag == "__reserved__" || tag.charAt(0) == "$") {
+			return;
+		}
+		var parts = tag.indexOf("_$") < 0 ? tag.split("_") : this.safeSplit(tag);
+		if(parts.length == 1) {
+			parts.unshift("TOPLEVEL");
+		}
+		var parent = this.current;
+		var _g = 0;
+		while(_g < parts.length) {
+			var p = parts[_g];
+			++_g;
+			if(parent.group == null) {
+				parent.group = { };
+			}
+			var node = parent.group[p];
+			if(node == null) {
+				node = { size : 0, rel : 0};
+				parent.group[p] = node;
+			}
+			node.size += size;
+			parent = node;
+		}
+	}
+	,safeSplit: function(tag) {
+		var p = [];
+		var acc = "";
+		var _g1 = 0;
+		var _g = tag.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var c = tag.charAt(i);
+			if(c != "_") {
+				if(c != "$" || tag.charAt(i - 1) != "_") {
+					acc += c;
+				}
+			} else if(tag.charAt(i + 1) != "$") {
+				p.push(acc);
+				acc = "";
+			} else {
+				acc += "_";
+			}
+		}
+		p.push(acc);
+		return p;
+	}
+};
 var SM = require("@elsassph/fast-source-map");
 var SourceMap = function(input,src) {
 	var p = src.lastIndexOf("//# sourceMappingURL=");
@@ -1388,6 +1513,7 @@ var SourceMap = function(input,src) {
 	this.fileName = js_node_Path.join(js_node_Path.dirname(input),this.fileName);
 	this.source = SM.decodeFile(this.fileName);
 };
+SourceMap.__name__ = true;
 SourceMap.prototype = {
 	emitMappings: function(nodes,offset) {
 		if(nodes.length == 0 || this.source == null) {
@@ -1470,7 +1596,13 @@ SourceMap.prototype = {
 		return map;
 	}
 };
+var Std = function() { };
+Std.__name__ = true;
+Std.string = function(s) {
+	return js_Boot.__string_rec(s,"");
+};
 var StringTools = function() { };
+StringTools.__name__ = true;
 StringTools.isSpace = function(s,pos) {
 	var c = HxOverrides.cca(s,pos);
 	if(!(c > 8 && c < 14)) {
@@ -1506,9 +1638,12 @@ var acorn_Acorn = require("acorn");
 var acorn_Walk = require("acorn/dist/walk");
 var graphlib_Graph = require("graphlib").Graph;
 var haxe_IMap = function() { };
+haxe_IMap.__name__ = true;
 var haxe_ds_StringMap = function() { };
+haxe_ds_StringMap.__name__ = true;
 haxe_ds_StringMap.__interfaces__ = [haxe_IMap];
 var haxe_io_Bytes = function() { };
+haxe_io_Bytes.__name__ = true;
 var js__$Boot_HaxeError = function(val) {
 	Error.call(this);
 	this.val = val;
@@ -1517,6 +1652,7 @@ var js__$Boot_HaxeError = function(val) {
 		Error.captureStackTrace(this,js__$Boot_HaxeError);
 	}
 };
+js__$Boot_HaxeError.__name__ = true;
 js__$Boot_HaxeError.wrap = function(val) {
 	if((val instanceof Error)) {
 		return val;
@@ -1527,9 +1663,98 @@ js__$Boot_HaxeError.wrap = function(val) {
 js__$Boot_HaxeError.__super__ = Error;
 js__$Boot_HaxeError.prototype = $extend(Error.prototype,{
 });
+var js_Boot = function() { };
+js_Boot.__name__ = true;
+js_Boot.__string_rec = function(o,s) {
+	if(o == null) {
+		return "null";
+	}
+	if(s.length >= 5) {
+		return "<...>";
+	}
+	var t = typeof(o);
+	if(t == "function" && (o.__name__ || o.__ename__)) {
+		t = "object";
+	}
+	switch(t) {
+	case "function":
+		return "<function>";
+	case "object":
+		if(o instanceof Array) {
+			if(o.__enum__) {
+				if(o.length == 2) {
+					return o[0];
+				}
+				var str = o[0] + "(";
+				s += "\t";
+				var _g1 = 2;
+				var _g = o.length;
+				while(_g1 < _g) {
+					var i = _g1++;
+					if(i != 2) {
+						str += "," + js_Boot.__string_rec(o[i],s);
+					} else {
+						str += js_Boot.__string_rec(o[i],s);
+					}
+				}
+				return str + ")";
+			}
+			var l = o.length;
+			var i1;
+			var str1 = "[";
+			s += "\t";
+			var _g11 = 0;
+			var _g2 = l;
+			while(_g11 < _g2) {
+				var i2 = _g11++;
+				str1 += (i2 > 0 ? "," : "") + js_Boot.__string_rec(o[i2],s);
+			}
+			str1 += "]";
+			return str1;
+		}
+		var tostr;
+		try {
+			tostr = o.toString;
+		} catch( e ) {
+			return "???";
+		}
+		if(tostr != null && tostr != Object.toString && typeof(tostr) == "function") {
+			var s2 = o.toString();
+			if(s2 != "[object Object]") {
+				return s2;
+			}
+		}
+		var k = null;
+		var str2 = "{\n";
+		s += "\t";
+		var hasp = o.hasOwnProperty != null;
+		for( var k in o ) {
+		if(hasp && !o.hasOwnProperty(k)) {
+			continue;
+		}
+		if(k == "prototype" || k == "__class__" || k == "__super__" || k == "__interfaces__" || k == "__properties__") {
+			continue;
+		}
+		if(str2.length != 2) {
+			str2 += ", \n";
+		}
+		str2 += s + k + " : " + js_Boot.__string_rec(o[k],s);
+		}
+		s = s.substring(1);
+		str2 += "\n" + s + "}";
+		return str2;
+	case "string":
+		return o;
+	default:
+		return String(o);
+	}
+};
 var js_node_Fs = require("fs");
 var js_node_Path = require("path");
 var js_node_buffer_Buffer = require("buffer").Buffer;
+String.__name__ = true;
+Array.__name__ = true;
+Date.__name__ = ["Date"];
 var __map_reserved = {};
 Bundler.REQUIRE = "var require = (function(r){ return function require(m) { return r[m]; } })($s.__registry__);\n";
 Bundler.SCOPE = "typeof exports != \"undefined\" ? exports : typeof window != \"undefined\" ? window : typeof self != \"undefined\" ? self : this";
