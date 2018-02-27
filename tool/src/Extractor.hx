@@ -70,7 +70,6 @@ class Extractor
 		// apply policy of debug mode
 		if (debugMode) linkEnums(mainModule, parser.isEnum.keys());
 
-
 		// find libs
 		var libTest:Array<LibTest> = expandLibs();
 
@@ -83,10 +82,10 @@ class Extractor
 		// format results
 		main = moduleMap.get(mainModule);
 		main.name = 'Main';
-		bundles = [for (module in modules) {
+		bundles = modules.map(function(module) {
 			var name = module.indexOf('=') > 0 ? module.split('=')[0] : module;
-			moduleMap.get(name);
-		}];
+			return moduleMap.get(name);
+		}).filter(function(bundle) return bundle != null);
 
 		var t1 = Date.now().getTime();
 		trace('Graph processed in: ${t1 - t0}ms');
@@ -163,7 +162,7 @@ class Extractor
 	{
 		var children = [];
 		for (module in modules) {
-			if (module.indexOf('=') > 0) continue;
+			if (module.indexOf('=') > 0 || moduleMap.exists(module)) continue;
 			var mod = createBundle(module);
 			parents.set(module, module);
 			walkGraph(mod, [module], libTest, parents, children);

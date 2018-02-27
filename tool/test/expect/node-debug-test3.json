@@ -8,8 +8,7 @@
       "$hxClasses",
       "Type",
       "DepMain",
-      "DepDepMain",
-      "Bundle"
+      "DepDepMain"
     ],
     "indexes": [],
     "exports": {
@@ -29,9 +28,9 @@
       "CaseC"
     ],
     "indexes": [
-      5,
-      6,
-      7
+      2,
+      3,
+      4
     ],
     "exports": {
       "CaseC": true
@@ -52,12 +51,12 @@
       "DepSubC"
     ],
     "indexes": [
-      8,
-      9,
-      10,
-      21,
-      22,
-      23
+      5,
+      6,
+      7,
+      18,
+      19,
+      20
     ],
     "exports": {
       "DepC": true,
@@ -80,9 +79,9 @@
       "SubC"
     ],
     "indexes": [
-      18,
-      19,
-      20
+      15,
+      16,
+      17
     ],
     "exports": {
       "SubC": true
@@ -101,9 +100,9 @@
       "SubC2"
     ],
     "indexes": [
-      24,
-      25,
-      26
+      21,
+      22,
+      23
     ],
     "exports": {
       "SubC2": true

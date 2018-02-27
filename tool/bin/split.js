@@ -639,6 +639,7 @@ var Extractor = function(parser) {
 };
 Extractor.prototype = {
 	process: function(mainModule,modulesList,debugMode) {
+		var _gthis = this;
 		var t0 = new Date().getTime();
 		console.log("Bundling...");
 		this.moduleMap = { };
@@ -671,16 +672,12 @@ Extractor.prototype = {
 		this.populateBundles(mainModule,parents);
 		this.main = this.moduleMap[mainModule];
 		this.main.name = "Main";
-		var _g1 = [];
-		var _g11 = 0;
-		var _g2 = this.modules;
-		while(_g11 < _g2.length) {
-			var module1 = _g2[_g11];
-			++_g11;
+		this.bundles = this.modules.map(function(module1) {
 			var name = module1.indexOf("=") > 0 ? module1.split("=")[0] : module1;
-			_g1.push(this.moduleMap[name]);
-		}
-		this.bundles = _g1;
+			return _gthis.moduleMap[name];
+		}).filter(function(bundle) {
+			return bundle != null;
+		});
 		var t1 = new Date().getTime();
 		console.log("Graph processed in: " + (t1 - t0) + "ms");
 	}
@@ -764,7 +761,7 @@ Extractor.prototype = {
 		while(_g < modules.length) {
 			var $module = modules[_g];
 			++_g;
-			if($module.indexOf("=") > 0) {
+			if($module.indexOf("=") > 0 || Object.prototype.hasOwnProperty.call(this.moduleMap,$module)) {
 				continue;
 			}
 			var mod = this.createBundle($module);

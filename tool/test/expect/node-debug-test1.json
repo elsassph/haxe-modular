@@ -6,12 +6,12 @@
     "nodes": [
       "Test1",
       "$hxClasses",
+      "js_Boot",
       "Type",
       "DepAB",
       "DepDepAB",
       "DepDepB",
-      "Bundle",
-      "js_Boot"
+      "$estr"
     ],
     "indexes": [],
     "exports": {
@@ -33,9 +33,9 @@
       "CaseA"
     ],
     "indexes": [
-      5,
-      6,
-      7
+      2,
+      3,
+      4
     ],
     "exports": {
       "CaseA": true
@@ -55,12 +55,12 @@
       "DepB"
     ],
     "indexes": [
-      8,
-      9,
-      10,
-      17,
-      18,
-      19
+      5,
+      6,
+      7,
+      14,
+      15,
+      16
     ],
     "exports": {
       "CaseB": true

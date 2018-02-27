@@ -3,7 +3,7 @@
 const exec = require('child_process').exec;
 const fs = require('fs');
 
-const testClasses = ['Test1', 'Test2', 'Test3', 'Test4', 'Test5'];
+const testClasses = ['Test1', 'Test2', 'Test3', 'Test4', 'Test5', 'Test6', 'Test7', 'Test8'];
 const useLib = { Test4:true, Test5:true };
 
 const suites = [{

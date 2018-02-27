@@ -6,16 +6,17 @@
     "nodes": [
       "Test2",
       "$hxClasses",
+      "js_Boot",
       "Type",
       "DepAB",
       "DepDepAB",
-      "Bundle",
-      "js_Boot"
+      "$estr"
     ],
     "indexes": [],
     "exports": {
       "DepAB": true,
-      "$hxClasses": true
+      "$hxClasses": true,
+      "$estr": true
     },
     "shared": {
       "CaseA": true,
@@ -31,9 +32,9 @@
       "CaseA"
     ],
     "indexes": [
-      5,
-      6,
-      7
+      2,
+      3,
+      4
     ],
     "exports": {
       "CaseA": true
@@ -54,17 +55,19 @@
       "DepDepB"
     ],
     "indexes": [
-      8,
-      9,
-      10,
+      5,
+      6,
+      7,
+      14,
+      15,
+      16,
       17,
       18,
       19,
       20,
       21,
       22,
-      23,
-      24
+      23
     ],
     "exports": {
       "CaseB": true
@@ -72,6 +75,7 @@
     "shared": {},
     "imports": {
       "DepAB": true,
+      "$estr": true,
       "$hxClasses": true
     }
   }

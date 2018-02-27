@@ -1,3 +1,5 @@
+// TestInterop -> CaseInterop
+// CaseInterop uses HTML compat classes
 class TestInterop {
 	static function main() {
 		var i = cast(0, Int);
