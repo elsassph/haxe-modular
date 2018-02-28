@@ -681,6 +681,7 @@ Extractor.prototype = {
 		var libTest = this.expandLibs();
 		var parents = { };
 		this.recurseVisit([mainModule],libTest,parents);
+		this.recurseVisit(this.modules,libTest,parents);
 		this.walkLibs(libTest,parents);
 		this.populateBundles(mainModule,parents);
 		this.main = this.moduleMap[mainModule];
@@ -773,7 +774,7 @@ Extractor.prototype = {
 		while(_g < modules.length) {
 			var $module = modules[_g];
 			++_g;
-			if($module.indexOf("=") > 0 || Object.prototype.hasOwnProperty.call(this.moduleMap,$module)) {
+			if($module.indexOf("=") > 0 || Object.prototype.hasOwnProperty.call(this.moduleMap,$module) || !this.g.hasNode($module)) {
 				continue;
 			}
 			var mod = this.createBundle($module);
