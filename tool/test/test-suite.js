@@ -5,7 +5,7 @@ const fs = require('fs');
 
 try { fs.mkdirSync('tool/test/bin'); } catch (_) { }
 
-const testClasses = ['Test1', 'Test2', 'Test3', 'Test4', 'Test5', 'Test6', 'Test7', 'Test8'];
+const testClasses = ['Test1', 'Test2', 'Test3', 'Test4', 'Test5', 'Test6', 'Test7', 'Test8', 'Test9'];
 const useLib = { Test4:true, Test5:true };
 
 const suites = [{

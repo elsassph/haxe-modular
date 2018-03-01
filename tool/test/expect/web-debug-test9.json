@@ -2,11 +2,17 @@
   {
     "isMain": true,
     "isLib": false,
-    "name": "Test7",
+    "name": "Test9",
     "nodes": [
-      "Test7",
+      "Test9",
       "$hxClasses",
-      "Type"
+      "Type",
+      "Require",
+      "haxe_Timer",
+      "Std",
+      "js_Boot",
+      "haxe_ds_StringMap",
+      "haxe_IMap"
     ],
     "indexes": [],
     "exports": {
@@ -33,7 +39,8 @@
       6,
       7,
       8,
-      9
+      9,
+      53
     ],
     "exports": {
       "CaseD": true

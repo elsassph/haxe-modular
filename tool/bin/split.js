@@ -1126,12 +1126,15 @@ Parser.prototype = {
 				g.setEdge(id,name);
 				refs += 1;
 			}
+		}, AssignmentExpression : function(node1,state,cont) {
+			cont(node1.right,state);
+			cont(node1.left,state);
 		}};
 		var _g = 0;
 		while(_g < nodes.length) {
 			var decl = nodes[_g];
 			++_g;
-			acorn_Walk.simple(decl,visitors);
+			acorn_Walk.recursive(decl,{ },visitors);
 		}
 		return refs;
 	}

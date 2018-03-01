@@ -69,9 +69,14 @@ class Parser
 					g.setEdge(id, name);
 					refs++;
 				}
+			},
+			AssignmentExpression: function(node, state, cont) {
+				// force exploring both right and left of expression
+				cont(node.right, state);
+				cont(node.left, state);
 			}
 		};
-		for (decl in nodes) Walk.simple(decl, visitors);
+		for (decl in nodes) Walk.recursive(decl, {}, visitors);
 		return refs;
 	}
 
