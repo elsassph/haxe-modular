@@ -1413,6 +1413,7 @@ Reporter.prototype = {
 		if(!this.enabled) {
 			return;
 		}
+		console.log("Size report: " + output + ".stats.json");
 		this.calculate_rec(this.stats);
 		var raw = JSON.stringify(this.stats,null,"  ");
 		js_node_Fs.writeFileSync(output + ".stats.json",raw);
