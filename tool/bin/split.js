@@ -681,6 +681,7 @@ Extractor.prototype = {
 		var libTest = this.expandLibs();
 		var parents = { };
 		this.recurseVisit([mainModule],libTest,parents);
+		this.recurseVisit(this.modules,libTest,parents);
 		this.walkLibs(libTest,parents);
 		this.populateBundles(mainModule,parents);
 		this.main = this.moduleMap[mainModule];
@@ -773,7 +774,7 @@ Extractor.prototype = {
 		while(_g < modules.length) {
 			var $module = modules[_g];
 			++_g;
-			if($module.indexOf("=") > 0 || Object.prototype.hasOwnProperty.call(this.moduleMap,$module)) {
+			if($module.indexOf("=") > 0 || Object.prototype.hasOwnProperty.call(this.moduleMap,$module) || !this.g.hasNode($module)) {
 				continue;
 			}
 			var mod = this.createBundle($module);
@@ -1125,12 +1126,15 @@ Parser.prototype = {
 				g.setEdge(id,name);
 				refs += 1;
 			}
+		}, AssignmentExpression : function(node1,state,cont) {
+			cont(node1.right,state);
+			cont(node1.left,state);
 		}};
 		var _g = 0;
 		while(_g < nodes.length) {
 			var decl = nodes[_g];
 			++_g;
-			acorn_Walk.simple(decl,visitors);
+			acorn_Walk.recursive(decl,{ },visitors);
 		}
 		return refs;
 	}

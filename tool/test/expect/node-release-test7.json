@@ -22,13 +22,18 @@
     "isLib": false,
     "name": "CaseD",
     "nodes": [
-      "CaseD"
+      "CaseD",
+      "CycleD"
     ],
     "indexes": [
       2,
       3,
       4,
-      5
+      5,
+      6,
+      7,
+      8,
+      9
     ],
     "exports": {
       "CaseD": true

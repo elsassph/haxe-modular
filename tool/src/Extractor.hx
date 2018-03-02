@@ -76,6 +76,7 @@ class Extractor
 		// process graph
 		var parents = {};
 		recurseVisit([mainModule], libTest, parents);
+		recurseVisit(modules, libTest, parents); // modules can be isolated from entry point
 		walkLibs(libTest, parents);
 		populateBundles(mainModule, parents);
 
@@ -161,7 +162,7 @@ class Extractor
 	{
 		var children = [];
 		for (module in modules) {
-			if (module.indexOf('=') > 0 || moduleMap.exists(module)) continue;
+			if (module.indexOf('=') > 0 || moduleMap.exists(module) || !g.hasNode(module)) continue;
 			var mod = createBundle(module);
 			parents.set(module, module);
 			walkGraph(mod, [module], libTest, parents, children);

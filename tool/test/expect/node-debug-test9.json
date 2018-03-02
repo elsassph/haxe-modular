@@ -2,9 +2,9 @@
   {
     "isMain": true,
     "isLib": false,
-    "name": "Test7",
+    "name": "Test9",
     "nodes": [
-      "Test7",
+      "Test9",
       "$hxClasses",
       "Type"
     ],
