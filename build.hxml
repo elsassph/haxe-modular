@@ -10,7 +10,3 @@
 HxSplit
 -js tool/bin/split.js
 --macro includeFile('tool/vendor/generateHtml.js')
-
-#-D verbose_debug
-
--cmd node tool/test/test-suite.js

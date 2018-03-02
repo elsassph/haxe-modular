@@ -27,6 +27,7 @@ class Reporter
 	public function save(output:String)
 	{
 		if (!this.enabled) return;
+		trace('Size report: ${output}.stats.json');
 		calculate_rec(stats);
 		var raw = Json.stringify(stats, null, '  ');
 		Fs.writeFileSync(output + '.stats.json', raw);
