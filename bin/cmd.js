@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
-const hooks = require('./hooks');
+const run = require('./run');
+
+/* ARGUMENTS */
 
 const args = [].concat(process.argv);
 const debugMode = remove(args, '-debug');
@@ -9,6 +11,7 @@ const webpackMode = remove(args,  '-webpack');
 const nodejsMode = remove(args, '-nodejs');
 const debugSourceMap = remove(args,  '-debugmap');
 const dump = remove(args, '-dump');
+const cjsMode = webpackMode || nodejsMode;
 
 if (args.length < 3)
 	return printUsage();
@@ -19,57 +22,17 @@ if (debugMode || webpackMode) {
 	if (webpackMode) console.log('- generate webpack-compatible source');
 }
 
-const t0 = new Date().getTime();
 const input = args[2];
 const output = args[3];
 const modules = args.slice(4);
 
+/* PROCESS */
+
 try { fs.mkdirSync(path.dirname(output)); } catch (_) { }
 
-const split = require('../tool/bin/split');
-const cjsMode = webpackMode || nodejsMode;
-const graphHook = hooks.getGraphHooks();
-const result = split.run(input, output, modules, debugMode, cjsMode, debugSourceMap, dump, graphHook);
-for (file of result) {
-	if (!file || !file.source) continue;
-	if (file.map) {
-		writeIfChanged(file.map.path, JSON.stringify(file.map.content));
-	}
-	const content = file.map
-		? `${file.source.content}\n//# sourceMappingURL=${path.basename(file.map.path)}`
-		: file.source.content;
-	writeIfChanged(file.source.path, content);
+run(input, output, modules, debugMode, cjsMode, debugSourceMap, dump);
 
-	if (file.debugMap) {
-		writeIfChanged(file.source.path + '.map.html', file.debugMap);
-	}
-}
-
-const t1 = new Date().getTime();
-console.log(`Total process: ${t1 - t0}ms`);
-
-
-/* TOOLS */
-
-function remove(a, v) {
-	const i = a.indexOf(v);
-	if (i < 0) return false;
-	a.splice(i, 1);
-	return true;
-}
-
-function hasChanged(output, content) {
-	if (!fs.existsSync(output)) return true;
-	var original = String(fs.readFileSync(output));
-	return original != content;
-}
-
-function writeIfChanged(output, content) {
-	if (hasChanged(output, content)) {
-		console.log('Write ' + output);
-		fs.writeFileSync(output, content);
-	}
-}
+/* UTIL */
 
 function printUsage() {
 	console.log(`
@@ -84,4 +47,11 @@ Arguments:
   output.js: path to output JS source
   module-i : qualified Haxe module name to split
 `);
+}
+
+function remove(a, v) {
+	const i = a.indexOf(v);
+	if (i < 0) return false;
+	a.splice(i, 1);
+	return true;
 }

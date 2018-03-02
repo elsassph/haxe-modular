@@ -1,7 +1,9 @@
+import haxe.Json;
 import haxe.io.Path;
 import haxe.macro.Compiler;
 import haxe.macro.Context;
 import sys.FileSystem;
+import sys.io.File;
 
 class Split
 {
@@ -15,8 +17,14 @@ class Split
 		if (!FileSystem.exists('.temp')) FileSystem.createDirectory('.temp');
 
 		output = absolute(Compiler.getOutput());
+        if (!StringTools.endsWith(output, '.js')) return;
+
+		#if modular_noprocess
+		tempOutput = output;
+		#else
 		tempOutput = absolute('.temp/output.js');
 		Compiler.setOutput(tempOutput);
+		#end
 
 		Context.onAfterGenerate(generated);
 	}
@@ -63,8 +71,12 @@ class Split
 		];
 		args = args.concat(bundles).concat(options);
 
+		#if modular_noprocess
+		File.saveContent('.temp/split-args.json', Json.stringify(args));
+		#else
 		//Sys.println(cmd + ' ' + args.join(' '));
 		var code = Sys.command(cmd, args);
 		if (code != 0) Sys.exit(code);
+		#end
 	}
 }
