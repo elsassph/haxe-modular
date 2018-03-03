@@ -1177,6 +1177,8 @@ Parser.prototype = {
 			++_g;
 			var _g1 = node.type;
 			switch(_g1) {
+			case "EmptyStatement":
+				break;
 			case "ExpressionStatement":
 				this.inspectExpression(node.expression,node);
 				break;
