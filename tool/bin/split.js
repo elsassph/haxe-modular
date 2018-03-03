@@ -1577,20 +1577,14 @@ SourceMap.prototype = {
 			var _g5 = this.source.sources.length;
 			while(_g13 < _g5) {
 				var i3 = _g13++;
-				map.sources[i3] = usedSources[i3] ? this.formatPath(this.source.sources[i3]) : null;
+				map.sources[i3] = usedSources[i3] ? this.source.sources[i3] : "";
 			}
+			map.sourceRoot = this.source.sourceRoot;
 			map.mappings = output;
 			return SM.encode(map);
 		} catch( err ) {
 			console.log("Invalid source-map");
 			return null;
-		}
-	}
-	,formatPath: function(path) {
-		if(path.indexOf("file://") < 0) {
-			return "file://" + path;
-		} else {
-			return path;
 		}
 	}
 	,emitFile: function(output,map) {

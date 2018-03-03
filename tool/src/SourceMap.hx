@@ -108,7 +108,8 @@ class SourceMap
 
 			// set used sources
 			for (i in 0...source.sources.length)
-				map.sources[i] = usedSources[i] ? formatPath(source.sources[i]) : null;
+				map.sources[i] = usedSources[i] ? source.sources[i] : '';
+			map.sourceRoot = source.sourceRoot;
 			map.mappings = output;
 
 			// encode mappings
@@ -118,11 +119,6 @@ class SourceMap
 			trace('Invalid source-map');
 			return null;
 		}
-	}
-
-	function formatPath(path:String)
-	{
-		return path.indexOf('file://') < 0 ? 'file://' + path : path;
 	}
 
 	/**
