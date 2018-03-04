@@ -13,20 +13,20 @@ class Split
 
 	static public function modules()
 	{
-		// generate in temp directory for processing
-		if (!FileSystem.exists('.temp')) FileSystem.createDirectory('.temp');
-
 		output = absolute(Compiler.getOutput());
         if (!StringTools.endsWith(output, '.js')) return;
 
-		#if modular_noprocess
+		#if (!modular_stub)
+		#if (modular_noprocess)
 		tempOutput = output;
 		#else
 		tempOutput = absolute('.temp/output.js');
 		Compiler.setOutput(tempOutput);
 		#end
 
+		if (!FileSystem.exists('.temp')) FileSystem.createDirectory('.temp');
 		Context.onAfterGenerate(generated);
+		#end
 	}
 
 	static function absolute(path:String)

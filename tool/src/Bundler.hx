@@ -209,16 +209,18 @@ class Bundler
 	function emitDebugMap(src:String, bundle:Bundle, rawMap:SourceMapFile)
 	{
 		if (rawMap.sources.length == 0) return null;
+		// library doesn't like empty strings
+		rawMap.sources = rawMap.sources.map(function(url) return url == '' ? null : url);
 
 		var consumer = new SourceMapConsumer(rawMap);
-		var sources = [for (source in rawMap.sources) {
-			if (source == null) '';
+		var sourcesContent = [for (source in rawMap.sources) {
+			if (source == null || source == '') '';
 			else {
 				var fileName = source.split('file://').pop();
 				Fs.readFileSync(fileName).toString();
 			}
 		}];
-		return generateHtml(consumer, src, sources);
+		return generateHtml(consumer, src, sourcesContent);
 	}
 
 	function emitJS(src:String, bundle:Bundle, isMain:Bool)

@@ -462,6 +462,13 @@ Bundler.prototype = {
 		if(rawMap.sources.length == 0) {
 			return null;
 		}
+		rawMap.sources = rawMap.sources.map(function(url) {
+			if(url == "") {
+				return null;
+			} else {
+				return url;
+			}
+		});
 		var consumer = new SourceMapConsumer(rawMap);
 		var _g = [];
 		var _g1 = 0;
@@ -470,7 +477,7 @@ Bundler.prototype = {
 			var source = _g2[_g1];
 			++_g1;
 			var tmp;
-			if(source == null) {
+			if(source == null || source == "") {
 				tmp = "";
 			} else {
 				var fileName = source.split("file://").pop();
@@ -478,8 +485,8 @@ Bundler.prototype = {
 			}
 			_g.push(tmp);
 		}
-		var sources = _g;
-		return Bundler.generateHtml(consumer,src,sources);
+		var sourcesContent = _g;
+		return Bundler.generateHtml(consumer,src,sourcesContent);
 	}
 	,emitJS: function(src,bundle,isMain) {
 		this.reporter.start(bundle);

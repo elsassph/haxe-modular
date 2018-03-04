@@ -15,6 +15,11 @@ class Bundle
 			case Type.TType(_.get() => t, _):
 				var module = t.module.split('_').join('_$').split('.').join('_');
 				Split.register(module);
+
+				#if modular_stub
+				return macro ({ then: function(cb) { cb($v{module}); }});
+				#else
+
 				var bridge = macro var _ = untyped $i{module} = $p{["$s", module]};
 				#if nodejs
 				var jsModule = './$module';
@@ -34,6 +39,7 @@ class Bundle
 							return id;
 						});
 				}
+				#end
 				#end
 			default:
 				Context.fatalError('Module bundling needs to be provided a module class reference', Context.currentPos());
@@ -63,6 +69,11 @@ class Bundle
 				var module = '$libName=$pattern';
 				var bridge = '${libName}__BRIDGE__';
 				Split.register(module);
+
+				#if modular_stub
+				return macro ({ then: function(cb) { cb($v{libName}); }});
+				#else
+
 				return macro {
 					@:keep Require.module($v{libName})
 						.then(function(id:String) {
@@ -70,6 +81,7 @@ class Bundle
 							return id;
 						});
 				}
+				#end
 
 			default:
 				Context.fatalError('Array of string literals expected', pkgListExpr.pos);
