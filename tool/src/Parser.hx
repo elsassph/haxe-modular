@@ -142,6 +142,8 @@ class Parser
 						inspectExpression(node.consequent.expression, node);
 					else
 						inspectIfStatement(node.test, node);
+				case 'EmptyStatement':
+					// ignore
 				default:
 					trace('WARNING: Unexpected ${node.type}, at character ${node.start}');
 			}

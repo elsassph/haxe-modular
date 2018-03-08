@@ -462,6 +462,13 @@ Bundler.prototype = {
 		if(rawMap.sources.length == 0) {
 			return null;
 		}
+		rawMap.sources = rawMap.sources.map(function(url) {
+			if(url == "") {
+				return null;
+			} else {
+				return url;
+			}
+		});
 		var consumer = new SourceMapConsumer(rawMap);
 		var _g = [];
 		var _g1 = 0;
@@ -470,7 +477,7 @@ Bundler.prototype = {
 			var source = _g2[_g1];
 			++_g1;
 			var tmp;
-			if(source == null) {
+			if(source == null || source == "") {
 				tmp = "";
 			} else {
 				var fileName = source.split("file://").pop();
@@ -478,8 +485,8 @@ Bundler.prototype = {
 			}
 			_g.push(tmp);
 		}
-		var sources = _g;
-		return Bundler.generateHtml(consumer,src,sources);
+		var sourcesContent = _g;
+		return Bundler.generateHtml(consumer,src,sourcesContent);
 	}
 	,emitJS: function(src,bundle,isMain) {
 		this.reporter.start(bundle);
@@ -1177,6 +1184,8 @@ Parser.prototype = {
 			++_g;
 			var _g1 = node.type;
 			switch(_g1) {
+			case "EmptyStatement":
+				break;
 			case "ExpressionStatement":
 				this.inspectExpression(node.expression,node);
 				break;
@@ -1577,20 +1586,14 @@ SourceMap.prototype = {
 			var _g5 = this.source.sources.length;
 			while(_g13 < _g5) {
 				var i3 = _g13++;
-				map.sources[i3] = usedSources[i3] ? this.formatPath(this.source.sources[i3]) : null;
+				map.sources[i3] = usedSources[i3] ? this.source.sources[i3] : "";
 			}
+			map.sourceRoot = this.source.sourceRoot;
 			map.mappings = output;
 			return SM.encode(map);
 		} catch( err ) {
 			console.log("Invalid source-map");
 			return null;
-		}
-	}
-	,formatPath: function(path) {
-		if(path.indexOf("file://") < 0) {
-			return "file://" + path;
-		} else {
-			return path;
 		}
 	}
 	,emitFile: function(output,map) {
@@ -1767,7 +1770,7 @@ Bundler.GLOBAL = "typeof window != \"undefined\" ? window : typeof global != \"u
 Bundler.FUNCTION_START = "(function ($hx_exports, $global) { \"use-strict\";\n";
 Bundler.FUNCTION_END = "})(" + "typeof exports != \"undefined\" ? exports : typeof window != \"undefined\" ? window : typeof self != \"undefined\" ? self : this" + ", " + "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this" + ");\n";
 Bundler.WP_START = "/* eslint-disable */ \"use strict\"\n";
-Bundler.FRAGMENTS = { MAIN : { EXPORTS : "var $hx_exports = exports, $global = global;\n", SHARED : "var $s = $global.$hx_scope = $global.$hx_scope || {};\n"}, CHILD : { EXPORTS : "var $hx_exports = exports, $global = global;\n", SHARED : "var $s = $global.$hx_scope;\n"}};
+Bundler.FRAGMENTS = { MAIN : { EXPORTS : "var $hx_exports = module.exports, $global = global;\n", SHARED : "var $s = $global.$hx_scope = $global.$hx_scope || {};\n"}, CHILD : { EXPORTS : "var $hx_exports = module.exports, $global = global;\n", SHARED : "var $s = $global.$hx_scope;\n"}};
 Bundler.generateHtml = global.generateHtml;
 SourceMap.SRC_REF = "//# sourceMappingURL=";
 })(typeof exports != "undefined" ? exports : typeof window != "undefined" ? window : typeof self != "undefined" ? self : this);
