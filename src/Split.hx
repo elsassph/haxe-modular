@@ -89,11 +89,14 @@ class Split
 	static function compress() {
 		#if (closure && !modular_nocompress)
 		var path = Path.directory(output);
-		var files = [output].concat(bundles.map(function(name) return Path.join([path, name]) + '.js'));
+		var files = [output].concat(bundles.map(function(name) {
+			if (name.indexOf('=') > 0) name = name.split('=')[0];
+			return Path.join([path, name]) + '.js';
+		}));
 		for (file in files) {
+			if (!FileSystem.exists(file)) continue;
 			Sys.println('Compress $file');
-			var map = #if closure_create_source_map file + '.map'; #else null; #end
-			closure.Compiler.compileFile(file, map);
+			closure.Compiler.compileFile(file, file + '.map');
 		}
 		#end
 	}
