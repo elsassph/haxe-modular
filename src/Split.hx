@@ -13,11 +13,6 @@ class Split
 
 	static public function modules()
 	{
-		#if closure
-		// Closure will be executed by Modular
-		Compiler.define('closure_disabled');
-		#end
-
 		output = absolute(Compiler.getOutput());
 		if (!StringTools.endsWith(output, '.js')) return;
 

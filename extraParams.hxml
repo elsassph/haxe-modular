@@ -1,1 +1,3 @@
 --macro Split.modules()
+-D closure_disabled
+-D closure_overwrite
