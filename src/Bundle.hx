@@ -33,7 +33,7 @@ class Bundle
 					#if debug
 					Require.hot(function(_) $bridge, $v{module});
 					#end
-					@:keep Require.module($v{module})
+					Require.module($v{module})
 						.then(function(id:String) {
 							$bridge;
 							return id;

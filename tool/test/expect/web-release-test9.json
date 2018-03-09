@@ -7,9 +7,7 @@
       "Test9",
       "$hxClasses",
       "Type",
-      "Require",
-      "haxe_ds_StringMap",
-      "haxe_IMap"
+      "Require"
     ],
     "indexes": [],
     "exports": {
@@ -36,8 +34,7 @@
       6,
       7,
       8,
-      9,
-      36
+      9
     ],
     "exports": {
       "CaseD": true

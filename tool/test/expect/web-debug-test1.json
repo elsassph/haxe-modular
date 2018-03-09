@@ -11,8 +11,6 @@
       "Require",
       "haxe_Timer",
       "Std",
-      "haxe_ds_StringMap",
-      "haxe_IMap",
       "DepAB",
       "DepDepAB",
       "DepDepB",
@@ -40,8 +38,7 @@
     "indexes": [
       2,
       3,
-      4,
-      67
+      4
     ],
     "exports": {
       "CaseA": true
@@ -66,8 +63,7 @@
       7,
       14,
       15,
-      16,
-      67
+      16
     ],
     "exports": {
       "CaseB": true

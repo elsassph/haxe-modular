@@ -10,9 +10,7 @@
       "Require",
       "haxe_Timer",
       "Std",
-      "js_Boot",
-      "haxe_ds_StringMap",
-      "haxe_IMap"
+      "js_Boot"
     ],
     "indexes": [],
     "exports": {
@@ -39,8 +37,7 @@
       6,
       7,
       8,
-      9,
-      53
+      9
     ],
     "exports": {
       "CaseD": true

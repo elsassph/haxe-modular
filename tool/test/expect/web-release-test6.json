@@ -10,9 +10,7 @@
       "js__$Boot_HaxeError",
       "$extend",
       "Reflected",
-      "Require",
-      "haxe_ds_StringMap",
-      "haxe_IMap"
+      "Require"
     ],
     "indexes": [],
     "exports": {
@@ -41,8 +39,7 @@
       8,
       9,
       10,
-      11,
-      49
+      11
     ],
     "exports": {
       "CaseA": true

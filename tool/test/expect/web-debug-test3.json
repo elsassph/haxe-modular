@@ -12,9 +12,7 @@
       "Require",
       "haxe_Timer",
       "Std",
-      "js_Boot",
-      "haxe_ds_StringMap",
-      "haxe_IMap"
+      "js_Boot"
     ],
     "indexes": [],
     "exports": {
@@ -37,8 +35,7 @@
     "indexes": [
       2,
       3,
-      4,
-      66
+      4
     ],
     "exports": {
       "CaseC": true
@@ -65,8 +62,7 @@
       7,
       30,
       31,
-      32,
-      66
+      32
     ],
     "exports": {
       "DepC": true,
@@ -92,8 +88,7 @@
     "indexes": [
       27,
       28,
-      29,
-      66
+      29
     ],
     "exports": {
       "SubC": true
@@ -114,8 +109,7 @@
     "indexes": [
       33,
       34,
-      35,
-      66
+      35
     ],
     "exports": {
       "SubC2": true

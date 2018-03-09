@@ -1,3 +1,4 @@
+import haxe.DynamicAccess;
 import haxe.Timer;
 import haxe.macro.Expr;
 
@@ -6,8 +7,8 @@ class Require
 	#if (!macro && !webpack)
 	static public var jsPath = './';
 
-	static var loaded:Map<String, js.Promise<String>> = new Map();
-	static var handlers:Map<String, String -> Void> = new Map();
+	static var loaded:DynamicAccess<js.Promise<String>> = {};
+	static var handlers:DynamicAccess<String -> Void> = {};
 
 	#if debug
 	static var isHot:Bool;
@@ -21,7 +22,7 @@ class Require
 	 */
 	static public function module(name:String):js.Promise<String>
 	{
-		if (loaded.exists(name))
+		if (loaded.get(name) != null)
 			return loaded.get(name);
 
 		var p = new js.Promise<String>(function(resolve, reject) {
@@ -29,19 +30,14 @@ class Require
 			var script:js.html.ScriptElement = null;
 			var hasFailed:Bool = false;
 
-			function resourceLoaded(_)
-			{
+			function resourceLoaded(_) {
 				resolve(name);
 			}
-			function resourceFailed(_)
-			{
-				if (!hasFailed)
-				{
+			function resourceFailed(_) {
+				if (!hasFailed) {
 					hasFailed = true;
-
-					loaded.remove(name); // retry
+					loaded.set(name, null); // retry
 					doc.body.removeChild(script);
-
 					reject(name);
 				}
 			}
@@ -63,14 +59,12 @@ class Require
 	**/
 	static public function hot(?handler:String -> Void, ?forModule:String)
 	{
-		if (handler != null)
-		{
+		if (handler != null) {
 			if (forModule == null) forModule = '*';
 			handlers.set(forModule, handler);
 		}
 
-		if (!isHot)
-		{
+		if (!isHot) {
 			isHot = true;
 			js.Browser.document.addEventListener('LiveReloadConnect', function(_) {
 				untyped window.LiveReload.reloader.plugins.push({
@@ -103,7 +97,7 @@ class Require
 		js.Promise.all([for (module in modules) {
 			var script = js.Browser.document.querySelector('script[src$="$module.js"]');
 			if (script != null) script.remove();
-			loaded.remove(module);
+			loaded.set(module, null);
 			Require.module(module);
 		}])
 		.then(function(_) {

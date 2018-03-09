@@ -9,9 +9,7 @@
       "Type",
       "DepMain",
       "DepDepMain",
-      "Require",
-      "haxe_ds_StringMap",
-      "haxe_IMap"
+      "Require"
     ],
     "indexes": [],
     "exports": {
@@ -34,8 +32,7 @@
     "indexes": [
       2,
       3,
-      4,
-      49
+      4
     ],
     "exports": {
       "CaseC": true
@@ -62,8 +59,7 @@
       7,
       22,
       23,
-      24,
-      49
+      24
     ],
     "exports": {
       "DepC": true,
@@ -89,8 +85,7 @@
     "indexes": [
       19,
       20,
-      21,
-      49
+      21
     ],
     "exports": {
       "SubC": true
@@ -111,8 +106,7 @@
     "indexes": [
       25,
       26,
-      27,
-      49
+      27
     ],
     "exports": {
       "SubC2": true

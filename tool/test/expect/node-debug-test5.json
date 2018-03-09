@@ -11,8 +11,6 @@
       "DepMain",
       "DepDepMain",
       "Require",
-      "haxe_ds_StringMap",
-      "haxe_IMap",
       "DepAB",
       "DepDepAB",
       "DepDepB",
@@ -41,16 +39,15 @@
       "lib_Lib"
     ],
     "indexes": [
-      56,
-      57,
-      58,
-      59,
-      60,
-      61,
-      62,
-      63,
-      64,
-      69
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56
     ],
     "exports": {
       "lib_Lib2": true,
@@ -71,8 +68,7 @@
     "indexes": [
       2,
       3,
-      4,
-      69
+      4
     ],
     "exports": {
       "CaseA": true
@@ -98,8 +94,7 @@
       7,
       14,
       15,
-      16,
-      69
+      16
     ],
     "exports": {
       "CaseB": true
