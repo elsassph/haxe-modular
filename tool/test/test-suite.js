@@ -34,6 +34,14 @@ const suitesInterop = [{
 	name: 'web-release',
 	params: 'tool/test/test-interop.hxml',
 	isNode: false
+},{
+	name: 'web-debug-closure',
+	params: '-debug tool/test/test-interop.hxml -lib closure -D closure_create_source_map',
+	isNode: false
+}, {
+	name: 'web-release-closure',
+	params: 'tool/test/test-interop.hxml -lib closure',
+	isNode: false
 }];
 
 function runInterop() {
