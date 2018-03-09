@@ -13,8 +13,13 @@ class Split
 
 	static public function modules()
 	{
+		#if closure
+		// Closure will be executed by Modular
+		Compiler.define('closure_disabled');
+		#end
+
 		output = absolute(Compiler.getOutput());
-        if (!StringTools.endsWith(output, '.js')) return;
+		if (!StringTools.endsWith(output, '.js')) return;
 
 		#if (!modular_stub)
 		#if (modular_noprocess)
@@ -77,6 +82,22 @@ class Split
 		//Sys.println(cmd + ' ' + args.join(' '));
 		var code = Sys.command(cmd, args);
 		if (code != 0) Sys.exit(code);
+		else compress();
+		#end
+	}
+
+	static function compress() {
+		#if (closure && !modular_nocompress)
+		var path = Path.directory(output);
+		var files = [output].concat(bundles.map(function(name) {
+			if (name.indexOf('=') > 0) name = name.split('=')[0];
+			return Path.join([path, name]) + '.js';
+		}));
+		for (file in files) {
+			if (!FileSystem.exists(file)) continue;
+			Sys.println('Compress $file');
+			closure.Compiler.compileFile(file, file + '.map');
+		}
 		#end
 	}
 }

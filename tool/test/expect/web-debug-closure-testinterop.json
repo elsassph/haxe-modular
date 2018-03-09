@@ -1,0 +1,125 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "TestInterop",
+    "nodes": [
+      "TestInterop",
+      "js_Boot",
+      "Bool",
+      "Dynamic",
+      "Float",
+      "Int",
+      "Class",
+      "Enum",
+      "js__$Boot_HaxeError",
+      "$extend",
+      "Std",
+      "Require",
+      "haxe_Timer",
+      "haxe_ds_StringMap",
+      "haxe_IMap",
+      "haxe_io_Error",
+      "$estr"
+    ],
+    "indexes": [],
+    "exports": {
+      "js_Boot": true,
+      "Int": true,
+      "Float": true,
+      "Require": true,
+      "js__$Boot_HaxeError": true,
+      "haxe_io_Error": true,
+      "Std": true,
+      "$estr": true
+    },
+    "shared": {
+      "CaseInterop": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseInterop",
+    "nodes": [
+      "CaseInterop",
+      "DataView",
+      "js_html_compat_DataView",
+      "haxe_io_FPHelper",
+      "haxe__$Int64__$_$_$Int64",
+      "ArrayBuffer",
+      "js_html_compat_ArrayBuffer",
+      "Uint8Array",
+      "js_html_compat_Uint8Array"
+    ],
+    "indexes": [
+      3,
+      4,
+      5,
+      25,
+      26,
+      27,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      91,
+      92,
+      93,
+      94,
+      95,
+      100,
+      102
+    ],
+    "exports": {
+      "CaseInterop": true
+    },
+    "shared": {
+      "a_$b_C_$_$d": true
+    },
+    "imports": {
+      "js_Boot": true,
+      "Int": true,
+      "Float": true,
+      "Require": true,
+      "js__$Boot_HaxeError": true,
+      "haxe_io_Error": true,
+      "Std": true,
+      "$estr": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "a_$b_C_$_$d",
+    "nodes": [
+      "a_$b_C_$_$d"
+    ],
+    "indexes": [
+      20,
+      21,
+      22,
+      91
+    ],
+    "exports": {
+      "a_$b_C_$_$d": true
+    },
+    "shared": {},
+    "imports": {}
+  }
+]

@@ -83,16 +83,17 @@ Q: Is it only for React projects?
 
 Q: Is it possible to minify the code?
 
-- **Yes**, you can run a script minifying each of the resulting JS file - for instance 
-  using [Closure Compiler](https://developers.google.com/closure/) in "simple" mode, 
-  or [UglifyJS](https://www.npmjs.com/package/uglify-js), including with the `mangle` 
-  option which rename variables. 
-- However, you can NOT use `-lib closure` which processes the output directly. 
-  Generally, Modular must be the exclusive post-processor of the compiler output.
+- **Yes**, you can run a script minifying each of the resulting JS file - for instance
+  using [Closure Compiler](https://developers.google.com/closure/) in "simple" mode,
+  or [UglifyJS](https://www.npmjs.com/package/uglify-js), including the `mangle`
+  option which rename variables.
+- **Yes**, you can use `-lib closure` (in "simple" mode); make sure `-lib modular` is
+  defined *first*, and each individual JS bundle will be compressed automatically.
+  Use `-D modular_nocompress` to disable Closure compression.
 
 Q: Can I extract a library/package from my code?
 
-- **Yes**: [you can split libraries](doc/libraries.md), but for technical reasons, 
+- **Yes**: [you can split libraries](doc/libraries.md), but for technical reasons,
   extracting a library (e.g. many classes used across the application) has some limitations.
 
 Q: Can I still use the `includeFile` macro to inject JS code in the output?
