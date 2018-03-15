@@ -4,7 +4,8 @@ import haxe.macro.Expr;
 class Require
 {
 	#if (!macro && !webpack)
-	static public var jsPath = './';
+	static public var basePath = './';
+	static public var extension = '.js';
 
 	static var loaded:Map<String, js.Promise<String>> = new Map();
 	static var handlers:Map<String, String -> Void> = new Map();
@@ -49,7 +50,7 @@ class Require
 			script = doc.createScriptElement();
 			script.onload = resourceLoaded;
 			script.onerror = resourceFailed;
-			script.src = jsPath + name + '.js';
+			script.src = basePath + name + extension;
 			doc.body.appendChild(script);
 		});
 

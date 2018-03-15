@@ -141,14 +141,17 @@ otherwise, calling the function again will attempt to reload the failed script.
 `Require.module(module:String):Promise<String>`
 
 - `module`: the name of the JS file to load (Haxe-JS module or library),
-- returns a Promise providing the name of the loaded module
+- returns a Promise providing the name of the loaded module.
 
-`Require.jsPath`: relative path to JS files (defaults to `./`)
+`Require.basePath`: relative path to JS files (defaults to `./`).
+
+`Require.extension`: file extension (defaults to `.js`), which you can modify
+if you want to add for instance a cache buster.
 
 ## Nodejs
 
 Nodejs is supported, and recognised when `-D nodejs` is set (e.g. when using
 `-lib hxnodejs`); Modular will then emit code specifically for nodejs.
 
-Although the Promise API stays, bundle loading happens *synchronously*; that is it completes
-immediately, while in the browser it will always complete asynchronously.
+Although the Promise API stays, bundle loading happens *synchronously*; that is it
+completes immediately, while in the browser it will always complete asynchronously.
