@@ -1,0 +1,6 @@
+language: haxe
+haxe:
+  - "3.4.4"
+  - stable
+hxml:
+  - build-all.hxml
