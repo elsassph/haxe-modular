@@ -4,5 +4,6 @@ haxe:
   - stable
 install:
   - npm install
+  - haxelib install hxnodejs
 hxml:
   - build-all.hxml
