@@ -7,6 +7,7 @@ try { fs.mkdirSync('tool/test/bin'); } catch (_) { }
 
 const testClasses = ['Test1', 'Test2', 'Test3', 'Test4', 'Test5', 'Test6', 'Test7', 'Test8', 'Test9'];
 const useLib = { Test4:true, Test5:true };
+var failed = false;
 
 const suites = [{
 	name: 'node-debug',
@@ -92,6 +93,7 @@ function execTest(className, name, params, isNode, callback) {
 	//console.log(cmd);
 	exec(cmd, (err, stdout, stderr) => {
 		if (err) {
+			failed = true;
 			console.log(stderr);
 			callback(err);
 		} else {
@@ -106,6 +108,7 @@ function runValidation(name, isNode, callback) {
 	const valid = `tool/test/expect/${name}.json`;
 	exec(`node tool/test/validate.js ${result} ${valid}`, (err, stdout, stderr) => {
 		if (err) {
+			failed = true;
 			console.log(stdout);
 			callback(err);
 		} else {
@@ -121,6 +124,7 @@ function runOutput(name, callback) {
 	console.log(`[Run] ${output}`);
 	exec(`node ${output}`, (err, stdout, stderr) => {
 		if (err) {
+			failed = true;
 			console.log(stderr);
 			console.log('FAILED!');
 			callback(err);
@@ -134,3 +138,4 @@ function runOutput(name, callback) {
 
 // run normal suites then advanced interop cases
 runSuites();
+if (failed) process.exit(1);

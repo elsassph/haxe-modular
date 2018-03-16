@@ -1,10 +1,17 @@
 language: haxe
+
 haxe:
   - "3.4.4"
   - stable
   - development
+
+matrix:
+  allow_failures:
+    - haxe: development
+
 install:
   - node -v && npm install
   - haxelib install hxnodejs
+
 hxml:
   - build-all.hxml
