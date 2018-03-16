@@ -1,9 +1,13 @@
 language: haxe
 
 haxe:
-  - "3.4.4"
+  - 3.4.4
   - stable
   - development
+
+env:
+  global:
+    - secure: "iyOJtYJWVJp1RrSVbVM24OBeQOTLYZ/7uqnkvJzuiIZ+250E78kWCiKsQAFnw109acHUzff/5VvBWkoEYqPXlwg25NAfgHe6wUb4hffFDtVhVxCXFKjUbnXY1qvZtIgM9jXHwFjbD3kDWFVnX6mIYlQnXNTkRrQym1LS/ROytMv9grUtmCg9NgCP8QVkIp61MOBH9JAmKGlCuxlcyYR9gg1/Q6bdhb2HLOISHeRsD9VrgPbZ2zl4sMQ128oT3gTaLujM/rQL9sRPwdjG7CyprruSWspY45/hP/t1d6DHb5Tp5uaMp2Jtx9IiW1N9U9m3aOlRfwz1WcZQm6JnbNPGxWeTmRrqhV73KHRsTF7k2yY5aCz2DDNvQX16WZ80syC+ley/0McaQpFw8/JAvGa7zb2GS/yvUgQT1g2vpakZz8WKnsKP9EZ8dtlWMPO9EPGZ+owPmT6S6UZ1FS2WpJsaoeKjGDIJta49l8FUacYcSBZqTJhKavkTNz9pnxS4EaV+9kjpP60qw42r/0mn1qK4p3a8q9yFEoLnbtZp5JM5GAdrv8zcbQZ7jgnMqkOO3rhLUdbM+/8Amv93Jhg9P1kpF7wfnKXjceDyfZXUu9BoWUz+3scZ2oV5T3YfoxW1hy9gJ7xWS+tML6RafY9bw/2hC/Q6P3Qye3WSJOEA5+GPbHo="
 
 matrix:
   allow_failures:
@@ -19,3 +23,17 @@ before_script:
 
 script:
   - node tool/test/test-suite.js
+
+deploy:
+  - provider: script
+    haxe: 3.4.4
+    script: bash ./releaseHaxelib.sh $HAXELIB_PWD
+    on:
+      tags: true
+  - provider: npm
+    haxe: 3.4.4
+    email: "philippe.elsass@gmail.com"
+    api_key:
+      secure: E/mC4nT4QjsGn6jZ6lLhoDCm6LClAHTSy3NGxGb8CvlFvN0JSyUe3pz91oWL0xhpVI7vX4XqCtbV9XJegQuwtgyE7SSGEPTLXkFmWTorHB6y2vl7z0ixEOLq9YeyUmR84IvUBQPUBhaclT69m9dyS2UXs0uTdibNVlVRFHvTEMst0LQn7I4WCUxlmEUajUj9mLdwYoyRg6VYx9YPpynVVP4BQ8QskEGIJ3G1TCK78tgGdElyh0ywX33NqHVUvSqiDOUqifqWAIBTXjNkBd+JMeSGw/drRuqb/WeGHnqUIikJrl61+FwtOq7Bx56erfY2Itlus+MIM2i44R0CWOyGxwC1QNUwU8JI31VHYoWPYS8AtW53vrxKUGvGL9gXK3jZU0XzdiQ1peYWkaIwub7O2eGonutjPGug9ZtXoF44Bu8kIT0KmfAsXBA9IU+JKDf84SP8Ja6ClUzj4Q9LMBbXsvinN18Ji6pWsbIOwrHfhRcItXV66MYaOx0exY1BKfcJBezpfzu7A80kHGBqD+oHRn5+q/mn7a3XtcCrqjKTa1Nv6ArwNT76vlrLhliypP/rC5q3r+yngkYl/weFiJr0mpzARiIpbggN84tZWu6Now69h08KRDnh0RQCKDjo2GIGcmVeN0ljIaw5TmZOhKEhGWb/GNV9yixuWFD0J2UaXks=
+    on:
+      tags: true
