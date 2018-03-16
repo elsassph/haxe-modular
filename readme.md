@@ -1,6 +1,7 @@
 # Haxe Modular
 
 [![TravisCI Build Status](https://travis-ci.org/elsassph/haxe-modular.svg?branch=master)](https://travis-ci.org/elsassph/haxe-modular)
+[![Haxelib Version](https://img.shields.io/github/tag/elsassph/haxe-modular.svg?label=haxelib)](http://lib.haxe.org/p/modular)
 [![npm Version](https://img.shields.io/npm/v/haxe-modular.svg)](https://www.npmjs.com/package/haxe-modular)
 [![Downloads](http://img.shields.io/npm/dm/haxe-modular.svg)](https://npmjs.org/package/haxe-modular)
 [![Join the chat at https://gitter.im/haxe-react/haxe-modular](https://img.shields.io/badge/gitter-join%20chat-brightgreen.svg)](https://gitter.im/haxe-react/haxe-modular)
