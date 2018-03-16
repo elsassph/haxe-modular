@@ -4,16 +4,15 @@
     "isLib": false,
     "name": "Test3",
     "nodes": [
-      "Test3",
       "$hxClasses",
-      "Type",
-      "DepMain",
       "DepDepMain",
+      "DepMain",
       "Require",
-      "haxe_ds_StringMap",
-      "haxe_IMap"
+      "Test3",
+      "Type",
+      "haxe_IMap",
+      "haxe_ds_StringMap"
     ],
-    "indexes": [],
     "exports": {
       "Require": true,
       "DepMain": true,
@@ -30,12 +29,6 @@
     "name": "CaseC",
     "nodes": [
       "CaseC"
-    ],
-    "indexes": [
-      2,
-      3,
-      4,
-      49
     ],
     "exports": {
       "CaseC": true
@@ -55,15 +48,6 @@
     "nodes": [
       "DepC",
       "DepSubC"
-    ],
-    "indexes": [
-      5,
-      6,
-      7,
-      22,
-      23,
-      24,
-      49
     ],
     "exports": {
       "DepC": true,
@@ -86,12 +70,6 @@
     "nodes": [
       "SubC"
     ],
-    "indexes": [
-      19,
-      20,
-      21,
-      49
-    ],
     "exports": {
       "SubC": true
     },
@@ -107,12 +85,6 @@
     "name": "SubC2",
     "nodes": [
       "SubC2"
-    ],
-    "indexes": [
-      25,
-      26,
-      27,
-      49
     ],
     "exports": {
       "SubC2": true

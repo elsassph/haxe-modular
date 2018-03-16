@@ -4,23 +4,22 @@
     "isLib": false,
     "name": "Test4",
     "nodes": [
-      "Test4",
+      "$estr",
       "$hxClasses",
-      "js_Boot",
-      "Type",
-      "DepMain",
-      "DepDepMain",
-      "Require",
-      "haxe_Timer",
-      "Std",
-      "haxe_ds_StringMap",
-      "haxe_IMap",
       "DepAB",
       "DepDepAB",
       "DepDepB",
-      "$estr"
+      "DepDepMain",
+      "DepMain",
+      "Require",
+      "Std",
+      "Test4",
+      "Type",
+      "haxe_IMap",
+      "haxe_Timer",
+      "haxe_ds_StringMap",
+      "js_Boot"
     ],
-    "indexes": [],
     "exports": {
       "DepAB": true,
       "$hxClasses": true,
@@ -37,21 +36,9 @@
     "isLib": true,
     "name": "lib",
     "nodes": [
-      "lib_Lib",
       "lib_DepLib",
+      "lib_Lib",
       "lib_Lib2"
-    ],
-    "indexes": [
-      69,
-      70,
-      71,
-      72,
-      73,
-      74,
-      75,
-      76,
-      77,
-      82
     ],
     "exports": {
       "lib_Lib": true,
@@ -68,12 +55,6 @@
     "name": "CaseA",
     "nodes": [
       "CaseA"
-    ],
-    "indexes": [
-      2,
-      3,
-      4,
-      82
     ],
     "exports": {
       "CaseA": true
@@ -92,15 +73,6 @@
     "nodes": [
       "CaseB",
       "DepB"
-    ],
-    "indexes": [
-      5,
-      6,
-      7,
-      14,
-      15,
-      16,
-      82
     ],
     "exports": {
       "CaseB": true

@@ -4,13 +4,12 @@
     "isLib": false,
     "name": "Test3",
     "nodes": [
-      "Test3",
       "$hxClasses",
-      "Type",
+      "DepDepMain",
       "DepMain",
-      "DepDepMain"
+      "Test3",
+      "Type"
     ],
-    "indexes": [],
     "exports": {
       "DepMain": true,
       "$hxClasses": true
@@ -26,11 +25,6 @@
     "name": "CaseC",
     "nodes": [
       "CaseC"
-    ],
-    "indexes": [
-      2,
-      3,
-      4
     ],
     "exports": {
       "CaseC": true
@@ -49,14 +43,6 @@
     "nodes": [
       "DepC",
       "DepSubC"
-    ],
-    "indexes": [
-      5,
-      6,
-      7,
-      18,
-      19,
-      20
     ],
     "exports": {
       "DepC": true,
@@ -78,11 +64,6 @@
     "nodes": [
       "SubC"
     ],
-    "indexes": [
-      15,
-      16,
-      17
-    ],
     "exports": {
       "SubC": true
     },
@@ -98,11 +79,6 @@
     "name": "SubC2",
     "nodes": [
       "SubC2"
-    ],
-    "indexes": [
-      21,
-      22,
-      23
     ],
     "exports": {
       "SubC2": true

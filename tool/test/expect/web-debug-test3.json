@@ -4,19 +4,18 @@
     "isLib": false,
     "name": "Test3",
     "nodes": [
-      "Test3",
       "$hxClasses",
-      "Type",
-      "DepMain",
       "DepDepMain",
+      "DepMain",
       "Require",
-      "haxe_Timer",
       "Std",
-      "js_Boot",
+      "Test3",
+      "Type",
+      "haxe_IMap",
+      "haxe_Timer",
       "haxe_ds_StringMap",
-      "haxe_IMap"
+      "js_Boot"
     ],
-    "indexes": [],
     "exports": {
       "Require": true,
       "DepMain": true,
@@ -33,12 +32,6 @@
     "name": "CaseC",
     "nodes": [
       "CaseC"
-    ],
-    "indexes": [
-      2,
-      3,
-      4,
-      66
     ],
     "exports": {
       "CaseC": true
@@ -58,15 +51,6 @@
     "nodes": [
       "DepC",
       "DepSubC"
-    ],
-    "indexes": [
-      5,
-      6,
-      7,
-      30,
-      31,
-      32,
-      66
     ],
     "exports": {
       "DepC": true,
@@ -89,12 +73,6 @@
     "nodes": [
       "SubC"
     ],
-    "indexes": [
-      27,
-      28,
-      29,
-      66
-    ],
     "exports": {
       "SubC": true
     },
@@ -110,12 +88,6 @@
     "name": "SubC2",
     "nodes": [
       "SubC2"
-    ],
-    "indexes": [
-      33,
-      34,
-      35,
-      66
     ],
     "exports": {
       "SubC2": true

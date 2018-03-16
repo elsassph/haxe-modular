@@ -50,6 +50,11 @@ class HxSplit
 	{
 		trace('Dump bundles: ${output}.json');
 		var bundles = [extractor.main].concat(extractor.bundles);
+		for (bundle in bundles) {
+			Reflect.deleteField(bundle, 'indexes');
+			bundle.nodes.sort(null);
+		}
+
 		var out = Json.stringify(bundles, '  ');
 		Fs.writeFileSync(output + '.json', out);
 	}

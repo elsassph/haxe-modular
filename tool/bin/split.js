@@ -1046,6 +1046,13 @@ HxSplit.applyAstHooks = function(mainModule,modules,astHooks,graph) {
 HxSplit.dumpModules = function(output,extractor) {
 	console.log("Dump bundles: " + output + ".json");
 	var bundles = [extractor.main].concat(extractor.bundles);
+	var _g = 0;
+	while(_g < bundles.length) {
+		var bundle = bundles[_g];
+		++_g;
+		Reflect.deleteField(bundle,"indexes");
+		bundle.nodes.sort(null);
+	}
 	var out = JSON.stringify(bundles,null,"  ");
 	js_node_Fs.writeFileSync(output + ".json",out);
 };
@@ -1411,6 +1418,13 @@ Reflect.fields = function(o) {
 		}
 	}
 	return a;
+};
+Reflect.deleteField = function(o,field) {
+	if(!Object.prototype.hasOwnProperty.call(o,field)) {
+		return false;
+	}
+	delete(o[field]);
+	return true;
 };
 var Reporter = function(enabled) {
 	this.enabled = enabled;

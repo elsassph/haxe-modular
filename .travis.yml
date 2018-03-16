@@ -13,6 +13,8 @@ install:
   - node -v && npm install
   - haxelib install hxnodejs
 
-script:
+before_script:
   - haxe build.hxml
+
+script:
   - node tool/test/test-suite.js
