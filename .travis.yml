@@ -2,8 +2,9 @@ language: haxe
 haxe:
   - "3.4.4"
   - stable
+  - development
 install:
-  - npm install
+  - node -v && npm install
   - haxelib install hxnodejs
 hxml:
   - build-all.hxml
