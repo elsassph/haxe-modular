@@ -12,6 +12,7 @@ matrix:
 install:
   - node -v && npm install
   - haxelib install hxnodejs
+  - haxelib install closure
 
 before_script:
   - haxe build.hxml
