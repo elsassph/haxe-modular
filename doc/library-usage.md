@@ -143,9 +143,9 @@ otherwise, calling the function again will attempt to reload the failed script.
 - `module`: the name of the JS file to load (Haxe-JS module or library),
 - returns a Promise providing the name of the loaded module.
 
-`Require.basePath`: relative path to JS files (defaults to `./`).
+`Require.jsPath`: relative path to JS files (defaults to `./`).
 
-`Require.extension`: file extension (defaults to `.js`), which you can modify
+`Require.jsExt`: file extension (defaults to `.js`), which you can modify
 if you want to add for instance a cache buster.
 
 ## Nodejs
