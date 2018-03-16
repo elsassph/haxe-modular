@@ -5,6 +5,7 @@ class Require
 {
 	#if (!macro && !webpack)
 	static public var jsPath = './';
+	static public var jsExt = '.js';
 
 	static var loaded:Map<String, js.Promise<String>> = new Map();
 	static var handlers:Map<String, String -> Void> = new Map();
@@ -49,7 +50,7 @@ class Require
 			script = doc.createScriptElement();
 			script.onload = resourceLoaded;
 			script.onerror = resourceFailed;
-			script.src = jsPath + name + '.js';
+			script.src = jsPath + name + jsExt;
 			doc.body.appendChild(script);
 		});
 
