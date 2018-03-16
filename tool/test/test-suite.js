@@ -44,8 +44,19 @@ const suitesInterop = [{
 	isNode: false
 }];
 
+var hasFailedCase = 0;
+
+function exitWithResult() {
+	// report case failure
+	if (hasFailedCase) {
+		console.log('One or more test case has failed:', hasFailedCase);
+		process.exit(hasFailedCase);
+	}
+}
+
 function runInterop() {
 	if (!suitesInterop.length) {
+		exitWithResult();
 		return;
 	}
 	const className = 'TestInterop';
@@ -53,7 +64,11 @@ function runInterop() {
 	const name = `${suite.name}-${className.toLowerCase()}`;
 	console.log(`---------[${name}]---------`);
 	execTest(className, name, suite.params, false, err => {
-		if (err) return;
+		if (err) {
+			hasFailedCase = 4;
+			runInterop();
+			return;
+		}
 		const index = `tool/test/bin/${name}/index.html`;
 		fs.writeFileSync(index, `<!DOCTYPE html><body><script src=index.js></script></body>`);
 		runInterop();
@@ -92,6 +107,7 @@ function execTest(className, name, params, isNode, callback) {
 	//console.log(cmd);
 	exec(cmd, (err, stdout, stderr) => {
 		if (err) {
+			hasFailedCase = 1;
 			console.log(stderr);
 			callback(err);
 		} else {
@@ -106,6 +122,7 @@ function runValidation(name, isNode, callback) {
 	const valid = `tool/test/expect/${name}.json`;
 	exec(`node tool/test/validate.js ${result} ${valid}`, (err, stdout, stderr) => {
 		if (err) {
+			hasFailedCase = 2;
 			console.log(stdout);
 			callback(err);
 		} else {
@@ -121,6 +138,7 @@ function runOutput(name, callback) {
 	console.log(`[Run] ${output}`);
 	exec(`node ${output}`, (err, stdout, stderr) => {
 		if (err) {
+			hasFailedCase = 3;
 			console.log(stderr);
 			console.log('FAILED!');
 			callback(err);

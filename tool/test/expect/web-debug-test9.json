@@ -4,17 +4,16 @@
     "isLib": false,
     "name": "Test9",
     "nodes": [
-      "Test9",
       "$hxClasses",
-      "Type",
       "Require",
-      "haxe_Timer",
       "Std",
-      "js_Boot",
+      "Test9",
+      "Type",
+      "haxe_IMap",
+      "haxe_Timer",
       "haxe_ds_StringMap",
-      "haxe_IMap"
+      "js_Boot"
     ],
-    "indexes": [],
     "exports": {
       "$hxClasses": true
     },
@@ -30,17 +29,6 @@
     "nodes": [
       "CaseD",
       "CycleD"
-    ],
-    "indexes": [
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      53
     ],
     "exports": {
       "CaseD": true

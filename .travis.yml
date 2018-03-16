@@ -1,6 +1,21 @@
 language: haxe
+
 haxe:
   - "3.4.4"
   - stable
-hxml:
-  - build-all.hxml
+  - development
+
+matrix:
+  allow_failures:
+    - haxe: development
+
+install:
+  - node -v && npm install
+  - haxelib install hxnodejs
+  - haxelib install closure
+
+before_script:
+  - haxe build.hxml
+
+script:
+  - node tool/test/test-suite.js

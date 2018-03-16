@@ -4,20 +4,19 @@
     "isLib": false,
     "name": "Test6",
     "nodes": [
-      "Test6",
-      "$hxClasses",
-      "Type",
-      "js__$Boot_HaxeError",
       "$extend",
+      "$hxClasses",
       "Reflected",
       "Require",
-      "haxe_Timer",
       "Std",
-      "js_Boot",
+      "Test6",
+      "Type",
+      "haxe_IMap",
+      "haxe_Timer",
       "haxe_ds_StringMap",
-      "haxe_IMap"
+      "js_Boot",
+      "js__$Boot_HaxeError"
     ],
-    "indexes": [],
     "exports": {
       "$hxClasses": true
     },
@@ -34,18 +33,6 @@
       "CaseA",
       "DepAB",
       "DepDepAB"
-    ],
-    "indexes": [
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      66
     ],
     "exports": {
       "CaseA": true

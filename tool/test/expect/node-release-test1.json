@@ -4,15 +4,14 @@
     "isLib": false,
     "name": "Test1",
     "nodes": [
-      "Test1",
+      "$estr",
       "$hxClasses",
-      "js_Boot",
-      "Type",
       "DepAB",
       "DepDepAB",
-      "$estr"
+      "Test1",
+      "Type",
+      "js_Boot"
     ],
-    "indexes": [],
     "exports": {
       "DepAB": true,
       "$hxClasses": true,
@@ -31,11 +30,6 @@
     "nodes": [
       "CaseA"
     ],
-    "indexes": [
-      2,
-      3,
-      4
-    ],
     "exports": {
       "CaseA": true
     },
@@ -53,21 +47,6 @@
       "CaseB",
       "DepB",
       "DepDepB"
-    ],
-    "indexes": [
-      5,
-      6,
-      7,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23
     ],
     "exports": {
       "CaseB": true

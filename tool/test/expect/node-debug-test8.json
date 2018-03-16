@@ -4,11 +4,10 @@
     "isLib": false,
     "name": "Test8",
     "nodes": [
-      "Test8",
       "$hxClasses",
+      "Test8",
       "Type"
     ],
-    "indexes": [],
     "exports": {},
     "shared": {},
     "imports": {}

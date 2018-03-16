@@ -4,14 +4,13 @@
     "isLib": false,
     "name": "Test9",
     "nodes": [
-      "Test9",
       "$hxClasses",
-      "Type",
       "Require",
-      "haxe_ds_StringMap",
-      "haxe_IMap"
+      "Test9",
+      "Type",
+      "haxe_IMap",
+      "haxe_ds_StringMap"
     ],
-    "indexes": [],
     "exports": {
       "$hxClasses": true
     },
@@ -27,17 +26,6 @@
     "nodes": [
       "CaseD",
       "CycleD"
-    ],
-    "indexes": [
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      36
     ],
     "exports": {
       "CaseD": true
