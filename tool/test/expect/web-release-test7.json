@@ -9,7 +9,8 @@
       "Test7",
       "Type",
       "haxe_IMap",
-      "haxe_ds_StringMap"
+      "haxe_ds_StringMap",
+      "require"
     ],
     "exports": {
       "$hxClasses": true

@@ -352,6 +352,7 @@ var Bundler = function(parser,sourceMap,extractor,reporter) {
 	this.sourceMap = sourceMap;
 	this.extractor = extractor;
 	this.reporter = reporter;
+	this.minifyId = new MinifyId();
 };
 Bundler.__name__ = true;
 Bundler.prototype = {
@@ -385,6 +386,9 @@ Bundler.prototype = {
 	}
 	,buildIndex: function(src) {
 		var ids = this.idMap = { };
+		if(!this.commonjs) {
+			ids["require"] = true;
+		}
 		var rev = this.revMap;
 		var body = this.parser.rootBody;
 		var bodyLength = body.length;
@@ -425,6 +429,7 @@ Bundler.prototype = {
 		}
 	}
 	,createRevMap: function(index,bundle) {
+		this.minifyId.set(bundle.name);
 		var rev = this.revMap;
 		var nodes = bundle.nodes;
 		var len = nodes.length;
@@ -489,6 +494,7 @@ Bundler.prototype = {
 		return Bundler.generateHtml(consumer,src,sourcesContent);
 	}
 	,emitJS: function(src,bundle,isMain) {
+		var _gthis = this;
 		this.reporter.start(bundle);
 		var mapOffset = 0;
 		var imports = Reflect.fields(bundle.imports);
@@ -521,8 +527,10 @@ Bundler.prototype = {
 			++mapOffset;
 			buffer += frag.SHARED;
 			++mapOffset;
-			buffer += "var require = (function(r){ return function require(m) { return r[m]; } })($s.__registry__);\n";
-			++mapOffset;
+			if(isMain) {
+				buffer += "var require = (function(r){ return function require(m) { return r[m]; } })($s.__registry__ || {});\n";
+				++mapOffset;
+			}
 		}
 		if(imports.length > 0 || shared.length > 0) {
 			var _g = [];
@@ -530,7 +538,7 @@ Bundler.prototype = {
 			while(_g1 < imports.length) {
 				var node = imports[_g1];
 				++_g1;
-				_g.push("" + node + " = $" + "s." + node);
+				_g.push("" + node + " = $" + "s." + this.minifyId.get(node));
 			}
 			var tmp = shared.concat(_g);
 			buffer += "var " + tmp.join(", ") + ";\n";
@@ -580,7 +588,7 @@ Bundler.prototype = {
 				var node3 = exports[_g4];
 				++_g4;
 				if(node3.charAt(0) == "$" || Object.prototype.hasOwnProperty.call(this.idMap,node3)) {
-					buffer += "$" + "s." + node3 + " = " + node3 + "; ";
+					buffer += "$" + "s." + this.minifyId.get(node3) + " = " + node3 + "; ";
 				}
 			}
 			buffer += "\n";
@@ -601,7 +609,7 @@ Bundler.prototype = {
 				var bridge = Reflect.fields(bundle1.exports).filter(function(node4) {
 					return shared.indexOf(node4) >= 0;
 				}).map(function(node5) {
-					return "" + node5 + " = $" + "s." + node5;
+					return "" + node5 + " = $" + "s." + _gthis.minifyId.get(node5);
 				}).join(", ");
 				if(bridge == "") {
 					bridge = "0";
@@ -1006,7 +1014,7 @@ var HxSplit = function() { };
 HxSplit.__name__ = true;
 HxSplit.run = $hx_exports["run"] = function(input,output,modules,debugMode,commonjs,debugSourceMap,dump,astHooks) {
 	var src = js_node_Fs.readFileSync(input).toString();
-	var parser = new Parser(src,debugMode);
+	var parser = new Parser(src,debugMode,commonjs);
 	var sourceMap = debugMode ? new SourceMap(input,src) : null;
 	modules = HxSplit.applyAstHooks(parser.mainModule,modules,astHooks,parser.graph);
 	if(debugSourceMap) {
@@ -1090,14 +1098,43 @@ HxSplit.dumpGraph = function(output,g) {
 	js_node_Fs.writeFileSync(output + ".graph",out);
 };
 Math.__name__ = true;
-var Parser = function(src,withLocation) {
+var MinifyId = function() {
+	this.index = 0;
+	this.map = { };
+};
+MinifyId.__name__ = true;
+MinifyId.prototype = {
+	set: function(id) {
+		this.map[id] = id;
+	}
+	,get: function(id) {
+		if(id.length <= 2) {
+			return id;
+		}
+		var min = this.map[id];
+		if(min == null) {
+			var B16 = MinifyId.BASE_16;
+			var i = this.index++;
+			min = "";
+			while(i > 15) {
+				var add = i & 15;
+				i = (i >> 4) - 1;
+				min = B16[add] + min;
+			}
+			min = B16[i] + min;
+			this.map[id] = min;
+		}
+		return min;
+	}
+};
+var Parser = function(src,withLocation,commonjs) {
 	this.reservedTypes = { "String" : true, "Math" : true, "Array" : true, "Date" : true, "Number" : true, "Boolean" : true, __map_reserved : true};
 	this.mainModule = "Main";
 	var t0 = new Date().getTime();
 	this.processInput(src,withLocation);
 	var t1 = new Date().getTime();
 	console.log("Parsed in: " + (t1 - t0) + "ms");
-	this.buildGraph();
+	this.buildGraph(commonjs);
 	var t2 = new Date().getTime();
 	console.log("AST processed in: " + (t2 - t1) + "ms");
 };
@@ -1108,7 +1145,7 @@ Parser.prototype = {
 		var program = acorn_Acorn.parse(src,options);
 		this.walkProgram(program);
 	}
-	,buildGraph: function() {
+	,buildGraph: function(commonjs) {
 		var g = new graphlib_Graph({ directed : true, compound : true});
 		var cpt = 0;
 		var refs = 0;
@@ -1119,6 +1156,11 @@ Parser.prototype = {
 			++_g;
 			++cpt;
 			g.setNode(t,t);
+		}
+		if(!commonjs) {
+			this.types["require"] = [];
+			g.setNode("require","require");
+			g.setEdge(this.mainModule,"require");
 		}
 		var _g2 = 0;
 		var _g11 = Reflect.fields(this.types);
@@ -1778,7 +1820,7 @@ String.__name__ = true;
 Array.__name__ = true;
 Date.__name__ = ["Date"];
 var __map_reserved = {};
-Bundler.REQUIRE = "var require = (function(r){ return function require(m) { return r[m]; } })($s.__registry__);\n";
+Bundler.REQUIRE = "var require = (function(r){ return function require(m) { return r[m]; } })($s.__registry__ || {});\n";
 Bundler.SCOPE = "typeof exports != \"undefined\" ? exports : typeof window != \"undefined\" ? window : typeof self != \"undefined\" ? self : this";
 Bundler.GLOBAL = "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this";
 Bundler.FUNCTION_START = "(function ($hx_exports, $global) { \"use-strict\";\n";
@@ -1786,5 +1828,6 @@ Bundler.FUNCTION_END = "})(" + "typeof exports != \"undefined\" ? exports : type
 Bundler.WP_START = "/* eslint-disable */ \"use strict\"\n";
 Bundler.FRAGMENTS = { MAIN : { EXPORTS : "var $hx_exports = module.exports, $global = global;\n", SHARED : "var $s = $global.$hx_scope = $global.$hx_scope || {};\n"}, CHILD : { EXPORTS : "var $hx_exports = module.exports, $global = global;\n", SHARED : "var $s = $global.$hx_scope;\n"}};
 Bundler.generateHtml = global.generateHtml;
+MinifyId.BASE_16 = "abcdefghijklmnop".split("");
 SourceMap.SRC_REF = "//# sourceMappingURL=";
 })(typeof exports != "undefined" ? exports : typeof window != "undefined" ? window : typeof self != "undefined" ? self : this);
