@@ -598,7 +598,7 @@ Bundler.prototype = {
 					continue;
 				}
 				var match = "\"" + bundle1.name + "__BRIDGE__\"";
-				var bridge = exports.filter(function(node4) {
+				var bridge = Reflect.fields(bundle1.exports).filter(function(node4) {
 					return shared.indexOf(node4) >= 0;
 				}).map(function(node5) {
 					return "" + node5 + " = $" + "s." + node5;

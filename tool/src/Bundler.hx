@@ -330,7 +330,7 @@ class Bundler
 			for (bundle in extractor.bundles) {
 				if (!bundle.isLib) continue;
 				var match = '"${bundle.name}__BRIDGE__"';
-				var bridge = exports
+				var bridge = bundle.exports.keys()
 					.filter(function(node) return shared.indexOf(node) >= 0)
 					.map(function(node) return '$node = $$s.$node')
 					.join(', ');
