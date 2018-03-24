@@ -30,7 +30,7 @@ extern class SourceMapConsumer {
 
 class Bundler
 {
-	static inline var REQUIRE = "var require = (function(r){ return function require(m) { return r[m]; } })($s.__registry__);\n";
+	static inline var REQUIRE = "var require = (function(r){ return function require(m) { return r[m]; } })($s.__registry__ || {});\n";
     static inline var SCOPE = "typeof exports != \"undefined\" ? exports : typeof window != \"undefined\" ? window : typeof self != \"undefined\" ? self : this";
 	static inline var GLOBAL = "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this";
 	static inline var FUNCTION_START = "(function ($hx_exports, $global) { \"use-strict\";\n";
@@ -54,6 +54,7 @@ class Bundler
 	var sourceMap:SourceMap;
 	var extractor:Extractor;
 	var reporter:Reporter;
+	var minifyId:MinifyId;
 	var commonjs:Bool;
 	var debugSourceMap:Bool;
 	var nodejsMode:Bool;
@@ -67,6 +68,7 @@ class Bundler
 		this.sourceMap = sourceMap;
 		this.extractor = extractor;
 		this.reporter = reporter;
+		minifyId = new MinifyId();
 	}
 
 	public function generate(src:String, output:String, commonjs:Bool, debugSourceMap:Bool):Array<BundleResult>
@@ -110,6 +112,7 @@ class Bundler
 		trace('Build index...');
 		#end
 		var ids = idMap = {};
+		if (!commonjs) ids.set('require', true);
 		var rev = revMap;
 		var body = parser.rootBody;
 		var bodyLength = body.length;
@@ -166,6 +169,7 @@ class Bundler
 
 	function createRevMap(index:Int, bundle:Bundle)
 	{
+		minifyId.set(bundle.name);
 		var rev = revMap;
 		var nodes = bundle.nodes;
 		var len = nodes.length;
@@ -265,13 +269,15 @@ class Bundler
 			// shared scope
 			buffer += frag.SHARED;
 			mapOffset++;
-			// npm require stub
-			buffer += REQUIRE;
-			mapOffset++;
+			if (isMain) {
+				// npm require stub
+				buffer += REQUIRE;
+				mapOffset++;
+			}
 		}
 		if (imports.length > 0 || shared.length > 0)
 		{
-			var tmp = shared.concat([for (node in imports) '$node = $$s.$node']);
+			var tmp = shared.concat([for (node in imports) '$node = $$s.${minifyId.get(node)}']);
 			buffer += 'var ${tmp.join(', ')};\n';
 			mapOffset++;
 		}
@@ -315,7 +321,7 @@ class Bundler
 		{
 			for (node in exports)
 				if (node.charAt(0) == '$' || idMap.exists(node))
-					buffer += '$$s.$node = $node; ';
+					buffer += '$$s.${minifyId.get(node)} = $node; ';
 			buffer += '\n';
 		}
 
@@ -332,7 +338,7 @@ class Bundler
 				var match = '"${bundle.name}__BRIDGE__"';
 				var bridge = bundle.exports.keys()
 					.filter(function(node) return shared.indexOf(node) >= 0)
-					.map(function(node) return '$node = $$s.$node')
+					.map(function(node) return '$node = $$s.${minifyId.get(node)}')
 					.join(', ');
 				if (bridge == '') bridge = '0';
 				buffer = buffer.split(match).join('($bridge)');

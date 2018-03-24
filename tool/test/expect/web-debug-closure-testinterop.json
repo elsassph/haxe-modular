@@ -20,7 +20,8 @@
       "haxe_ds_StringMap",
       "haxe_io_Error",
       "js_Boot",
-      "js__$Boot_HaxeError"
+      "js__$Boot_HaxeError",
+      "require"
     ],
     "exports": {
       "js_Boot": true,
@@ -30,7 +31,8 @@
       "js__$Boot_HaxeError": true,
       "haxe_io_Error": true,
       "Std": true,
-      "$estr": true
+      "$estr": true,
+      "require": true
     },
     "shared": {
       "CaseInterop": true
@@ -66,7 +68,8 @@
       "js__$Boot_HaxeError": true,
       "haxe_io_Error": true,
       "Std": true,
-      "$estr": true
+      "$estr": true,
+      "require": true
     }
   },
   {

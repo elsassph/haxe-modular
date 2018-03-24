@@ -6,7 +6,8 @@
     "nodes": [
       "$hxClasses",
       "Test8",
-      "Type"
+      "Type",
+      "require"
     ],
     "exports": {},
     "shared": {},

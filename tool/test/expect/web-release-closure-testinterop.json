@@ -18,7 +18,8 @@
       "haxe_IMap",
       "haxe_ds_StringMap",
       "js_Boot",
-      "js__$Boot_HaxeError"
+      "js__$Boot_HaxeError",
+      "require"
     ],
     "exports": {
       "js_Boot": true,
@@ -27,7 +28,8 @@
       "Require": true,
       "js__$Boot_HaxeError": true,
       "$estr": true,
-      "Std": true
+      "Std": true,
+      "require": true
     },
     "shared": {
       "CaseInterop": true
@@ -63,7 +65,8 @@
       "Require": true,
       "js__$Boot_HaxeError": true,
       "$estr": true,
-      "Std": true
+      "Std": true,
+      "require": true
     }
   },
   {

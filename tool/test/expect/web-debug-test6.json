@@ -15,7 +15,8 @@
       "haxe_Timer",
       "haxe_ds_StringMap",
       "js_Boot",
-      "js__$Boot_HaxeError"
+      "js__$Boot_HaxeError",
+      "require"
     ],
     "exports": {
       "$hxClasses": true

@@ -13,6 +13,7 @@ class CaseInterop {
 			var d = new js.html.DataView(new js.html.ArrayBuffer(2));
 			// verify sharing of $estr
 			var estr = untyped __js__("$estr");
+			var m = js.Lib.require('foo');
 			#end
 		});
 	}

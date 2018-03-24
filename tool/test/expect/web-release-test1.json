@@ -13,7 +13,8 @@
       "Type",
       "haxe_IMap",
       "haxe_ds_StringMap",
-      "js_Boot"
+      "js_Boot",
+      "require"
     ],
     "exports": {
       "DepAB": true,

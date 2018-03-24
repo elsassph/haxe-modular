@@ -20,14 +20,14 @@ class Parser
 
 	var types:DynamicAccess<Array<AstNode>>;
 
-	public function new(src:String, withLocation:Bool)
+	public function new(src:String, withLocation:Bool, commonjs:Bool)
 	{
 		var t0 = Date.now().getTime();
 		processInput(src, withLocation);
 		var t1 = Date.now().getTime();
 		trace('Parsed in: ${t1 - t0}ms');
 
-		buildGraph();
+		buildGraph(commonjs);
 		var t2 = Date.now().getTime();
 		trace('AST processed in: ${t2 - t1}ms');
 	}
@@ -39,15 +39,21 @@ class Parser
 		walkProgram(program);
 	}
 
-	function buildGraph()
+	function buildGraph(commonjs:Bool)
 	{
 		var g = new Graph({ directed: true, compound:true });
 		var cpt = 0;
 		var refs = 0;
-		for (t in types.keys())
-		{
+		for (t in types.keys()) {
 			cpt++;
 			g.setNode(t, t);
+		}
+
+		if (!commonjs) {
+			// require stub is generated in web entry point
+			types.set('require', []);
+			g.setNode('require', 'require');
+			g.setEdge(mainModule, 'require');
 		}
 
 		for (t in types.keys())
