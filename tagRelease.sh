@@ -31,4 +31,4 @@ esac
 # Tag, commit and push to trigger a new CI release
 git tag $VERSION
 git commit -am "Release version $VERSION"
-git push origin $VERSION
+git push --follow-tags
