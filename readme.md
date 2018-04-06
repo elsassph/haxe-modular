@@ -89,13 +89,11 @@ Q: Is it only for React projects?
 
 Q: Is it possible to minify the code?
 
-- **Yes**, you can run a script minifying each of the resulting JS file - for instance
-  using [Closure Compiler](https://developers.google.com/closure/) in "simple" mode,
-  or [UglifyJS](https://www.npmjs.com/package/uglify-js), including the `mangle`
-  option which rename variables.
-- **Yes**, you can use `-lib closure` (in "simple" mode); make sure `-lib modular` is
-  defined *first*, and each individual JS bundle will be compressed automatically.
-  Use `-D modular_nocompress` to disable Closure compression.
+- **Yes**, with [Standalone Modular](doc/start.md) you can either minify each script
+  yourself, or use `uglifyjs` or `closure` haxelibs for that:
+  [releasing to production](doc/production-release.md).
+- **Yes**, with [Webpack Haxe Loader](https://github.com/jasononeil/webpack-haxe-loader)
+  it will be taken care of by Webpack as part of the production build minification.
 
 Q: Can I extract a library/package from my code?
 
