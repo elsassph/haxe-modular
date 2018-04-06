@@ -13,6 +13,7 @@ install:
   - node -v && npm install
   - haxelib install hxnodejs
   - haxelib install closure
+  - haxelib install uglifyjs
 
 before_script:
   - haxe build.hxml
