@@ -29,6 +29,6 @@ case "$(uname -s)" in
 esac
 
 # Tag, commit and push to trigger a new CI release
-git tag $VERSION
 git commit -am "Release version $VERSION"
+git tag $VERSION
 git push --follow-tags
