@@ -42,6 +42,14 @@ const suitesInterop = [{
 	name: 'web-release-closure',
 	params: 'tool/test/test-interop.hxml -lib closure',
 	isNode: false
+},{
+	name: 'web-debug-uglify',
+	params: '-debug tool/test/test-interop.hxml -lib uglifyjs',
+	isNode: false
+}, {
+	name: 'web-release-uglify',
+	params: 'tool/test/test-interop.hxml -lib uglifyjs',
+	isNode: false
 }];
 
 var hasFailedCase = 0;

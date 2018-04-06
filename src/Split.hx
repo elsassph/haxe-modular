@@ -48,17 +48,12 @@ class Split
 	{
 		var args = [tempOutput, output];
 
-		// resolve haxe-split
 		#if haxe_split
 		var params = Std.string(Compiler.getDefine('haxe_split')).split(' ');
 		var cmd = params.shift();
 		if (params.length > 0) args = params.concat(args);
-
 		#else
-		var cmd = Sys.systemName() == 'Windows'
-			? 'node_modules\\.bin\\haxe-split.cmd'
-			: './node_modules/.bin/haxe-split';
-		if (!FileSystem.exists(cmd)) cmd = 'haxe-split'; // try global
+		var cmd = getCmd();
 		#end
 
 		// emit the bundles
@@ -81,8 +76,17 @@ class Split
 		#end
 	}
 
+	static function getCmd() {
+		var cmd = Sys.systemName() == 'Windows'
+			? 'node_modules\\.bin\\haxe-split.cmd'
+			: './node_modules/.bin/haxe-split';
+		if (!FileSystem.exists(cmd)) cmd = 'haxe-split'; // try global
+		return cmd;
+	}
+
 	static function compress() {
-		#if (closure && !modular_nocompress)
+		#if !modular_nocompress
+		#if closure
 		var path = Path.directory(output);
 		var files = [output].concat(bundles.map(function(name) {
 			if (name.indexOf('=') > 0) name = name.split('=')[0];
@@ -93,6 +97,19 @@ class Split
 			Sys.println('Compress $file');
 			closure.Compiler.compileFile(file, file + '.map');
 		}
+		#end
+		#if uglifyjs
+		var path = Path.directory(output);
+		var files = [output].concat(bundles.map(function(name) {
+			if (name.indexOf('=') > 0) name = name.split('=')[0];
+			return Path.join([path, name]) + '.js';
+		}));
+		for (file in files) {
+			if (!FileSystem.exists(file)) continue;
+			Sys.println('Compress $file');
+			UglifyJS.compileFile(file, file);
+		}
+		#end
 		#end
 	}
 }

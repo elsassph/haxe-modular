@@ -1,0 +1,85 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "TestInterop",
+    "nodes": [
+      "$estr",
+      "$extend",
+      "Bool",
+      "Class",
+      "Dynamic",
+      "Enum",
+      "Float",
+      "Int",
+      "Require",
+      "Std",
+      "TestInterop",
+      "haxe_IMap",
+      "haxe_ds_StringMap",
+      "js_Boot",
+      "js__$Boot_HaxeError",
+      "require"
+    ],
+    "exports": {
+      "js_Boot": true,
+      "Int": true,
+      "Float": true,
+      "Require": true,
+      "js__$Boot_HaxeError": true,
+      "$estr": true,
+      "Std": true,
+      "require": true
+    },
+    "shared": {
+      "CaseInterop": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseInterop",
+    "nodes": [
+      "ArrayBuffer",
+      "CaseInterop",
+      "DataView",
+      "Uint8Array",
+      "haxe__$Int64__$_$_$Int64",
+      "haxe_io_Error",
+      "haxe_io_FPHelper",
+      "js_html_compat_ArrayBuffer",
+      "js_html_compat_DataView",
+      "js_html_compat_Uint8Array"
+    ],
+    "exports": {
+      "CaseInterop": true
+    },
+    "shared": {
+      "a_$b_C_$_$d": true
+    },
+    "imports": {
+      "js_Boot": true,
+      "Int": true,
+      "Float": true,
+      "Require": true,
+      "js__$Boot_HaxeError": true,
+      "$estr": true,
+      "Std": true,
+      "require": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "a_$b_C_$_$d",
+    "nodes": [
+      "a_$b_C_$_$d"
+    ],
+    "exports": {
+      "a_$b_C_$_$d": true
+    },
+    "shared": {},
+    "imports": {}
+  }
+]
