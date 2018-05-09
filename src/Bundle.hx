@@ -2,6 +2,10 @@ import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
 
+#if (js_classic)
+	#error 'haxe-modular doesn\'t work with -D js-classic'
+#end
+
 class Bundle
 {
 	/**
