@@ -1141,7 +1141,10 @@ var Parser = function(src,withLocation,commonjs) {
 Parser.__name__ = true;
 Parser.prototype = {
 	processInput: function(src,withLocation) {
-		var options = withLocation ? { ecmaVersion : 5, locations : true} : { ecmaVersion : 5};
+		var options = { ecmaVersion : 5, allowReserved : true};
+		if(withLocation) {
+			options.locations = true;
+		}
 		var program = acorn_Acorn.parse(src,options);
 		this.walkProgram(program);
 	}

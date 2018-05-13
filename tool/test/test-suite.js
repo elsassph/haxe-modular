@@ -2,6 +2,7 @@
 
 const exec = require('child_process').exec;
 const fs = require('fs');
+const t0 = new Date().getTime();
 
 try { fs.mkdirSync('tool/test/bin'); } catch (_) { }
 
@@ -60,6 +61,7 @@ function exitWithResult() {
 		console.log('One or more test case has failed:', hasFailedCase);
 		process.exit(hasFailedCase);
 	}
+	console.log('Completed in', ((new Date().getTime() - t0) / 1000).toFixed(1) + 's');
 }
 
 function runInterop() {
