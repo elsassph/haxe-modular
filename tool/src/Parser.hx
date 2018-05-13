@@ -34,7 +34,8 @@ class Parser
 
 	function processInput(src:String, withLocation:Bool)
 	{
-		var options:AcornOptions = withLocation ? { ecmaVersion:5, locations:true } : { ecmaVersion:5 };
+		var options:AcornOptions = { ecmaVersion: 5, allowReserved: true };
+		if (withLocation) options.locations = true;
 		var program = Acorn.parse(src, options);
 		walkProgram(program);
 	}
