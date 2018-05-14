@@ -647,20 +647,6 @@ Bundler.prototype = {
 		return "if ($" + "global.__REACT_HOT_LOADER__)\n" + ("  [" + names.join(",") + "].map(function(c) {\n") + "    __REACT_HOT_LOADER__.register(c,c.displayName,c.__fileName__);\n" + "  });\n";
 	}
 };
-var EReg = function(r,opt) {
-	this.r = new RegExp(r,opt.split("u").join(""));
-};
-EReg.__name__ = true;
-EReg.prototype = {
-	match: function(s) {
-		if(this.r.global) {
-			this.r.lastIndex = 0;
-		}
-		this.r.m = this.r.exec(s);
-		this.r.s = s;
-		return this.r.m != null;
-	}
-};
 var Extractor = function(parser) {
 	this.parser = parser;
 };
@@ -817,7 +803,15 @@ Extractor.prototype = {
 				children.push(childModule);
 				continue;
 			}
-			if(this.isInLib(bundle,node,libTest)) {
+			var lib = this.libMap[node];
+			var tmp;
+			if(lib != null && libTest.indexOf(lib) >= 0) {
+				lib.roots[node] = true;
+				tmp = true;
+			} else {
+				tmp = false;
+			}
+			if(tmp) {
 				continue;
 			}
 			if(Object.prototype.hasOwnProperty.call(parents,node)) {
@@ -891,15 +885,11 @@ Extractor.prototype = {
 		}
 		return best;
 	}
-	,isInLib: function(bundle,node,libTest) {
-		var _g = 0;
-		while(_g < libTest.length) {
-			var lib = libTest[_g];
-			++_g;
-			if(lib.test.match(node)) {
-				lib.roots[node] = true;
-				return true;
-			}
+	,isInLib: function(node,libTest) {
+		var lib = this.libMap[node];
+		if(lib != null && libTest.indexOf(lib) >= 0) {
+			lib.roots[node] = true;
+			return true;
 		}
 		return false;
 	}
@@ -957,24 +947,47 @@ Extractor.prototype = {
 		return bundle;
 	}
 	,expandLibs: function() {
+		this.libMap = { };
 		var libTest = [];
-		var _g = 0;
-		var _g1 = this.modules;
-		while(_g < _g1.length) {
-			var $module = _g1[_g];
-			++_g;
+		var allNodes = this.parser.graph.nodes();
+		var _g1 = 0;
+		var _g = this.modules.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var $module = this.modules[i];
 			if($module.indexOf("=") > 0) {
-				libTest.push(this.resolveLib($module));
+				var lib = this.resolveLib($module);
+				this.mapLibTypes(allNodes,lib);
+				libTest.push(lib);
 			}
 		}
 		return libTest;
 	}
+	,mapLibTypes: function(allNodes,lib) {
+		var test = lib.test;
+		var n = test.length;
+		var _g1 = 0;
+		var _g = allNodes.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var node = allNodes[i];
+			var _g3 = 0;
+			var _g2 = n;
+			while(_g3 < _g2) {
+				var j = _g3++;
+				if(node.startsWith(test[j])) {
+					this.libMap[node] = lib;
+					break;
+				}
+			}
+		}
+	}
 	,resolveLib: function(name) {
 		var parts = name.split("=");
 		var newName = parts[0];
-		var test = new EReg("^" + parts[1],"");
-		var tmp = this.createBundle(newName,true);
-		return { test : test, roots : { }, bundle : tmp};
+		var tmp = parts[1].split("|");
+		var tmp1 = this.createBundle(newName,true);
+		return { test : tmp, roots : { }, bundle : tmp1};
 	}
 	,addOnce: function(source,target) {
 		var temp = target.slice();

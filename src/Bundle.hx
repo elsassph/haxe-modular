@@ -68,7 +68,7 @@ class Bundle
 			case EArrayDecl(values):
 				var pattern = values
 					.map(getString)
-					.map(function(v:String) return v.split('_').join('_$').split('.').join('_') + '_')
+					.map(formatMatch)
 					.join('|');
 				var module = '$libName=$pattern';
 				var bridge = '${libName}__BRIDGE__';
@@ -92,4 +92,12 @@ class Bundle
 		}
 		return macro {};
 	}
+
+	#if macro
+	static function formatMatch(s:String)
+	{
+		var m = s.split('_').join('_$').split('.').join('_');
+		return ~/_[A-Z]/.match(m) ? m : m += '_';
+	}
+	#end
 }

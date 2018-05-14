@@ -25,6 +25,7 @@
     },
     "shared": {
       "lib_Lib2": true,
+      "a_$b_C_$_$d": true,
       "CaseA": true,
       "CaseB": true
     },
@@ -35,12 +36,14 @@
     "isLib": true,
     "name": "lib",
     "nodes": [
+      "a_$b_C_$_$d",
       "lib_DepLib",
       "lib_Lib",
       "lib_Lib2"
     ],
     "exports": {
       "lib_Lib2": true,
+      "a_$b_C_$_$d": true,
       "lib_Lib": true
     },
     "shared": {},

@@ -14,7 +14,7 @@ typedef Bundle = {
 	imports:DynamicAccess<Bool>
 }
 
-typedef LibTest = { test:EReg, roots:DynamicAccess<Bool>, bundle:Bundle };
+typedef LibTest = { test:Array<String>, roots:DynamicAccess<Bool>, bundle:Bundle };
 
 class Extractor
 {
@@ -32,7 +32,7 @@ class Extractor
 	var mainImports:Array<String>;
 	var mainExports:Array<String>;
 	var libsNodes:Array<String>;
-	var libMap:DynamicAccess<String>;
+	var libMap:DynamicAccess<LibTest>;
 	var moduleTest:DynamicAccess<Bool>;
 	var parenting:Graph;
 	var moduleMap:DynamicAccess<Bundle>;
@@ -185,7 +185,7 @@ class Extractor
 				continue;
 			}
 			// reached lib
-			if (isInLib(bundle, node, libTest)) {
+			if (isInLib(node, libTest)) {
 				continue;
 			}
 			// deduplicate
@@ -254,13 +254,12 @@ class Extractor
 		return best;
 	}
 
-	function isInLib(bundle:Bundle, node:String, libTest:Array<LibTest>)
+	inline function isInLib(node:String, libTest:Array<LibTest>)
 	{
-		for (lib in libTest) {
-			if (lib.test.match(node)) {
-				lib.roots.set(node, true);
-				return true;
-			}
+		var lib = libMap.get(node);
+		if (lib != null && libTest.indexOf(lib) >= 0) {
+			lib.roots.set(node, true);
+			return true;
 		}
 		return false;
 	}
@@ -315,23 +314,44 @@ class Extractor
 
 	function expandLibs()
 	{
+		libMap = {};
 		var libTest:Array<LibTest> = [];
-		for (module in modules) {
+		var allNodes = parser.graph.nodes();
+		for (i in 0...modules.length) {
+			var module = modules[i];
 			if (module.indexOf('=') > 0) {
-				libTest.push(resolveLib(module));
+				var lib = resolveLib(module);
+				mapLibTypes(allNodes, lib);
+				libTest.push(lib);
 			}
 		}
 		return libTest;
 	}
 
-	function resolveLib(name:String)
+	function mapLibTypes(allNodes:Array<String>, lib:LibTest)
+	{
+		// match each node with owning lib
+		var test = lib.test;
+		var n = test.length;
+		for (i in 0...allNodes.length) {
+			var node = allNodes[i];
+			for (j in 0...n) {
+				// use JS native `startsWith`
+				if (untyped node.startsWith(test[j])) {
+					libMap.set(node, lib);
+					break;
+				}
+			}
+		}
+	}
+
+	function resolveLib(name:String):LibTest
 	{
 		// libname=pattern
 		var parts = name.split('=');
 		var newName = parts[0];
-		var test = new EReg('^${parts[1]}', '');
 		return {
-			test: test,
+			test: parts[1].split('|'),
 			roots: ({} :DynamicAccess<Bool>),
 			bundle: createBundle(newName, true)
 		};
