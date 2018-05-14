@@ -1,0 +1,62 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test10",
+    "nodes": [
+      "$hxClasses",
+      "Require",
+      "Test10",
+      "Test10",
+      "Type",
+      "haxe_IMap",
+      "haxe_ds_StringMap",
+      "require"
+    ],
+    "exports": {
+      "$hxClasses": true,
+      "Test10": true,
+      "Require": true
+    },
+    "shared": {
+      "CaseE": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseE",
+    "nodes": [
+      "CaseE"
+    ],
+    "exports": {
+      "CaseE": true
+    },
+    "shared": {
+      "DepE": true
+    },
+    "imports": {
+      "$hxClasses": true,
+      "Test10": true,
+      "Require": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "DepE",
+    "nodes": [
+      "DepE"
+    ],
+    "exports": {
+      "DepE": true
+    },
+    "shared": {},
+    "imports": {
+      "CaseE": true,
+      "Test10": true,
+      "$hxClasses": true
+    }
+  }
+]

@@ -128,12 +128,23 @@ class Extractor
 			// find node owner
 			var parentModule = parents.get(node);
 			if (parentModule == module) {
+				// same bundle
 				parent = bundle;
 			}
 			else {
-				// node is owned by another bundle - bridge the bundles
+				// node is owned by another bundle and has to be exported
 				parent = moduleMap.get(parentModule);
-				if (node == parentModule || bundle.isMain) bundle.shared.set(node, true);
+				if (bundle.isMain) {
+					// we can't import sub-modules/classes in main module
+					bundle.shared.set(node, true);
+				}
+				else if (node == parentModule) {
+					// if it's a child bundle entry point, then it's shared (by the child)
+					if (parenting.hasEdge(module, parentModule)) bundle.shared.set(node, true);
+					// otherwise, it's a parent bundle and we can import it
+					else bundle.imports.set(node, true);
+				}
+				// class is part of another module
 				else bundle.imports.set(node, true);
 				parent.exports.set(node, true);
 			}
@@ -180,8 +191,11 @@ class Extractor
 			// reached sub modules
 			if (moduleTest.exists(node)) {
 				var childModule = node;
-				parenting.setEdge(module, childModule);
-				children.push(childModule);
+				// create only edge from parent to child
+				if (!parenting.hasEdge(childModule, module)) {
+					parenting.setEdge(module, childModule);
+					children.push(childModule);
+				}
 				continue;
 			}
 			// reached lib

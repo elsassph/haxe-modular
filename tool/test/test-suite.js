@@ -6,7 +6,7 @@ const t0 = new Date().getTime();
 
 try { fs.mkdirSync('tool/test/bin'); } catch (_) { }
 
-const testClasses = ['Test1', 'Test2', 'Test3', 'Test4', 'Test5', 'Test6', 'Test7', 'Test8', 'Test9'];
+const testClasses = ['Test1', 'Test2', 'Test3', 'Test4', 'Test5', 'Test6', 'Test7', 'Test8', 'Test9', 'Test10'];
 const useLib = { Test4:true, Test5:true };
 
 const suites = [{
@@ -99,6 +99,7 @@ function runAllTests(suite, params, isNode, callback) {
 
 	function runTest(err) {
 		if (err || !cases.length) {
+			if (err) console.log(err);
 			callback();
 			return;
 		}

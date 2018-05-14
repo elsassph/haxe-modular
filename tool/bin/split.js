@@ -731,8 +731,14 @@ Extractor.prototype = {
 				parent = bundle;
 			} else {
 				parent = this.moduleMap[parentModule];
-				if(node == parentModule || bundle.isMain) {
+				if(bundle.isMain) {
 					bundle.shared[node] = true;
+				} else if(node == parentModule) {
+					if(this.parenting.hasEdge($module,parentModule)) {
+						bundle.shared[node] = true;
+					} else {
+						bundle.imports[node] = true;
+					}
 				} else {
 					bundle.imports[node] = true;
 				}
@@ -799,8 +805,10 @@ Extractor.prototype = {
 			++_g;
 			if(Object.prototype.hasOwnProperty.call(this.moduleTest,node)) {
 				var childModule = node;
-				this.parenting.setEdge($module,childModule);
-				children.push(childModule);
+				if(!this.parenting.hasEdge(childModule,$module)) {
+					this.parenting.setEdge($module,childModule);
+					children.push(childModule);
+				}
 				continue;
 			}
 			var lib = this.libMap[node];
