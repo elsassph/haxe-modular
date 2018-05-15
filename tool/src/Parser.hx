@@ -13,9 +13,12 @@ class Parser
 	public var typesCount(default, null):Int;
 	public var mainModule:String = 'Main';
 
-	var reservedTypes = {
+	var reservedTypes:DynamicAccess<Bool> = {
 		'String':true, 'Math':true, 'Array':true, 'Date':true, 'Number':true, 'Boolean':true,
 		__map_reserved:true
+	};
+	var objectMethods:DynamicAccess<Bool> = {
+		'defineProperty':true, 'defineProperties':true, 'freeze':true
 	};
 
 	var types:DynamicAccess<Array<AstNode>>;
@@ -206,14 +209,24 @@ class Parser
 			case 'CallExpression':
 				var path = getIdentifier(expression.callee.object);
 				var prop = getIdentifier(expression.callee.property);
-				if (prop.length > 0 && path.length > 0 && types.exists(path[0]))
-				{
+				if (prop.length == 1 && path.length == 1) {
 					var name = path[0];
-					if (prop.length == 1 && prop[0] == 'main') {
-						// last SomeType.main() is the main module
-						mainModule = name;
+					var member = prop[0];
+					// eg. SomeType.something()
+					if (types.exists(name)) {
+						// last SomeType.main() call is the entry point
+						if (member == 'main') mainModule = name;
+						tag(name, def);
 					}
-					tag(name, def);
+					// eg. Object.defineProperty(SomeType.prototype, ...)
+					else if (name == 'Object' && objectMethods.get(member)
+						&& expression.arguments != null && expression.arguments[0] != null) {
+						path = getIdentifier(expression.arguments[0].object);
+						if (path.length == 1) {
+							name = path[0];
+							if (types.exists(name)) tag(name, def);
+						}
+					}
 				}
 			default:
 		}
@@ -294,7 +307,7 @@ class Parser
 	function tag(name:String, def:AstNode)
 	{
 		if (!types.exists(name)) {
-			if (isReserved(name)) {
+			if (reservedTypes.get(name)) {
 				// Tag types we want to include only in main module (eg. 'Math.__name__ = "Math";)
 				// but 'var __map_reserved = {}' is better to just include everywhere
 				if (name !=  '__map_reserved') def.__tag__ = '__reserved__';
@@ -304,11 +317,6 @@ class Parser
 		}
 		else types.get(name).push(def);
 		if (def.__tag__ == null) def.__tag__ = name;
-	}
-
-	inline function isReserved(name:String):Bool
-	{
-		return untyped reservedTypes[name];
 	}
 
 	function isEnumDecl(node:AstNode)
@@ -334,6 +342,7 @@ class Parser
 
 	function getIdentifier(left:AstNode)
 	{
+		if (left == null) return [];
 		switch (left.type)
 		{
 			case 'Identifier':

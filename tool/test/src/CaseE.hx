@@ -1,6 +1,6 @@
 class CaseE {
 	static public var SECRET = 'secret';
-	static public function init() {
+	public function new() {
 		trace('CaseE');
 		trace(Test10.SECRET);
 		Bundle.load(DepE).then(function(_) new DepE() );
