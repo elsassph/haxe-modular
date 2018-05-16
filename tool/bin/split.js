@@ -1149,6 +1149,7 @@ MinifyId.prototype = {
 	}
 };
 var Parser = function(src,withLocation,commonjs) {
+	this.objectMethods = { "defineProperty" : true, "defineProperties" : true, "freeze" : true};
 	this.reservedTypes = { "String" : true, "Math" : true, "Array" : true, "Date" : true, "Number" : true, "Boolean" : true, __map_reserved : true};
 	this.mainModule = "Main";
 	var t0 = new Date().getTime();
@@ -1328,12 +1329,23 @@ Parser.prototype = {
 		case "CallExpression":
 			var path1 = this.getIdentifier(expression.callee.object);
 			var prop = this.getIdentifier(expression.callee.property);
-			if(prop.length > 0 && path1.length > 0 && Object.prototype.hasOwnProperty.call(this.types,path1[0])) {
+			if(prop.length == 1 && path1.length == 1) {
 				var name1 = path1[0];
-				if(prop.length == 1 && prop[0] == "main") {
-					this.mainModule = name1;
+				var member = prop[0];
+				if(Object.prototype.hasOwnProperty.call(this.types,name1)) {
+					if(member == "main") {
+						this.mainModule = name1;
+					}
+					this.tag(name1,def);
+				} else if(name1 == "Object" && this.objectMethods[member] && expression["arguments"] != null && expression["arguments"][0] != null) {
+					path1 = this.getIdentifier(expression["arguments"][0].object);
+					if(path1.length == 1) {
+						name1 = path1[0];
+						if(Object.prototype.hasOwnProperty.call(this.types,name1)) {
+							this.tag(name1,def);
+						}
+					}
 				}
-				this.tag(name1,def);
 			}
 			break;
 		default:
@@ -1432,9 +1444,6 @@ Parser.prototype = {
 			def.__tag__ = name;
 		}
 	}
-	,isReserved: function(name) {
-		return this.reservedTypes[name];
-	}
 	,isEnumDecl: function(node) {
 		var props = node.properties;
 		if(node.type == "ObjectExpression" && props != null && props.length > 0) {
@@ -1458,6 +1467,9 @@ Parser.prototype = {
 		}
 	}
 	,getIdentifier: function(left) {
+		if(left == null) {
+			return [];
+		}
 		var _g = left.type;
 		switch(_g) {
 		case "Identifier":

@@ -10,8 +10,8 @@
       "Type"
     ],
     "exports": {
-      "$hxClasses": true,
-      "Test10": true
+      "Test10": true,
+      "$hxClasses": true
     },
     "shared": {
       "CaseE": true
@@ -32,8 +32,8 @@
       "DepE": true
     },
     "imports": {
-      "$hxClasses": true,
-      "Test10": true
+      "Test10": true,
+      "$hxClasses": true
     }
   },
   {

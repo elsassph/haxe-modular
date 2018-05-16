@@ -14,9 +14,9 @@
       "require"
     ],
     "exports": {
-      "$hxClasses": true,
       "Test10": true,
-      "Require": true
+      "Require": true,
+      "$hxClasses": true
     },
     "shared": {
       "CaseE": true
@@ -37,9 +37,9 @@
       "DepE": true
     },
     "imports": {
-      "$hxClasses": true,
       "Test10": true,
-      "Require": true
+      "Require": true,
+      "$hxClasses": true
     }
   },
   {
