@@ -365,7 +365,7 @@ class Extractor
 		var parts = name.split('=');
 		var newName = parts[0];
 		return {
-			test: parts[1].split('|'),
+			test: parts[1].split(','),
 			roots: ({} :DynamicAccess<Bool>),
 			bundle: createBundle(newName, true)
 		};

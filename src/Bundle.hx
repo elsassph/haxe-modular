@@ -69,7 +69,7 @@ class Bundle
 				var pattern = values
 					.map(getString)
 					.map(formatMatch)
-					.join('|');
+					.join(',');
 				var module = '$libName=$pattern';
 				var bridge = '${libName}__BRIDGE__';
 				Split.register(module);
