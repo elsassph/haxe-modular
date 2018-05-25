@@ -771,7 +771,7 @@ Extractor.prototype = {
 					continue;
 				}
 				parents[node] = lib[0].bundle.name;
-				this.walkGraph(lib[0].bundle,[node],test,parents,children);
+				this.walkGraph(lib[0].bundle,node,test,parents,children);
 			}
 		}
 	}
@@ -786,18 +786,14 @@ Extractor.prototype = {
 			}
 			var mod = this.createBundle($module);
 			parents[$module] = $module;
-			this.walkGraph(mod,[$module],libTest,parents,children);
+			this.walkGraph(mod,$module,libTest,parents,children);
 		}
 		if(children.length > 0) {
 			this.recurseVisit(children,libTest,parents);
 		}
 	}
-	,walkGraph: function(bundle,stack,libTest,parents,children) {
-		if(stack.length == 0) {
-			return;
-		}
+	,walkGraph: function(bundle,target,libTest,parents,children) {
 		var $module = bundle.name;
-		var target = stack.pop();
 		var succ = this.g.successors(target);
 		var _g = 0;
 		while(_g < succ.length) {
@@ -836,9 +832,8 @@ Extractor.prototype = {
 				continue;
 			}
 			parents[node] = $module;
-			stack.push(node);
+			this.walkGraph(bundle,node,libTest,parents,children);
 		}
-		this.walkGraph(bundle,stack,libTest,parents,children);
 	}
 	,shareGraph: function(toBundle,fromBundle,root,parents) {
 		var toModule = toBundle.name;
