@@ -1,5 +1,5 @@
 --macro Split.modules()
--D closure_disabled
+-D closure_slavemode
 -D closure_overwrite
--D uglifyjs_disabled
+-D uglifyjs_slavemode
 -D uglifyjs_overwrite

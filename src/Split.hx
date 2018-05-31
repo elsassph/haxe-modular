@@ -85,8 +85,7 @@ class Split
 	}
 
 	static function compress() {
-		#if !modular_nocompress
-		#if closure
+		#if (closure &&  !closure_disabled)
 		var path = Path.directory(output);
 		var files = [output].concat(bundles.map(function(name) {
 			if (name.indexOf('=') > 0) name = name.split('=')[0];
@@ -98,7 +97,7 @@ class Split
 			closure.Compiler.compileFile(file, file + '.map');
 		}
 		#end
-		#if uglifyjs
+		#if (uglifyjs && !uglifyjs_disabled)
 		var path = Path.directory(output);
 		var files = [output].concat(bundles.map(function(name) {
 			if (name.indexOf('=') > 0) name = name.split('=')[0];
@@ -109,7 +108,6 @@ class Split
 			Sys.println('Compress $file');
 			UglifyJS.compileFile(file, file);
 		}
-		#end
 		#end
 	}
 }
