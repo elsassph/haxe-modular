@@ -1,6 +1,7 @@
+import acorn.Acorn;
+import acorn.Cherow;
 import graphlib.Graph;
 import haxe.DynamicAccess;
-import acorn.Acorn;
 
 class Parser
 {
@@ -26,7 +27,11 @@ class Parser
 	public function new(src:String, withLocation:Bool, commonjs:Bool)
 	{
 		var t0 = Date.now().getTime();
-		processInput(src, withLocation);
+		#if cherow_parser
+		processInputAcorn(src, withLocation);
+		#else
+		processInputCherow(src, withLocation);
+		#end
 		var t1 = Date.now().getTime();
 		trace('Parsed in: ${t1 - t0}ms');
 
@@ -35,11 +40,17 @@ class Parser
 		trace('AST processed in: ${t2 - t1}ms');
 	}
 
-	function processInput(src:String, withLocation:Bool)
+	function processInputAcorn(src:String, withLocation:Bool)
 	{
 		var options:AcornOptions = { ecmaVersion: 5, allowReserved: true };
 		if (withLocation) options.locations = true;
 		var program = Acorn.parse(src, options);
+		walkProgram(program);
+	}
+
+	function processInputCherow(src:String, withLocation:Bool)
+	{
+		var program = Cherow.parse(src, { ranges: true, loc: withLocation });
 		walkProgram(program);
 	}
 
@@ -48,7 +59,8 @@ class Parser
 		var g = new Graph({ directed: true, compound:true });
 		var cpt = 0;
 		var refs = 0;
-		for (t in types.keys()) {
+		var keys = types.keys();
+		for (t in keys) {
 			cpt++;
 			g.setNode(t, t);
 		}
@@ -56,11 +68,12 @@ class Parser
 		if (!commonjs) {
 			// require stub is generated in web entry point
 			types.set('require', []);
+			keys.push('require');
 			g.setNode('require', 'require');
 			g.setEdge(mainModule, 'require');
 		}
 
-		for (t in types.keys())
+		for (t in keys)
 			refs += walk(g, t, types.get(t));
 
 		trace('Stats: $cpt types, $refs references');

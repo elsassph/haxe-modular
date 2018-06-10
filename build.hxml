@@ -5,6 +5,7 @@
 
 --next
 
+-D cherow_parser
 -lib hxnodejs
 -cp tool/src
 HxSplit

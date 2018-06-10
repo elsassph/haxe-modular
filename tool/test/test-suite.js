@@ -115,14 +115,14 @@ function execTest(className, name, params, isNode, callback) {
 	const folder = `tool/test/bin/${name}`;
 	if (useLib[className]) params += ' -D uselib';
 	var cmd = `haxe tool/test/test-common.hxml -main ${className} -js ${folder}/index.js ${params}`;
-	//console.log(cmd);
+	console.log(cmd);
 	exec(cmd, (err, stdout, stderr) => {
+		console.log(stdout);
 		if (err) {
 			hasFailedCase = 1;
 			console.log(stderr);
 			callback(err);
 		} else {
-			console.log(stdout);
 			runValidation(name, isNode, callback);
 		}
 	});
@@ -132,12 +132,11 @@ function runValidation(name, isNode, callback) {
 	const result = `tool/test/bin/${name}/index.js.json`;
 	const valid = `tool/test/expect/${name}.json`;
 	exec(`node tool/test/validate.js ${result} ${valid}`, (err, stdout, stderr) => {
+		console.log(stdout);
 		if (err) {
 			hasFailedCase = 2;
-			console.log(stdout);
 			callback(err);
 		} else {
-			console.log(stdout);
 			if (isNode) runOutput(name, callback);
 			else callback();
 		}

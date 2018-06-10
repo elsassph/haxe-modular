@@ -12,7 +12,7 @@ class HxSplit
 		astHooks:Array<Graph->String->Array<String>>)
 	{
 		// parse input
-		var src = Fs.readFileSync(input).toString();
+		var src = Fs.readFileSync(input, "utf8");
 		var parser = new Parser(src, debugMode, commonjs);
 		var sourceMap = debugMode ? new SourceMap(input, src) : null;
 

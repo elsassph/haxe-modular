@@ -1029,7 +1029,7 @@ HxOverrides.substr = function(s,pos,len) {
 var HxSplit = function() { };
 HxSplit.__name__ = true;
 HxSplit.run = $hx_exports["run"] = function(input,output,modules,debugMode,commonjs,debugSourceMap,dump,astHooks) {
-	var src = js_node_Fs.readFileSync(input).toString();
+	var src = js_node_Fs.readFileSync(input,"utf8");
 	var parser = new Parser(src,debugMode,commonjs);
 	var sourceMap = debugMode ? new SourceMap(input,src) : null;
 	modules = HxSplit.applyAstHooks(parser.mainModule,modules,astHooks,parser.graph);
@@ -1148,7 +1148,7 @@ var Parser = function(src,withLocation,commonjs) {
 	this.reservedTypes = { "String" : true, "Math" : true, "Array" : true, "Date" : true, "Number" : true, "Boolean" : true, __map_reserved : true};
 	this.mainModule = "Main";
 	var t0 = new Date().getTime();
-	this.processInput(src,withLocation);
+	this.processInputAcorn(src,withLocation);
 	var t1 = new Date().getTime();
 	console.log("Parsed in: " + (t1 - t0) + "ms");
 	this.buildGraph(commonjs);
@@ -1157,7 +1157,7 @@ var Parser = function(src,withLocation,commonjs) {
 };
 Parser.__name__ = true;
 Parser.prototype = {
-	processInput: function(src,withLocation) {
+	processInputAcorn: function(src,withLocation) {
 		var options = { ecmaVersion : 5, allowReserved : true};
 		if(withLocation) {
 			options.locations = true;
@@ -1165,28 +1165,32 @@ Parser.prototype = {
 		var program = acorn_Acorn.parse(src,options);
 		this.walkProgram(program);
 	}
+	,processInputCherow: function(src,withLocation) {
+		var program = acorn_Cherow.parse(src,{ ranges : true, loc : withLocation});
+		this.walkProgram(program);
+	}
 	,buildGraph: function(commonjs) {
 		var g = new graphlib_Graph({ directed : true, compound : true});
 		var cpt = 0;
 		var refs = 0;
+		var keys = Reflect.fields(this.types);
 		var _g = 0;
-		var _g1 = Reflect.fields(this.types);
-		while(_g < _g1.length) {
-			var t = _g1[_g];
+		while(_g < keys.length) {
+			var t = keys[_g];
 			++_g;
 			++cpt;
 			g.setNode(t,t);
 		}
 		if(!commonjs) {
 			this.types["require"] = [];
+			keys.push("require");
 			g.setNode("require","require");
 			g.setEdge(this.mainModule,"require");
 		}
-		var _g2 = 0;
-		var _g11 = Reflect.fields(this.types);
-		while(_g2 < _g11.length) {
-			var t1 = _g11[_g2];
-			++_g2;
+		var _g1 = 0;
+		while(_g1 < keys.length) {
+			var t1 = keys[_g1];
+			++_g1;
 			refs += this.walk(g,t1,this.types[t1]);
 		}
 		console.log("Stats: " + cpt + " types, " + refs + " references");
@@ -1731,6 +1735,7 @@ StringTools.trim = function(s) {
 };
 var acorn_Acorn = require("acorn");
 var acorn_Walk = require("acorn/dist/walk");
+var acorn_Cherow = require("cherow");
 var graphlib_Graph = require("graphlib").Graph;
 var haxe_IMap = function() { };
 haxe_IMap.__name__ = true;
