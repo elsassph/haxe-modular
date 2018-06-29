@@ -299,7 +299,7 @@ class Extractor
 				g.setEdge(mainModule, source);
 
 		// force some links to main module
-		for (enforce in ["$estr", "$hxClasses", "Std"]) {
+		for (enforce in ["$estr", "$hxClasses", "$hxEnums", "Std"]) {
 			if (!g.hasNode(enforce)) continue;
 			if (!g.hasEdge(mainModule, enforce))
 				g.setEdge(mainModule, enforce);

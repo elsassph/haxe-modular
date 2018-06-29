@@ -926,7 +926,7 @@ Extractor.prototype = {
 			}
 		}
 		var _g1 = 0;
-		var _g11 = ["$estr","$hxClasses","Std"];
+		var _g11 = ["$estr","$hxClasses","$hxEnums","Std"];
 		while(_g1 < _g11.length) {
 			var enforce = _g11[_g1];
 			++_g1;
