@@ -1857,7 +1857,7 @@ Bundler.GLOBAL = "typeof window != \"undefined\" ? window : typeof global != \"u
 Bundler.FUNCTION_START = "(function ($hx_exports, $global) { \"use-strict\";\n";
 Bundler.FUNCTION_END = "})(" + "typeof exports != \"undefined\" ? exports : typeof window != \"undefined\" ? window : typeof self != \"undefined\" ? self : this" + ", " + "typeof window != \"undefined\" ? window : typeof global != \"undefined\" ? global : typeof self != \"undefined\" ? self : this" + ");\n";
 Bundler.WP_START = "/* eslint-disable */ \"use strict\"\n";
-Bundler.FRAGMENTS = { MAIN : { EXPORTS : "var $hx_exports = module.exports, $global = global;\n", SHARED : "var $s = $global.$hx_scope = $global.$hx_scope || {};\n"}, CHILD : { EXPORTS : "var $hx_exports = module.exports, $global = global;\n", SHARED : "var $s = $global.$hx_scope;\n"}};
+Bundler.FRAGMENTS = { MAIN : { EXPORTS : "var $hx_exports = module.exports, $global = global;\n", SHARED : "var $s = $global.$hx_scope = $global.$hx_scope || {};\n"}, CHILD : { EXPORTS : "var $hx_exports = module.exports, $global = global;\n", SHARED : "var $s = $global.$hx_scope, $_;\n"}};
 Bundler.generateHtml = global.generateHtml;
 MinifyId.BASE_16 = "abcdefghijklmnop".split("");
 SourceMap.SRC_REF = "//# sourceMappingURL=";

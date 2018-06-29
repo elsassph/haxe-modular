@@ -44,7 +44,7 @@ class Bundler
 		},
 		CHILD: {
 			EXPORTS: "var $hx_exports = module.exports, $global = global;\n",
-			SHARED: "var $s = $global.$hx_scope;\n"
+			SHARED: "var $s = $global.$hx_scope, $_;\n"
 		}
 	}
 
