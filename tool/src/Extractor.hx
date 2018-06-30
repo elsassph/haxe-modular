@@ -208,7 +208,7 @@ class Extractor
 				if (!owner.isMain) {
 					var parentModule = commonParent(bundle, owner);
 					var parent = moduleMap.get(parentModule);
-					shareGraph(parent, owner, node, parents);
+					if (parent != owner) shareGraph(parent, owner, node, parents);
 				}
 				continue;
 			}

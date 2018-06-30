@@ -827,7 +827,9 @@ Extractor.prototype = {
 				if(!owner.isMain) {
 					var parentModule = this.commonParent(bundle,owner);
 					var parent = this.moduleMap[parentModule];
-					this.shareGraph(parent,owner,node,parents);
+					if(parent != owner) {
+						this.shareGraph(parent,owner,node,parents);
+					}
 				}
 				continue;
 			}
