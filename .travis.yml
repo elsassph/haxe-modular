@@ -16,7 +16,8 @@ install:
   - haxelib install uglifyjs
 
 before_script:
-  - haxe build.hxml
+  - haxe build-viewer.hxml
+  - haxe build-tool.hxml
 
 script:
   - node tool/test/test-suite.js

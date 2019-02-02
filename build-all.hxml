@@ -1,5 +1,0 @@
-# build split and viewer
-build.hxml
-
-# run tests
--cmd node tool/test/test-suite.js

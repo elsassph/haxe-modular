@@ -1,0 +1,5 @@
+-lib hxnodejs
+-cp tool/src
+HxSplit
+-js tool/bin/split.js
+--macro includeFile('tool/vendor/generateHtml.js')
