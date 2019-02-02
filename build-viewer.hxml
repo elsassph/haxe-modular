@@ -1,0 +1,4 @@
+-cp tool/src
+-main StatsViewer
+-js tool/bin/viewer.js
+--macro includeFile('tool/vendor/carrotsearch.foamtree.js')

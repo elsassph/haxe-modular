@@ -1,0 +1,4 @@
+-cp src
+-cp tool/test/src
+-js x.js
+Bundle
