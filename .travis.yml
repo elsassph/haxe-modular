@@ -24,12 +24,12 @@ script:
 
 deploy:
   - provider: script
-    haxe: 3.4.4
+    haxe: stable
     script: bash ./releaseHaxelib.sh $HAXELIB_PWD
     on:
       tags: true
   - provider: npm
-    haxe: 3.4.4
+    haxe: stable
     email: "philippe.elsass@gmail.com"
     api_key: $NPM_KEY
     on:
