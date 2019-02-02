@@ -491,7 +491,12 @@ Bundler.prototype = {
 			_g.push(tmp);
 		}
 		var sourcesContent = _g;
-		return Bundler.generateHtml(consumer,src,sourcesContent);
+		try {
+			return Bundler.generateHtml(consumer,src,sourcesContent);
+		} catch( err ) {
+			haxe_Log.trace("[WARNING] error while generating debug map for " + bundle.name + ": " + Std.string(((err) instanceof js__$Boot_HaxeError) ? err.val : err),{ fileName : "tool/src/Bundler.hx", lineNumber : 230, className : "Bundler", methodName : "emitDebugMap"});
+			return null;
+		}
 	}
 	,emitJS: function(src,bundle,isMain) {
 		var _gthis = this;
