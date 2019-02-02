@@ -1,0 +1,46 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test6",
+    "nodes": [
+      "$extend",
+      "$hxClasses",
+      "Reflected",
+      "Require",
+      "Std",
+      "Test6",
+      "Type",
+      "haxe_IMap",
+      "haxe_Timer",
+      "haxe_ds_StringMap",
+      "js_Boot",
+      "js__$Boot_HaxeError",
+      "require"
+    ],
+    "exports": {
+      "$hxClasses": true
+    },
+    "shared": {
+      "CaseA": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseA",
+    "nodes": [
+      "CaseA",
+      "DepAB",
+      "DepDepAB"
+    ],
+    "exports": {
+      "CaseA": true
+    },
+    "shared": {},
+    "imports": {
+      "$hxClasses": true
+    }
+  }
+]

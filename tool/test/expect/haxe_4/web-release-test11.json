@@ -1,0 +1,39 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test11",
+    "nodes": [
+      "$hxClasses",
+      "Require",
+      "Test11",
+      "haxe_IMap",
+      "haxe_ds_StringMap",
+      "require"
+    ],
+    "exports": {
+      "$hxClasses": true
+    },
+    "shared": {
+      "CaseF": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseF",
+    "nodes": [
+      "$extend",
+      "CaseF",
+      "js__$Boot_HaxeError"
+    ],
+    "exports": {
+      "CaseF": true
+    },
+    "shared": {},
+    "imports": {
+      "$hxClasses": true
+    }
+  }
+]

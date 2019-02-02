@@ -1,0 +1,90 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test4",
+    "nodes": [
+      "$estr",
+      "$extend",
+      "$hxClasses",
+      "$hxEnums",
+      "DepAB",
+      "DepDepAB",
+      "DepDepMain",
+      "DepMain",
+      "Require",
+      "Test4",
+      "haxe_IMap",
+      "haxe_ds_StringMap",
+      "js_Boot",
+      "js__$Boot_HaxeError"
+    ],
+    "exports": {
+      "DepAB": true,
+      "$hxClasses": true,
+      "$estr": true,
+      "$hxEnums": true
+    },
+    "shared": {
+      "CaseA": true,
+      "CaseB": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": true,
+    "name": "lib",
+    "nodes": [
+      "lib_DepLib",
+      "lib_Lib",
+      "lib_Lib2"
+    ],
+    "exports": {
+      "lib_Lib": true,
+      "lib_Lib2": true
+    },
+    "shared": {},
+    "imports": {
+      "$hxClasses": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseA",
+    "nodes": [
+      "CaseA"
+    ],
+    "exports": {
+      "CaseA": true
+    },
+    "shared": {},
+    "imports": {
+      "DepAB": true,
+      "lib_Lib": true,
+      "$hxClasses": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseB",
+    "nodes": [
+      "CaseB",
+      "DepB",
+      "DepDepB"
+    ],
+    "exports": {
+      "CaseB": true
+    },
+    "shared": {},
+    "imports": {
+      "DepAB": true,
+      "$estr": true,
+      "$hxEnums": true,
+      "$hxClasses": true,
+      "lib_Lib2": true
+    }
+  }
+]

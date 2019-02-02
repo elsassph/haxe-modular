@@ -1,0 +1,44 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test11",
+    "nodes": [
+      "$extend",
+      "$hxClasses",
+      "Require",
+      "Std",
+      "Test11",
+      "haxe_IMap",
+      "haxe_Timer",
+      "haxe_ds_StringMap",
+      "js_Boot",
+      "js__$Boot_HaxeError",
+      "require"
+    ],
+    "exports": {
+      "js__$Boot_HaxeError": true,
+      "$hxClasses": true
+    },
+    "shared": {
+      "CaseF": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseF",
+    "nodes": [
+      "CaseF"
+    ],
+    "exports": {
+      "CaseF": true
+    },
+    "shared": {},
+    "imports": {
+      "js__$Boot_HaxeError": true,
+      "$hxClasses": true
+    }
+  }
+]

@@ -11,6 +11,8 @@ class HxSplit
 		debugMode:Bool, commonjs:Bool, debugSourceMap:Bool, dump:Bool,
 		astHooks:Array<Graph->String->Array<String>>)
 	{
+		haxe.Log.trace = function(v, ?infos) { untyped console.log(v); };
+
 		// parse input
 		var src = Fs.readFileSync(input).toString();
 		var parser = new Parser(src, debugMode, commonjs);

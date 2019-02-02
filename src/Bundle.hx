@@ -38,9 +38,9 @@ class Bundle
 					Require.hot(function(_) $bridge, $v{module});
 					#end
 					@:keep Require.module($v{module})
-						.then(function(id:String) {
+						.then(function(_i:String) {
 							$bridge;
-							return id;
+							return _i;
 						});
 				}
 				#end
