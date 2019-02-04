@@ -1,0 +1,65 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test1",
+    "nodes": [
+      "$estr",
+      "$extend",
+      "$hxClasses",
+      "$hxEnums",
+      "DepAB",
+      "DepDepAB",
+      "Test1",
+      "js_Boot",
+      "js__$Boot_HaxeError"
+    ],
+    "exports": {
+      "DepAB": true,
+      "$hxClasses": true,
+      "$estr": true,
+      "$hxEnums": true
+    },
+    "shared": {
+      "CaseA": true,
+      "CaseB": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseA",
+    "nodes": [
+      "CaseA"
+    ],
+    "exports": {
+      "CaseA": true
+    },
+    "shared": {},
+    "imports": {
+      "DepAB": true,
+      "$hxClasses": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseB",
+    "nodes": [
+      "CaseB",
+      "DepB",
+      "DepDepB"
+    ],
+    "exports": {
+      "CaseB": true
+    },
+    "shared": {},
+    "imports": {
+      "DepAB": true,
+      "$estr": true,
+      "$hxEnums": true,
+      "$hxClasses": true
+    }
+  }
+]

@@ -1,7 +1,6 @@
 "use strict";
 
 const fs = require('fs');
-const path = require('path');
 
 const args = [].concat(process.argv);
 const result = args[2];

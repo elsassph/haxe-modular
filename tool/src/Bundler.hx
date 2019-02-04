@@ -224,7 +224,13 @@ class Bundler
 				Fs.readFileSync(fileName).toString();
 			}
 		}];
-		return generateHtml(consumer, src, sourcesContent);
+		try {
+			return generateHtml(consumer, src, sourcesContent);
+		} catch (err: Dynamic) {
+			// happens when a module is almost empty and has no mapped code at all
+			trace('[WARNING] error while generating debug map for ${bundle.name}: ' + err);
+			return null;
+		}
 	}
 
 	function emitJS(src:String, bundle:Bundle, isMain:Bool)

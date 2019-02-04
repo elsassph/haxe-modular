@@ -9,6 +9,8 @@ try { fs.mkdirSync('tool/test/bin'); } catch (_) { }
 const testClasses = ['Test1', 'Test2', 'Test3', 'Test4', 'Test5', 'Test6', 'Test7', 'Test8', 'Test9', 'Test10', 'Test11'];
 const useLib = { Test4:true, Test5:true };
 
+const only = getOnly();
+
 const suites = [{
 	name: 'node-debug',
 	params: '-debug -D nodejs',
@@ -54,6 +56,13 @@ const suitesInterop = [{
 }];
 
 var hasFailedCase = 0;
+var haxeVersion = 3;
+
+function getOnly() {
+	const args = [].concat(process.argv);
+	if (args.length > 2) return args.slice(2);
+	else return null;
+}
 
 function exitWithResult() {
 	// report case failure
@@ -65,13 +74,17 @@ function exitWithResult() {
 }
 
 function runInterop() {
-	if (!suitesInterop.length) {
+	const className = 'TestInterop';
+	if (!suitesInterop.length || (only && only[1] && only[1] !== className)) {
 		exitWithResult();
 		return;
 	}
-	const className = 'TestInterop';
 	const suite = suitesInterop.shift();
 	const name = `${suite.name}-${className.toLowerCase()}`;
+	if (only && only[0] !== suite.name) {
+		runInterop();
+		return;
+	}
 	console.log(`---------[${name}]---------`);
 	execTest(className, name, suite.params, false, err => {
 		if (err) {
@@ -91,6 +104,10 @@ function runSuites() {
 		return;
 	}
 	const suite = suites.shift();
+	if (only && only[0] !== suite.name) {
+		runSuites();
+		return;
+	}
 	runAllTests(suite.name, suite.params, suite.isNode, runSuites);
 }
 
@@ -104,6 +121,10 @@ function runAllTests(suite, params, isNode, callback) {
 			return;
 		}
 		const className = cases.shift();
+		if (only && only[1] && only[1] !== className) {
+			runTest();
+			return;
+		}
 		const name = `${suite}-${className.toLowerCase()}`;
 		console.log(`---------[${name}]---------`);
 		execTest(className, name, params, isNode, runTest);
@@ -130,7 +151,7 @@ function execTest(className, name, params, isNode, callback) {
 
 function runValidation(name, isNode, callback) {
 	const result = `tool/test/bin/${name}/index.js.json`;
-	const valid = `tool/test/expect/${name}.json`;
+	const valid = `tool/test/expect/haxe_${haxeVersion}/${name}.json`;
 	exec(`node tool/test/validate.js ${result} ${valid}`, (err, stdout, stderr) => {
 		if (err) {
 			hasFailedCase = 2;
@@ -161,5 +182,27 @@ function runOutput(name, callback) {
 	});
 }
 
-// run normal suites then advanced interop cases
-runSuites();
+function detectHaxe(callback) {
+	exec(`haxe -version`, (err, stdout, stderr) => {
+		if (err) {
+			console.log(stderr);
+			console.log('FATAL: Haxe binary missing');
+			process.exit(-1);
+		} else {
+			const out = ('' + stdout + stderr).trim();
+			haxeVersion = parseInt(out);
+			console.log(`Running tests against Haxe version ${out} ->`, haxeVersion);
+			if (haxeVersion !== 3 && haxeVersion !== 4) {
+				console.log('FATAL: Haxe version unsupported');
+				process.exit(-2);
+			}
+			try { fs.mkdirSync(`tool/test/expect/haxe_${haxeVersion}`); } catch (_) { }
+			callback();
+		}
+	});
+}
+
+detectHaxe(() => {
+	// run normal suites then advanced interop cases
+	runSuites();
+});

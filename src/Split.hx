@@ -49,7 +49,7 @@ class Split
 		var args = [tempOutput, output];
 
 		#if haxe_split
-		var params = Std.string(Compiler.getDefine('haxe_split')).split(' ');
+		var params = Std.string(Context.definedValue('haxe_split')).split(' ');
 		var cmd = params.shift();
 		if (params.length > 0) args = params.concat(args);
 		#else

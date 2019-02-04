@@ -51,50 +51,51 @@ typedef AstSourceLocation = {
 	end: AstPosition
 }
 
-typedef AstNode = {
-	__tag__: String,
-	__main__: Bool,
-	type: String,
-	loc: AstSourceLocation,
-	source: String,
-	start: Int,
-	end: Int,
-	range: Array<Int>,
-	body: haxe.extern.EitherType<AstNode, Array<AstNode>>,
+extern interface AstNode {
+	var __tag__: String;
+	var __main__: Bool;
+	var raw: String;
+	var type: String;
+	var loc: AstSourceLocation;
+	var source: String;
+	var start: Int;
+	var end: Int;
+	var range: Array<Int>;
+	var body: haxe.extern.EitherType<AstNode, Array<AstNode>>;
 	// ExpressionStatement
-	expression: AstNode,
+	var expression: AstNode;
 	// CallExpression
-	callee: AstNode,
-	arguments: Array<AstNode>,
+	var callee: AstNode;
+	var arguments: Array<AstNode>;
 	// FunctionExpression
-	params: Array<AstNode>,
+	var params: Array<AstNode>;
 	// Identifier
-	name: String,
+	var name: String;
 	// Literal
-	value: String,
-	raw: String,
+	var value: String;
+	var rawvar : String;
 	// ConditionalExpression/IfStatement
-	test: AstNode,
-	consequent: AstNode,
-	alternate: AstNode,
+	var test: AstNode;
+	var consequent: AstNode;
+	var alternate: AstNode;
 	// VariableDeclaration
-	declarations: Array<AstNode>,
+	var declarations: Array<AstNode>;
 	// VariableDeclarator
-	id: AstNode,
-	init: AstNode,
+	var id: AstNode;
+	var init: AstNode;
 	// AssignmentExpression
-	left: AstNode,
-	right: AstNode,
+	var left: AstNode;
+	var right: AstNode;
 	// LogicalExpression
-	operator: String,
+	@:native('operator') var op: String;
 	// MemberExpression
-	object: AstNode,
-	property: AstNode,
-	computer: Bool,
+	var object: AstNode;
+	var property: AstNode;
+	var computer: Bool;
 	// ObjectExpression
-	properties: Array<AstNode>,
+	var properties: Array<AstNode>;
 	// Property
-	key: AstNode
+	var key: AstNode;
 }
 
 typedef Tokenizer = {
