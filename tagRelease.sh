@@ -29,7 +29,7 @@ case "$(uname -s)" in
 esac
 
 # Rebuild to ensure compiled JS includes all changes
-haxe build.hxml
+# haxe build.hxml
 
 # Tag, commit and push to trigger a new CI release
 git commit -am "Release version $VERSION"
