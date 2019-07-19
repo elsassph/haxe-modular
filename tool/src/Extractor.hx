@@ -95,21 +95,6 @@ class Extractor
 		#end
 	}
 
-	function deduplicate(a:Array<String>)
-	{
-		if (a.length <= 1) return a;
-		var b = [];
-		var known:DynamicAccess<Bool> = {};
-		for (s in a) {
-			if (!known.exists(s)) {
-				b.push(s);
-				known.set(s, true);
-			}
-		}
-		b.sort(null);
-		return b;
-	}
-
 	function populateBundles(mainModule:String, parents:DynamicAccess<String>)
 	{
 		// Now that nodes having attributed to bundles,
@@ -241,7 +226,7 @@ class Extractor
 		var i1 = p1.length - 1;
 		var i2 = p2.length - 1;
 		var parent = mainModule;
-		while (p1[i1] == p2[i2]) {
+		while (p1[i1] == p2[i2] && i1 >= 0) {
 			parent = p1[i1];
 			i1--;
 			i2--;
@@ -277,10 +262,20 @@ class Extractor
 
 	function uniqueModules(modulesList:Array<String>)
 	{
-		// deduplicate modules
+		// deduplicate and merge modules
 		modules = [];
-		for (module in modulesList)
-			if (modules.indexOf(module) < 0) modules.push(module);
+		var modulesMap:DynamicAccess<Array<String>> = {};
+		for (module in modulesList) {
+			if (module.indexOf('=') > 0) {
+				var parts = module.split('=');
+				var name = parts[0];
+				if (!modulesMap.exists(name)) modulesMap.set(name, []);
+				for (m in parts[1].split(","))
+					if (modulesMap.get(name).indexOf(m) < 0) modulesMap.get(name).push(m);
+			} 
+			else if (modules.indexOf(module) < 0) modules.push(module);
+		}
+		modules = modules.concat([for (name in modulesMap.keys()) '$name=${modulesMap.get(name).join(",")}']);
 	}
 
 	function linkEnums(root:String, list:Array<String>)

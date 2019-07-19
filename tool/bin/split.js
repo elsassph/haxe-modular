@@ -701,24 +701,6 @@ Extractor.prototype = {
 		var t1 = new Date().getTime();
 		haxe_Log.trace("Graph processed in: " + (t1 - t0) + "ms",{ fileName : "Extractor.hx", lineNumber : 91, className : "Extractor", methodName : "process"});
 	}
-	,deduplicate: function(a) {
-		if(a.length <= 1) {
-			return a;
-		}
-		var b = [];
-		var known = { };
-		var _g = 0;
-		while(_g < a.length) {
-			var s = a[_g];
-			++_g;
-			if(!Object.prototype.hasOwnProperty.call(known,s)) {
-				b.push(s);
-				known[s] = true;
-			}
-		}
-		b.sort(null);
-		return b;
-	}
 	,populateBundles: function(mainModule,parents) {
 		var bundle = this.moduleMap[mainModule];
 		this.recursePopulate(bundle,mainModule,parents,{ });
@@ -864,7 +846,7 @@ Extractor.prototype = {
 		var i1 = p1.length - 1;
 		var i2 = p2.length - 1;
 		var parent = this.mainModule;
-		while(p1[i1] == p2[i2]) {
+		while(p1[i1] == p2[i2] && i1 >= 0) {
 			parent = p1[i1];
 			--i1;
 			--i2;
@@ -906,14 +888,40 @@ Extractor.prototype = {
 	}
 	,uniqueModules: function(modulesList) {
 		this.modules = [];
+		var modulesMap = { };
 		var _g = 0;
 		while(_g < modulesList.length) {
 			var $module = modulesList[_g];
 			++_g;
-			if(this.modules.indexOf($module) < 0) {
+			if($module.indexOf("=") > 0) {
+				var parts = $module.split("=");
+				var name = parts[0];
+				if(!Object.prototype.hasOwnProperty.call(modulesMap,name)) {
+					modulesMap[name] = [];
+				}
+				var _g1 = 0;
+				var _g2 = parts[1].split(",");
+				while(_g1 < _g2.length) {
+					var m = _g2[_g1];
+					++_g1;
+					if(modulesMap[name].indexOf(m) < 0) {
+						modulesMap[name].push(m);
+					}
+				}
+			} else if(this.modules.indexOf($module) < 0) {
 				this.modules.push($module);
 			}
 		}
+		var tmp = this.modules;
+		var _g3 = [];
+		var _g11 = 0;
+		var _g21 = Reflect.fields(modulesMap);
+		while(_g11 < _g21.length) {
+			var name1 = _g21[_g11];
+			++_g11;
+			_g3.push("" + name1 + "=" + modulesMap[name1].join(","));
+		}
+		this.modules = tmp.concat(_g3);
 	}
 	,linkEnums: function(root,list) {
 		var _g = 0;
@@ -1086,7 +1094,15 @@ HxSplit.dumpModules = function(output,extractor) {
 		var bundle = bundles[_g];
 		++_g;
 		Reflect.deleteField(bundle,"indexes");
-		bundle.nodes.sort(null);
+		bundle.nodes.sort(function(s1,s2) {
+			if(s1 == s2) {
+				return 0;
+			} else if(s1 < s2) {
+				return -1;
+			} else {
+				return 1;
+			}
+		});
 	}
 	var out = JSON.stringify(bundles,null,"  ");
 	js_node_Fs.writeFileSync(output + ".json",out);

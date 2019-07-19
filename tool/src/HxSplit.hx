@@ -54,7 +54,7 @@ class HxSplit
 		var bundles = [extractor.main].concat(extractor.bundles);
 		for (bundle in bundles) {
 			Reflect.deleteField(bundle, 'indexes');
-			bundle.nodes.sort(null);
+			bundle.nodes.sort(function(s1, s2) return s1 == s2 ? 0 : s1 < s2 ? -1 : 1);
 		}
 
 		var out = Json.stringify(bundles, '  ');
