@@ -19,7 +19,14 @@ else {
 
 	console.log('[Validate]', result, 'from', valid);
 
-	if (resultRaw != validRaw) {
+	// it is necessary to remove dependence on sequence of modules, so we sort them by name
+	function sort(s) {
+		const jsonData = JSON.parse(s);
+		jsonData.sort(function(n1, n2) { return n1.name == n2.name ? 0 : n1.name < n2.name ? -1 : 1; });
+		return JSON.stringify(jsonData);
+	}
+
+	if (sort(resultRaw) != sort(validRaw)) {
 		console.log('FAILED!');
 		// print diff
 		const diff = require('json-diff/lib/cli');
