@@ -1,0 +1,42 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test12",
+    "nodes": [
+      "$hxClasses",
+      "DepDepMain",
+      "DepMain",
+      "Require",
+      "Test12",
+      "haxe_IMap",
+      "haxe_ds_StringMap"
+    ],
+    "exports": {
+      "$hxClasses": true
+    },
+    "shared": {
+      "lib_Lib2": true,
+      "a_$b_C_$_$d": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": true,
+    "name": "lib",
+    "nodes": [
+      "a_$b_C_$_$d",
+      "lib_DepLib",
+      "lib_Lib2"
+    ],
+    "exports": {
+      "lib_Lib2": true,
+      "a_$b_C_$_$d": true
+    },
+    "shared": {},
+    "imports": {
+      "$hxClasses": true
+    }
+  }
+]
