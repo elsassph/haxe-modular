@@ -3,6 +3,7 @@ import haxe.DynamicAccess;
 class MinifyId
 {
 	static var BASE_16 = 'abcdefghijklmnop'.split('');
+	static var blacklist:Map<String, Bool> = ["HxOverrides" => true];
 
 	var map:DynamicAccess<String> = {};
 	var index:Int = 0;
@@ -24,6 +25,7 @@ class MinifyId
 	 */
 	public function get(id:String)
 	{
+		if (blacklist.exists(id)) return id;
 		if (id.length <= 2) return id;
 		var min = map.get(id);
 		if (min == null) {
