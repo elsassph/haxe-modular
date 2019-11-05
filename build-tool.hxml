@@ -2,4 +2,5 @@
 -cp tool/src
 HxSplit
 -js tool/bin/split.js
+-D js-es=6
 --macro includeFile('tool/vendor/generateHtml.js')

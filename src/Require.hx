@@ -1,13 +1,19 @@
 import haxe.Timer;
 import haxe.macro.Expr;
 
+#if (haxe_ver >= 4)
+typedef Promise<T> = js.lib.Promise<T>;
+#else
+typedef Promise<T> = js.Promise<T>;
+#end
+
 class Require
 {
 	#if (!macro && !webpack)
 	static public var jsPath = './';
 	static public var jsExt = '.js';
 
-	static var loaded:Map<String, js.Promise<String>> = new Map();
+	static var loaded:Map<String, Promise<String>> = new Map();
 	static var handlers:Map<String, String -> Void> = new Map();
 
 	#if debug
@@ -20,12 +26,12 @@ class Require
 	 * Load JS module
 	 * @param	name	JS file name without extension
 	 */
-	static public function module(name:String):js.Promise<String>
+	static public function module(name:String):Promise<String>
 	{
 		if (loaded.exists(name))
 			return loaded.get(name);
 
-		var p = new js.Promise<String>(function(resolve, reject) {
+		var p = new Promise<String>(function(resolve, reject) {
 			var doc = js.Browser.document;
 			var script:js.html.ScriptElement = null;
 			var hasFailed:Bool = false;
@@ -101,7 +107,7 @@ class Require
 		reloadTimer = null;
 		trace('Reloading ${modules}...');
 
-		js.Promise.all([for (module in modules) {
+		Promise.all([for (module in modules) {
 			var script = js.Browser.document.querySelector('script[src$="$module.js"]');
 			if (script != null) script.remove();
 			loaded.remove(module);

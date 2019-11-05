@@ -30,7 +30,11 @@ class Bundle
 				return macro cast {
 					untyped require($v{jsModule});
 					$bridge;
+					#if (haxe_ver >= 4)
+					js.lib.Promise.resolve($v{module});
+					#else
 					js.Promise.resolve($v{module});
+					#end
 				}
 				#else
 				return macro {

@@ -4,3 +4,4 @@
 Bundle
 -lib closure
 -lib uglifyjs
+-debug
