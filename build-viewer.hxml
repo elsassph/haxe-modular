@@ -1,4 +1,5 @@
 -cp tool/src
 -main StatsViewer
 -js tool/bin/viewer.js
+-D js-es=6
 --macro includeFile('tool/vendor/carrotsearch.foamtree.js')
