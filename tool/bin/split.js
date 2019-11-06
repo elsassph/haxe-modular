@@ -1234,7 +1234,7 @@ class MinifyId {
 MinifyId.__name__ = true;
 class Parser {
 	constructor(src,withLocation,commonjs) {
-		this.objectMethods = { "defineProperty" : true, "defineProperties" : true, "freeze" : true};
+		this.objectMethods = { "defineProperty" : true, "defineProperties" : true, "freeze" : true, "assign" : true};
 		this.reservedTypes = { "String" : true, "Math" : true, "Array" : true, "Date" : true, "Number" : true, "Boolean" : true, __map_reserved : true};
 		this.mainModule = "Main";
 		var t0 = new Date().getTime();
@@ -1246,7 +1246,7 @@ class Parser {
 		haxe_Log.trace("AST processed in: " + (t2 - t1) + "ms",{ fileName : "tool/src/Parser.hx", lineNumber : 35, className : "Parser", methodName : "new"});
 	}
 	processInput(src,withLocation) {
-		var options = { ecmaVersion : 5, allowReserved : true};
+		var options = { ecmaVersion : 6, allowReserved : true};
 		if(withLocation) {
 			options.locations = true;
 		}
@@ -1337,6 +1337,9 @@ class Parser {
 			var node = body[_g];
 			++_g;
 			switch(node.type) {
+			case "ClassDeclaration":
+				this.inspectClass(node.id,node);
+				break;
 			case "EmptyStatement":
 				break;
 			case "ExpressionStatement":
@@ -1356,7 +1359,7 @@ class Parser {
 				this.inspectDeclarations(node.declarations,node);
 				break;
 			default:
-				haxe_Log.trace("WARNING: Unexpected " + node.type + ", at character " + node.start,{ fileName : "tool/src/Parser.hx", lineNumber : 158, className : "Parser", methodName : "walkDeclarations"});
+				haxe_Log.trace("WARNING: Unexpected " + node.type + ", at character " + node.start,{ fileName : "tool/src/Parser.hx", lineNumber : 160, className : "Parser", methodName : "walkDeclarations"});
 			}
 		}
 	}
@@ -1375,6 +1378,13 @@ class Parser {
 			if(name == "$extend" || name == "$bind" || name == "$iterator") {
 				this.tag(name,def);
 			}
+		}
+	}
+	inspectClass(id,def) {
+		var path = this.getIdentifier(id);
+		if(path.length > 0) {
+			var name = path[0];
+			this.tag(name,def);
 		}
 	}
 	inspectExpression(expression,def) {

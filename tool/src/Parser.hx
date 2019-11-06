@@ -18,7 +18,7 @@ class Parser
 		__map_reserved:true
 	};
 	var objectMethods:DynamicAccess<Bool> = {
-		'defineProperty':true, 'defineProperties':true, 'freeze':true
+		'defineProperty':true, 'defineProperties':true, 'freeze':true, 'assign': true
 	};
 
 	var types:DynamicAccess<Array<AstNode>>;
@@ -37,7 +37,7 @@ class Parser
 
 	function processInput(src:String, withLocation:Bool)
 	{
-		var options:AcornOptions = { ecmaVersion: 5, allowReserved: true };
+		var options:AcornOptions = { ecmaVersion: 6, allowReserved: true };
 		if (withLocation) options.locations = true;
 		var program = Acorn.parse(src, options);
 		walkProgram(program);
@@ -147,6 +147,8 @@ class Parser
 					inspectExpression(node.expression, node);
 				case 'FunctionDeclaration':
 					inspectFunction(node.id, node);
+				case 'ClassDeclaration':
+					inspectClass(node.id, node);
 				case 'IfStatement':
 					if (node.consequent.type == 'ExpressionStatement')
 						inspectExpression(node.consequent.expression, node);
@@ -179,6 +181,16 @@ class Parser
 		{
 			var name = path[0];
 			if (name == "$extend" || name == "$bind" || name == "$iterator") tag(name, def);
+		}
+	}
+
+	function inspectClass(id:AstNode, def:AstNode)
+	{
+		var path = getIdentifier(id);
+		if (path.length > 0)
+		{
+			var name = path[0];
+			tag(name, def);
 		}
 	}
 

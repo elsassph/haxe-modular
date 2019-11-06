@@ -9,7 +9,7 @@ try { fs.mkdirSync('tool/test/bin'); } catch (_) { }
 const testClasses = ['Test1', 'Test2', 'Test3', 'Test4', 'Test5', 'Test6', 'Test7', 'Test8', 'Test9', 'Test10', 'Test11', 'Test12'];
 const useLib = { Test4:true, Test5:true, Test12:true };
 
-const only = getOnly();
+const { only, es6 } = getOnly();
 
 const suites = [{
 	name: 'node-debug',
@@ -56,12 +56,19 @@ const suitesInterop = [{
 }];
 
 var hasFailedCase = 0;
-var haxeVersion = 3;
+var haxeVersion = '3';
 
 function getOnly() {
 	const args = [].concat(process.argv);
-	if (args.length > 2) return args.slice(2);
-	else return null;
+	if (args.length <= 2) return {};
+	let only = args.slice(2);
+	let es6 = false;
+	if (only[0] === 'es6') {
+		es6 = true;
+		only.shift();
+	}
+	if (only.length === 0) only = null;
+	return { only, es6 };
 }
 
 function exitWithResult() {
@@ -135,6 +142,7 @@ function runAllTests(suite, params, isNode, callback) {
 function execTest(className, name, params, isNode, callback) {
 	const folder = `tool/test/bin/${name}`;
 	if (useLib[className]) params += ' -D uselib';
+	if (es6) params += ' -D js-es=6';
 	var cmd = `haxe tool/test/test-common.hxml -main ${className} -js ${folder}/index.js ${params}`;
 	//console.log(cmd);
 	exec(cmd, (err, stdout, stderr) => {
@@ -190,12 +198,13 @@ function detectHaxe(callback) {
 			process.exit(-1);
 		} else {
 			const out = ('' + stdout + stderr).trim();
-			haxeVersion = parseInt(out);
-			console.log(`Running tests against Haxe version ${out} ->`, haxeVersion);
-			if (haxeVersion !== 3 && haxeVersion !== 4) {
+			const v = parseInt(out);
+			console.log(`Running tests against Haxe version ${out} ->`, v, es6 ? '(ES6)' : '');
+			if (v !== 3 && v !== 4) {
 				console.log('FATAL: Haxe version unsupported');
 				process.exit(-2);
 			}
+			haxeVersion = `${v}${es6 ? '_es6' : ''}`;
 			try { fs.mkdirSync(`tool/test/expect/haxe_${haxeVersion}`); } catch (_) { }
 			callback();
 		}
