@@ -204,6 +204,10 @@ function detectHaxe(callback) {
 				console.log('FATAL: Haxe version unsupported');
 				process.exit(-2);
 			}
+			if (v === 3 && es6) {
+				console.log('ES6 mode not supported by Haxe 3 - ignoring');
+				process.exit(0);
+			}
 			haxeVersion = `${v}${es6 ? '_es6' : ''}`;
 			try { fs.mkdirSync(`tool/test/expect/haxe_${haxeVersion}`); } catch (_) { }
 			callback();
