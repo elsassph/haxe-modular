@@ -205,8 +205,7 @@ class Parser
 					var name = path[0];
 					switch (name)
 					{
-						case "$hx_exports":
-						case "$hxClasses":
+						case "$hxClasses", "$hx_exports":
 							var moduleName = getIdentifier(expression.right);
 							if (moduleName.length == 1) tag(moduleName[0], def);
 						default:
@@ -365,6 +364,8 @@ class Parser
 				return getIdentifier(left.object).concat(getIdentifier(left.property));
 			case 'Literal':
 				return [left.raw];
+			case 'AssignmentExpression':
+				return getIdentifier(left.right);
 			default:
 				return [];
 		}

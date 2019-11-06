@@ -1394,13 +1394,11 @@ class Parser {
 			if(path.length > 0) {
 				var name = path[0];
 				switch(name) {
-				case "$hxClasses":
+				case "$hxClasses":case "$hx_exports":
 					var moduleName = this.getIdentifier(expression.right);
 					if(moduleName.length == 1) {
 						this.tag(moduleName[0],def);
 					}
-					break;
-				case "$hx_exports":
 					break;
 				default:
 					if(Object.prototype.hasOwnProperty.call(this.types,name)) {
@@ -1560,6 +1558,8 @@ class Parser {
 			return [];
 		}
 		switch(left.type) {
+		case "AssignmentExpression":
+			return this.getIdentifier(left.right);
 		case "Identifier":
 			return [left.name];
 		case "Literal":
