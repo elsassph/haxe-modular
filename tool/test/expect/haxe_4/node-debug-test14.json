@@ -2,22 +2,11 @@
   {
     "isMain": true,
     "isLib": false,
-    "name": "Test13",
+    "name": "Test14",
     "nodes": [
-      "$hxClasses",
-      "Require",
-      "Std",
-      "Test13",
-      "haxe_IMap",
-      "haxe_Timer",
-      "haxe_ds_StringMap",
-      "js_Boot",
-      "js__$Boot_HaxeError",
-      "require"
+      "Test14"
     ],
-    "exports": {
-      "$hxClasses": true
-    },
+    "exports": {},
     "shared": {
       "a_$b_Exposed": true
     },
@@ -35,8 +24,6 @@
       "a_$b_Exposed": true
     },
     "shared": {},
-    "imports": {
-      "$hxClasses": true
-    }
+    "imports": {}
   }
 ]

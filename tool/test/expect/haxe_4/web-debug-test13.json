@@ -4,6 +4,7 @@
     "isLib": false,
     "name": "Test13",
     "nodes": [
+      "$extend",
       "$hxClasses",
       "Require",
       "Std",

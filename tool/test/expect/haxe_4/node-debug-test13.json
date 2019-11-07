@@ -5,15 +5,7 @@
     "name": "Test13",
     "nodes": [
       "$hxClasses",
-      "Require",
-      "Std",
-      "Test13",
-      "haxe_IMap",
-      "haxe_Timer",
-      "haxe_ds_StringMap",
-      "js_Boot",
-      "js__$Boot_HaxeError",
-      "require"
+      "Test13"
     ],
     "exports": {
       "$hxClasses": true
