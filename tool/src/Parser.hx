@@ -13,11 +13,11 @@ class Parser
 	public var typesCount(default, null):Int;
 	public var mainModule:String = 'Main';
 
-	var reservedTypes:DynamicAccess<Bool> = {
+	final reservedTypes:DynamicAccess<Bool> = {
 		'String':true, 'Math':true, 'Array':true, 'Date':true, 'Number':true, 'Boolean':true,
 		__map_reserved:true
 	};
-	var objectMethods:DynamicAccess<Bool> = {
+	final objectMethods:DynamicAccess<Bool> = {
 		'defineProperty':true, 'defineProperties':true, 'freeze':true, 'assign': true
 	};
 
@@ -25,27 +25,27 @@ class Parser
 
 	public function new(src:String, withLocation:Bool, commonjs:Bool)
 	{
-		var t0 = Date.now().getTime();
+		final t0 = Date.now().getTime();
 		processInput(src, withLocation);
-		var t1 = Date.now().getTime();
+		final t1 = Date.now().getTime();
 		trace('Parsed in: ${t1 - t0}ms');
 
 		buildGraph(commonjs);
-		var t2 = Date.now().getTime();
+		final t2 = Date.now().getTime();
 		trace('AST processed in: ${t2 - t1}ms');
 	}
 
 	function processInput(src:String, withLocation:Bool)
 	{
-		var options:AcornOptions = { ecmaVersion: 6, allowReserved: true };
+		final options:AcornOptions = { ecmaVersion: 6, allowReserved: true };
 		if (withLocation) options.locations = true;
-		var program = Acorn.parse(src, options);
+		final program = Acorn.parse(src, options);
 		walkProgram(program);
 	}
 
 	function buildGraph(commonjs:Bool)
 	{
-		var g = new Graph({ directed: true, compound:true });
+		final g = new Graph({ directed: true, compound:true });
 		var cpt = 0;
 		var refs = 0;
 		for (t in types.keys()) {
@@ -71,9 +71,9 @@ class Parser
 	function walk(g:Graph, id:String, nodes:Array<AstNode>)
 	{
 		var refs = 0;
-		var visitors = {
+		final visitors = {
 			Identifier: function(node:AstNode) {
-				var name = node.name;
+				final name = node.name;
 				if (name != id && types.exists(name))
 				{
 					g.setEdge(id, name);
@@ -97,8 +97,7 @@ class Parser
 		isRequire = {};
 
 		// allow code to have been included before the Haxe output
-		var body = getBodyNodes(program);
-		rootExpr = body.pop();
+		rootExpr = getBodyNodes(program).pop();
 
 		switch (rootExpr.type)
 		{
@@ -122,11 +121,11 @@ class Parser
 
 	function walkRootFunction(callee:AstNode)
 	{
-		var block = getBodyNodes(callee)[0];
+		final block = getBodyNodes(callee)[0];
 		switch (block.type)
 		{
 			case 'BlockStatement':
-				var body = getBodyNodes(block);
+				final body = getBodyNodes(block);
 				walkDeclarations(body);
 			default:
 				throw 'Expecting block of statements inside root function';
@@ -168,7 +167,7 @@ class Parser
 		{
 			// conditional prototype modification
 			// eg. if(ArrayBuffer.prototype.slice == null) {...}
-			var path = getIdentifier(test.left);
+			final path = getIdentifier(test.left);
 			if (path.length > 1 && path[1] == 'prototype')
 				tag(path[0], def);
 		}
@@ -176,20 +175,20 @@ class Parser
 
 	function inspectFunction(id:AstNode, def:AstNode)
 	{
-		var path = getIdentifier(id);
+		final path = getIdentifier(id);
 		if (path.length > 0)
 		{
-			var name = path[0];
+			final name = path[0];
 			if (name == "$extend" || name == "$bind" || name == "$iterator") tag(name, def);
 		}
 	}
 
 	function inspectClass(id:AstNode, def:AstNode)
 	{
-		var path = getIdentifier(id);
+		final path = getIdentifier(id);
 		if (path.length > 0)
 		{
-			var name = path[0];
+			final name = path[0];
 			tag(name, def);
 		}
 	}
@@ -199,14 +198,14 @@ class Parser
 		switch (expression.type)
 		{
 			case 'AssignmentExpression':
-				var path = getIdentifier(expression.left);
+				final path = getIdentifier(expression.left);
 				if (path.length > 0)
 				{
-					var name = path[0];
+					final name = path[0];
 					switch (name)
 					{
 						case "$hxClasses", "$hx_exports":
-							var moduleName = getIdentifier(expression.right);
+							final moduleName = getIdentifier(expression.right);
 							if (moduleName.length == 1) tag(moduleName[0], def);
 						default:
 							if (types.exists(name))
@@ -218,11 +217,11 @@ class Parser
 					}
 				}
 			case 'CallExpression':
-				var path = getIdentifier(expression.callee.object);
-				var prop = getIdentifier(expression.callee.property);
+				final path = getIdentifier(expression.callee.object);
+				final prop = getIdentifier(expression.callee.property);
 				if (prop.length == 1 && path.length == 1) {
-					var name = path[0];
-					var member = prop[0];
+					final name = path[0];
+					final member = prop[0];
 					// eg. SomeType.something()
 					if (types.exists(name)) {
 						// last SomeType.main() call is the entry point
@@ -232,10 +231,10 @@ class Parser
 					// eg. Object.defineProperty(SomeType.prototype, ...)
 					else if (name == 'Object' && objectMethods.get(member)
 						&& expression.arguments != null && expression.arguments[0] != null) {
-						path = getIdentifier(expression.arguments[0].object);
-						if (path.length == 1) {
-							name = path[0];
-							if (types.exists(name)) tag(name, def);
+						final spath = getIdentifier(expression.arguments[0].object);
+						if (spath.length == 1) {
+							final sname = spath[0];
+							if (types.exists(sname)) tag(sname, def);
 						}
 					}
 				}
@@ -258,17 +257,17 @@ class Parser
 		{
 			if (decl.id != null)
 			{
-				var name = decl.id.name;
+				final name = decl.id.name;
 				if (decl.init != null)
 				{
-					var init = decl.init;
+					final init = decl.init;
 					switch (init.type)
 					{
 						case 'FunctionExpression': // ctor
 							tag(name, def);
 						case 'AssignmentExpression':
-							var right = init.right;
-							var type = right.type;
+							final right = init.right;
+							final type = right.type;
 							if (type == 'FunctionExpression') { // ctor with export
 								tag(name, def);
 							}
@@ -300,7 +299,7 @@ class Parser
 							if (name == "$hxEnums") // workaround for: $hxEnums = $hxEnums || {}
 								tag(name, def);
 							else if (init.op == '||' && init.right != null) {
-								var id = getIdentifier(init.right);
+								final id = getIdentifier(init.right);
 								if (id.length > 0 && id[0].indexOf('_compat_') > 0)
 									tag(name, def);
 							}
@@ -334,7 +333,7 @@ class Parser
 
 	function isEnumDecl(node:AstNode)
 	{
-		var props = node.properties;
+		final props = node.properties;
 		return node.type == 'ObjectExpression'
 			&& props != null
 			&& props.length > 0

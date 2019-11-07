@@ -14,22 +14,22 @@ class HxSplit
 		haxe.Log.trace = function(v, ?infos) { untyped console.log(v); };
 
 		// parse input
-		var src = Fs.readFileSync(input).toString();
-		var parser = new Parser(src, debugMode, commonjs);
-		var sourceMap = debugMode ? new SourceMap(input, src) : null;
+		final src = Fs.readFileSync(input).toString();
+		final parser = new Parser(src, debugMode, commonjs);
+		final sourceMap = debugMode ? new SourceMap(input, src) : null;
 
 		// external hook
 		modules = applyAstHooks(parser.mainModule, modules, astHooks, parser.graph);
 
 		// process
 		if (debugSourceMap) dumpGraph(output, parser.graph);
-		var extractor = new Extractor(parser);
+		final extractor = new Extractor(parser);
 		extractor.process(parser.mainModule, modules, debugMode);
 
 		// emit
-		var reporter = new Reporter(dump);
-		var bundler = new Bundler(parser, sourceMap, extractor, reporter);
-		var result = bundler.generate(src, output, commonjs, debugSourceMap);
+		final reporter = new Reporter(dump);
+		final bundler = new Bundler(parser, sourceMap, extractor, reporter);
+		final result = bundler.generate(src, output, commonjs, debugSourceMap);
 
 		if (debugSourceMap) dumpModules(output, extractor);
 		if (dump) reporter.save(output);
@@ -42,7 +42,7 @@ class HxSplit
 		if (astHooks == null || astHooks.length == 0) return modules;
 		for (hook in astHooks) {
 			if (hook == null) continue;
-			var addModules = hook(graph, mainModule);
+			final addModules = hook(graph, mainModule);
 			if (addModules != null) modules = modules.concat(addModules);
 		}
 		return modules;
@@ -51,13 +51,13 @@ class HxSplit
 	static function dumpModules(output:String, extractor:Extractor)
 	{
 		trace('Dump bundles: ${output}.json');
-		var bundles = [extractor.main].concat(extractor.bundles);
+		final bundles = [extractor.main].concat(extractor.bundles);
 		for (bundle in bundles) {
 			Reflect.deleteField(bundle, 'indexes');
-			bundle.nodes.sort(function(s1, s2) return s1 == s2 ? 0 : s1 < s2 ? -1 : 1);
+			bundle.nodes.sort((s1, s2) -> s1 == s2 ? 0 : s1 < s2 ? -1 : 1);
 		}
 
-		var out = Json.stringify(bundles, '  ');
+		final out = Json.stringify(bundles, '  ');
 		Fs.writeFileSync(output + '.json', out);
 	}
 
@@ -67,15 +67,15 @@ class HxSplit
 		var out = '';
 		for (node in g.nodes()) {
 			if (node.charAt(0) != '$') {
-				var toNode = g.inEdges(node)
-					.map(function(n) return n.v.split('_').join('.'))
-					.filter(function(l) return l.charAt(0) != '$');
+				final toNode = g.inEdges(node)
+					.map(n -> n.v.split('_').join('.'))
+					.filter(l -> l.charAt(0) != '$');
 				if (toNode.length == 0)
 					continue;
 				out += '+ ${node} < ${toNode.join(', ')}\n';
-				var fromNode = g.outEdges(node)
-					.map(function(n) return n.w.split('_').join('.'))
-					.filter(function(l) return l.charAt(0) != '$');
+				final fromNode = g.outEdges(node)
+					.map(n -> n.w.split('_').join('.'))
+					.filter(l -> l.charAt(0) != '$');
 				for (dest in fromNode) {
 					out += '  - $dest\n';
 				}

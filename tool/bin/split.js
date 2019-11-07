@@ -372,7 +372,6 @@ class Bundler {
 			haxe_Log.trace("Emit " + bundleOutput,{ fileName : "tool/src/Bundler.hx", lineNumber : 95, className : "Bundler", methodName : "generate"});
 			var buffer = this.emitBundle(src,bundle,isMain);
 			results[i1] = { name : bundle.name, map : this.writeMap(bundleOutput,buffer), source : this.write(bundleOutput,buffer.src), debugMap : buffer.debugMap};
-			isMain = false;
 		}
 		return results;
 	}
@@ -489,20 +488,20 @@ class Bundler {
 		try {
 			return Bundler.generateHtml(consumer,src,sourcesContent);
 		} catch( err ) {
-			haxe_Log.trace("[WARNING] error while generating debug map for " + bundle.name + ": " + Std.string(((err) instanceof js__$Boot_HaxeError) ? err.val : err),{ fileName : "tool/src/Bundler.hx", lineNumber : 231, className : "Bundler", methodName : "emitDebugMap"});
+			haxe_Log.trace("[WARNING] error while generating debug map for " + bundle.name + ": " + Std.string(((err) instanceof js__$Boot_HaxeError) ? err.val : err),{ fileName : "tool/src/Bundler.hx", lineNumber : 230, className : "Bundler", methodName : "emitDebugMap"});
 			return null;
 		}
 	}
 	emitJS(src,bundle,isMain) {
 		var _gthis = this;
 		this.reporter.start(bundle);
-		var mapOffset = 0;
 		var imports = Reflect.fields(bundle.imports);
 		var shared = Reflect.fields(bundle.shared);
 		var exports = Reflect.fields(bundle.exports);
-		var buffer = "";
 		var body = this.parser.rootBody;
 		var hasSourceMap = this.sourceMap != null;
+		var mapOffset = 0;
+		var buffer = "";
 		if(isMain) {
 			buffer += this.getBeforeBodySrc(src);
 			if(hasSourceMap) {
@@ -1306,8 +1305,7 @@ class Parser {
 		this.types = { };
 		this.isEnum = { };
 		this.isRequire = { };
-		var body = this.getBodyNodes(program);
-		this.rootExpr = body.pop();
+		this.rootExpr = this.getBodyNodes(program).pop();
 		if(this.rootExpr.type == "ExpressionStatement") {
 			this.walkRootExpression(this.rootExpr.expression);
 		} else {
@@ -1359,7 +1357,7 @@ class Parser {
 				this.inspectDeclarations(node.declarations,node);
 				break;
 			default:
-				haxe_Log.trace("WARNING: Unexpected " + node.type + ", at character " + node.start,{ fileName : "tool/src/Parser.hx", lineNumber : 160, className : "Parser", methodName : "walkDeclarations"});
+				haxe_Log.trace("WARNING: Unexpected " + node.type + ", at character " + node.start,{ fileName : "tool/src/Parser.hx", lineNumber : 159, className : "Parser", methodName : "walkDeclarations"});
 			}
 		}
 	}
@@ -1424,11 +1422,11 @@ class Parser {
 					}
 					this.tag(name1,def);
 				} else if(name1 == "Object" && this.objectMethods[member] && expression.arguments != null && expression.arguments[0] != null) {
-					path1 = this.getIdentifier(expression.arguments[0].object);
-					if(path1.length == 1) {
-						name1 = path1[0];
-						if(Object.prototype.hasOwnProperty.call(this.types,name1)) {
-							this.tag(name1,def);
+					var spath = this.getIdentifier(expression.arguments[0].object);
+					if(spath.length == 1) {
+						var sname = spath[0];
+						if(Object.prototype.hasOwnProperty.call(this.types,sname)) {
+							this.tag(sname,def);
 						}
 					}
 				}
@@ -1706,8 +1704,8 @@ class SourceMap {
 		if(p < 0) {
 			return;
 		}
-		this.fileName = StringTools.trim(HxOverrides.substr(src,p + "//# sourceMappingURL=".length,null));
-		this.fileName = js_node_Path.join(js_node_Path.dirname(input),this.fileName);
+		var srcName = StringTools.trim(HxOverrides.substr(src,p + "//# sourceMappingURL=".length,null));
+		this.fileName = js_node_Path.join(js_node_Path.dirname(input),srcName);
 		this.source = SM.decodeFile(this.fileName);
 	}
 	emitMappings(nodes,offset) {

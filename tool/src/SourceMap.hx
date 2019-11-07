@@ -45,16 +45,16 @@ class SourceMap
 {
 	static public inline var SRC_REF = '//# sourceMappingURL=';
 
-	var fileName:String;
-	var source:DecodedSourceMapFile;
+	final fileName:String;
+	final source:DecodedSourceMapFile;
 	var lines:Array<String>;
 
 	public function new(input:String, src:String)
 	{
 		var p = src.lastIndexOf(SRC_REF);
 		if (p < 0) return;
-		fileName = StringTools.trim(src.substr(p + SRC_REF.length));
-		fileName = Path.join(Path.dirname(input), fileName);
+		final srcName = StringTools.trim(src.substr(p + SRC_REF.length));
+		fileName = Path.join(Path.dirname(input), srcName);
 		source = SM.decodeFile(fileName);
 	}
 
@@ -66,7 +66,7 @@ class SourceMap
 		if (nodes.length == 0 || source == null) return null;
 
 		// flag lines from original source that we want to include
-		var inc:Array<Null<Int>> = [];
+		final inc:Array<Null<Int>> = [];
 		var line = offset;
 		for (node in nodes)
 		{
@@ -75,8 +75,8 @@ class SourceMap
 		}
 
 		// new sourcemap
-		var output:Array<LineMapping> = [];
-		var map:DecodedSourceMapFile = {
+		final output:Array<LineMapping> = [];
+		final map:DecodedSourceMapFile = {
 			version: 3,
 			file: '',
 			sourceRoot: '',
@@ -85,11 +85,11 @@ class SourceMap
 			names: [],
 			mappings: null
 		};
-		var usedSources:Array<Bool> = [];
+		final usedSources:Array<Bool> = [];
 		try {
 			// filter mappings by flagged lines
-			var mappings = source.mappings;
-			var srcLength = mappings.length;
+			final mappings = source.mappings;
+			final srcLength = mappings.length;
 			var maxLine = 0;
 			for (i in 0...srcLength) {
 				var mapping:LineMapping = mappings[i];
