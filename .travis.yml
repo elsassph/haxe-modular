@@ -1,7 +1,7 @@
 language: haxe
 
 haxe:
-  - 3.4.4
+  - 3.4.7
   - stable
   - development
 
@@ -20,8 +20,9 @@ before_script:
   - haxe build-tool.hxml
 
 script:
-  - node tool/test/test-suite.js
-  - node tool/test/test-suite.js es6
+  if: group = stable
+    - node tool/test/test-suite.js
+    - node tool/test/test-suite.js es6
 
 deploy:
   - provider: script
