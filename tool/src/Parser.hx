@@ -1,6 +1,6 @@
 import graphlib.Graph;
 import haxe.DynamicAccess;
-import acorn.Acorn;
+import ast.AstNode;
 
 class Parser
 {
@@ -26,9 +26,9 @@ class Parser
 	public function new(src:String, withLocation:Bool, commonjs:Bool)
 	{
 		final t0 = Date.now().getTime();
-		processInput(src, withLocation);
+		final engine = processInput(src, withLocation);
 		final t1 = Date.now().getTime();
-		trace('Parsed in: ${t1 - t0}ms');
+		trace('Parsed ($engine) in: ${t1 - t0}ms');
 
 		buildGraph(commonjs);
 		final t2 = Date.now().getTime();
@@ -37,10 +37,15 @@ class Parser
 
 	function processInput(src:String, withLocation:Bool)
 	{
-		final options:AcornOptions = { ecmaVersion: 6, allowReserved: true };
-		if (withLocation) options.locations = true;
-		final program = Acorn.parse(src, options);
+		#if cherow_parser
+		final program = ast.Cherow.parse(src, { ranges: true, raw: true, loc: withLocation });
+		final engine = "Cherow";
+		#else
+		final program = ast.Acorn.parse(src, { allowReserved: true, locations: withLocation });
+		final engine = "Acorn.js";
+		#end
 		walkProgram(program);
+		return engine;
 	}
 
 	function buildGraph(commonjs:Bool)
@@ -86,7 +91,7 @@ class Parser
 				cont(node.left, state);
 			}
 		};
-		for (decl in nodes) Walk.recursive(decl, {}, visitors);
+		for (decl in nodes) ast.Acorn.Walk.recursive(decl, {}, visitors);
 		return refs;
 	}
 

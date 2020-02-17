@@ -14,7 +14,7 @@ class HxSplit
 		haxe.Log.trace = function(v, ?infos) { untyped console.log(v); };
 
 		// parse input
-		final src = Fs.readFileSync(input).toString();
+		final src = Fs.readFileSync(input, 'utf8');
 		final parser = new Parser(src, debugMode, commonjs);
 		final sourceMap = debugMode ? new SourceMap(input, src) : null;
 

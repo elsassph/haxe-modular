@@ -480,7 +480,7 @@ class Bundler {
 				tmp = "";
 			} else {
 				var fileName = source.split("file://").pop();
-				tmp = js_node_Fs.readFileSync(fileName).toString();
+				tmp = js_node_Fs.readFileSync(fileName,"utf8");
 			}
 			_g2.push(tmp);
 		}
@@ -1078,7 +1078,7 @@ class HxSplit {
 		haxe_Log.trace = function(v,infos) {
 			console.log(v);
 		};
-		var src = js_node_Fs.readFileSync(input).toString();
+		var src = js_node_Fs.readFileSync(input,"utf8");
 		var parser = new Parser(src,debugMode,commonjs);
 		var sourceMap = debugMode ? new SourceMap(input,src) : null;
 		modules = HxSplit.applyAstHooks(parser.mainModule,modules,astHooks,parser.graph);
@@ -1237,20 +1237,18 @@ class Parser {
 		this.reservedTypes = { "String" : true, "Math" : true, "Array" : true, "Date" : true, "Number" : true, "Boolean" : true, __map_reserved : true};
 		this.mainModule = "Main";
 		var t0 = new Date().getTime();
-		this.processInput(src,withLocation);
+		var engine = this.processInput(src,withLocation);
 		var t1 = new Date().getTime();
-		haxe_Log.trace("Parsed in: " + (t1 - t0) + "ms",{ fileName : "tool/src/Parser.hx", lineNumber : 31, className : "Parser", methodName : "new"});
+		haxe_Log.trace("Parsed (" + engine + ") in: " + (t1 - t0) + "ms",{ fileName : "tool/src/Parser.hx", lineNumber : 31, className : "Parser", methodName : "new"});
 		this.buildGraph(commonjs);
 		var t2 = new Date().getTime();
 		haxe_Log.trace("AST processed in: " + (t2 - t1) + "ms",{ fileName : "tool/src/Parser.hx", lineNumber : 35, className : "Parser", methodName : "new"});
 	}
 	processInput(src,withLocation) {
-		var options = { ecmaVersion : 6, allowReserved : true};
-		if(withLocation) {
-			options.locations = true;
-		}
-		var program = acorn_Acorn.parse(src,options);
+		var program = ast_Acorn.parse(src,{ allowReserved : true, locations : withLocation});
+		var engine = "Acorn.js";
 		this.walkProgram(program);
+		return engine;
 	}
 	buildGraph(commonjs) {
 		var g = new graphlib_Graph({ directed : true, compound : true});
@@ -1276,7 +1274,7 @@ class Parser {
 			++_g2;
 			refs += this.walk(g,t1,this.types[t1]);
 		}
-		haxe_Log.trace("Stats: " + cpt + " types, " + refs + " references",{ fileName : "tool/src/Parser.hx", lineNumber : 66, className : "Parser", methodName : "buildGraph"});
+		haxe_Log.trace("Stats: " + cpt + " types, " + refs + " references",{ fileName : "tool/src/Parser.hx", lineNumber : 71, className : "Parser", methodName : "buildGraph"});
 		this.typesCount = cpt;
 		this.graph = g;
 	}
@@ -1297,7 +1295,7 @@ class Parser {
 		while(_g < nodes.length) {
 			var decl = nodes[_g];
 			++_g;
-			acorn_Walk.recursive(decl,{ },visitors);
+			ast_Walk.recursive(decl,{ },visitors);
 		}
 		return refs;
 	}
@@ -1357,7 +1355,7 @@ class Parser {
 				this.inspectDeclarations(node.declarations,node);
 				break;
 			default:
-				haxe_Log.trace("WARNING: Unexpected " + node.type + ", at character " + node.start,{ fileName : "tool/src/Parser.hx", lineNumber : 159, className : "Parser", methodName : "walkDeclarations"});
+				haxe_Log.trace("WARNING: Unexpected " + node.type + ", at character " + node.start,{ fileName : "tool/src/Parser.hx", lineNumber : 164, className : "Parser", methodName : "walkDeclarations"});
 			}
 		}
 	}
@@ -1605,8 +1603,8 @@ class Reporter {
 		this.calculate_rec(this.stats);
 		var raw = JSON.stringify(this.stats,null,"  ");
 		js_node_Fs.writeFileSync(output + ".stats.json",raw);
-		var src = js_node_Fs.readFileSync(js_node_Path.join(__dirname,"viewer.js"));
-		var viewer = "<!DOCTYPE html><body><script>var __STATS__ = " + raw + ";\n" + Std.string(src) + "</script></body>";
+		var src = js_node_Fs.readFileSync(js_node_Path.join(__dirname,"viewer.js"),"utf8");
+		var viewer = "<!DOCTYPE html><body><script>var __STATS__ = " + raw + ";\n" + src + "</script></body>";
 		js_node_Fs.writeFileSync(output + ".stats.html",viewer);
 	}
 	calculate_rec(group) {
@@ -1821,8 +1819,8 @@ class StringTools {
 	}
 }
 StringTools.__name__ = true;
-var acorn_Acorn = require("acorn");
-var acorn_Walk = require("acorn/dist/walk");
+var ast_Acorn = require("acorn");
+var ast_Walk = require("acorn-walk");
 var graphlib_Graph = require("graphlib").Graph;
 class haxe_Log {
 	static formatOutput(v,infos) {

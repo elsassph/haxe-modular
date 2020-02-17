@@ -32,7 +32,7 @@ class Reporter
 		final raw = Json.stringify(stats, null, '  ');
 		Fs.writeFileSync(output + '.stats.json', raw);
 
-		final src = Fs.readFileSync(Path.join(Node.__dirname, 'viewer.js'));
+		final src = Fs.readFileSync(Path.join(Node.__dirname, 'viewer.js'), 'utf8');
 		final viewer = '<!DOCTYPE html><body><script>var __STATS__ = $raw;\n$src</script></body>';
 		Fs.writeFileSync(output + '.stats.html', viewer);
 	}

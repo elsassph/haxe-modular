@@ -1,6 +1,6 @@
 package;
 
-import acorn.Acorn.AstNode;
+import ast.AstNode;
 import js.node.Path;
 
 typedef SourceMapFile = {

@@ -1,4 +1,4 @@
-import acorn.Acorn.AstNode;
+import ast.AstNode;
 import haxe.DynamicAccess;
 import js.node.Fs;
 import js.node.Path;
@@ -220,7 +220,7 @@ class Bundler
 			if (source == null || source == '') '';
 			else {
 				final fileName = source.split('file://').pop();
-				Fs.readFileSync(fileName).toString();
+				Fs.readFileSync(fileName, 'utf8');
 			}
 		}];
 		try {
