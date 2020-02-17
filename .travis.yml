@@ -1,7 +1,7 @@
 language: haxe
 
 haxe:
-  - 3.4.4
+  - 3.4.7
   - stable
   - development
 
@@ -16,11 +16,12 @@ install:
   - haxelib install uglifyjs
 
 before_script:
-  - haxe build-viewer.hxml
-  - haxe build-tool.hxml
+  # - haxe build-viewer.hxml
+  # - haxe build-tool.hxml
 
 script:
   - node tool/test/test-suite.js
+  - node tool/test/test-suite.js es6
 
 deploy:
   - provider: script

@@ -1,0 +1,34 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test13",
+    "nodes": [
+      "$hxClasses",
+      "Test13"
+    ],
+    "exports": {
+      "$hxClasses": true
+    },
+    "shared": {
+      "a_$b_Exposed": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "a_$b_Exposed",
+    "nodes": [
+      "a_$b_Exposed",
+      "a_$b_SubExposed"
+    ],
+    "exports": {
+      "a_$b_Exposed": true
+    },
+    "shared": {},
+    "imports": {
+      "$hxClasses": true
+    }
+  }
+]

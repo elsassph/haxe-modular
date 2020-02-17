@@ -2,9 +2,9 @@ import haxe.DynamicAccess;
 
 class MinifyId
 {
-	static var BASE_16 = 'abcdefghijklmnop'.split('');
+	static final BASE_16 = 'abcdefghijklmnop'.split('');
 
-	var map:DynamicAccess<String> = {};
+	final map:DynamicAccess<String> = {};
 	var index:Int = 0;
 
 	public function new()
@@ -27,7 +27,7 @@ class MinifyId
 		if (id.length <= 2) return id;
 		var min = map.get(id);
 		if (min == null) {
-			var B16 = BASE_16;
+			final B16 = BASE_16;
 			var i = index++;
 			min = '';
 			while (i > 0xf) {

@@ -292,6 +292,7 @@ class StatsViewer {
 			_gthis.delayResize = haxe_Timer.delay(function() {
 				_gthis.delayResize = null;
 				_gthis.foamtree.resize();
+				return;
 			},300);
 		});
 		window.addEventListener("mousemove",function(e) {
@@ -366,10 +367,12 @@ class StatsViewer {
 					_gthis.foamtree.set("dataObject",{ groups : groups});
 					window.history.pushState(null,_gthis.pendingGroup.label);
 					_gthis.clearTip();
+					return;
 				},100);
 			} else {
 				_gthis.foamtree.zoom(_gthis.pendingGroup);
 			}
+			return;
 		},300);
 	}
 	setDepth(groups) {

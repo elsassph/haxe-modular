@@ -372,7 +372,6 @@ class Bundler {
 			haxe_Log.trace("Emit " + bundleOutput,{ fileName : "tool/src/Bundler.hx", lineNumber : 95, className : "Bundler", methodName : "generate"});
 			var buffer = this.emitBundle(src,bundle,isMain);
 			results[i1] = { name : bundle.name, map : this.writeMap(bundleOutput,buffer), source : this.write(bundleOutput,buffer.src), debugMap : buffer.debugMap};
-			isMain = false;
 		}
 		return results;
 	}
@@ -481,7 +480,7 @@ class Bundler {
 				tmp = "";
 			} else {
 				var fileName = source.split("file://").pop();
-				tmp = js_node_Fs.readFileSync(fileName).toString();
+				tmp = js_node_Fs.readFileSync(fileName,"utf8");
 			}
 			_g2.push(tmp);
 		}
@@ -489,20 +488,20 @@ class Bundler {
 		try {
 			return Bundler.generateHtml(consumer,src,sourcesContent);
 		} catch( err ) {
-			haxe_Log.trace("[WARNING] error while generating debug map for " + bundle.name + ": " + Std.string(((err) instanceof js__$Boot_HaxeError) ? err.val : err),{ fileName : "tool/src/Bundler.hx", lineNumber : 231, className : "Bundler", methodName : "emitDebugMap"});
+			haxe_Log.trace("[WARNING] error while generating debug map for " + bundle.name + ": " + Std.string(((err) instanceof js__$Boot_HaxeError) ? err.val : err),{ fileName : "tool/src/Bundler.hx", lineNumber : 230, className : "Bundler", methodName : "emitDebugMap"});
 			return null;
 		}
 	}
 	emitJS(src,bundle,isMain) {
 		var _gthis = this;
 		this.reporter.start(bundle);
-		var mapOffset = 0;
 		var imports = Reflect.fields(bundle.imports);
 		var shared = Reflect.fields(bundle.shared);
 		var exports = Reflect.fields(bundle.exports);
-		var buffer = "";
 		var body = this.parser.rootBody;
 		var hasSourceMap = this.sourceMap != null;
+		var mapOffset = 0;
+		var buffer = "";
 		if(isMain) {
 			buffer += this.getBeforeBodySrc(src);
 			if(hasSourceMap) {
@@ -1079,7 +1078,7 @@ class HxSplit {
 		haxe_Log.trace = function(v,infos) {
 			console.log(v);
 		};
-		var src = js_node_Fs.readFileSync(input).toString();
+		var src = js_node_Fs.readFileSync(input,"utf8");
 		var parser = new Parser(src,debugMode,commonjs);
 		var sourceMap = debugMode ? new SourceMap(input,src) : null;
 		modules = HxSplit.applyAstHooks(parser.mainModule,modules,astHooks,parser.graph);
@@ -1234,24 +1233,22 @@ class MinifyId {
 MinifyId.__name__ = true;
 class Parser {
 	constructor(src,withLocation,commonjs) {
-		this.objectMethods = { "defineProperty" : true, "defineProperties" : true, "freeze" : true};
+		this.objectMethods = { "defineProperty" : true, "defineProperties" : true, "freeze" : true, "assign" : true};
 		this.reservedTypes = { "String" : true, "Math" : true, "Array" : true, "Date" : true, "Number" : true, "Boolean" : true, __map_reserved : true};
 		this.mainModule = "Main";
 		var t0 = new Date().getTime();
-		this.processInput(src,withLocation);
+		var engine = this.processInput(src,withLocation);
 		var t1 = new Date().getTime();
-		haxe_Log.trace("Parsed in: " + (t1 - t0) + "ms",{ fileName : "tool/src/Parser.hx", lineNumber : 31, className : "Parser", methodName : "new"});
+		haxe_Log.trace("Parsed (" + engine + ") in: " + (t1 - t0) + "ms",{ fileName : "tool/src/Parser.hx", lineNumber : 31, className : "Parser", methodName : "new"});
 		this.buildGraph(commonjs);
 		var t2 = new Date().getTime();
 		haxe_Log.trace("AST processed in: " + (t2 - t1) + "ms",{ fileName : "tool/src/Parser.hx", lineNumber : 35, className : "Parser", methodName : "new"});
 	}
 	processInput(src,withLocation) {
-		var options = { ecmaVersion : 5, allowReserved : true};
-		if(withLocation) {
-			options.locations = true;
-		}
-		var program = acorn_Acorn.parse(src,options);
+		var program = ast_Acorn.parse(src,{ allowReserved : true, locations : withLocation});
+		var engine = "Acorn.js";
 		this.walkProgram(program);
+		return engine;
 	}
 	buildGraph(commonjs) {
 		var g = new graphlib_Graph({ directed : true, compound : true});
@@ -1277,7 +1274,7 @@ class Parser {
 			++_g2;
 			refs += this.walk(g,t1,this.types[t1]);
 		}
-		haxe_Log.trace("Stats: " + cpt + " types, " + refs + " references",{ fileName : "tool/src/Parser.hx", lineNumber : 66, className : "Parser", methodName : "buildGraph"});
+		haxe_Log.trace("Stats: " + cpt + " types, " + refs + " references",{ fileName : "tool/src/Parser.hx", lineNumber : 71, className : "Parser", methodName : "buildGraph"});
 		this.typesCount = cpt;
 		this.graph = g;
 	}
@@ -1298,7 +1295,7 @@ class Parser {
 		while(_g < nodes.length) {
 			var decl = nodes[_g];
 			++_g;
-			acorn_Walk.recursive(decl,{ },visitors);
+			ast_Walk.recursive(decl,{ },visitors);
 		}
 		return refs;
 	}
@@ -1306,8 +1303,7 @@ class Parser {
 		this.types = { };
 		this.isEnum = { };
 		this.isRequire = { };
-		var body = this.getBodyNodes(program);
-		this.rootExpr = body.pop();
+		this.rootExpr = this.getBodyNodes(program).pop();
 		if(this.rootExpr.type == "ExpressionStatement") {
 			this.walkRootExpression(this.rootExpr.expression);
 		} else {
@@ -1337,6 +1333,9 @@ class Parser {
 			var node = body[_g];
 			++_g;
 			switch(node.type) {
+			case "ClassDeclaration":
+				this.inspectClass(node.id,node);
+				break;
 			case "EmptyStatement":
 				break;
 			case "ExpressionStatement":
@@ -1356,7 +1355,7 @@ class Parser {
 				this.inspectDeclarations(node.declarations,node);
 				break;
 			default:
-				haxe_Log.trace("WARNING: Unexpected " + node.type + ", at character " + node.start,{ fileName : "tool/src/Parser.hx", lineNumber : 158, className : "Parser", methodName : "walkDeclarations"});
+				haxe_Log.trace("WARNING: Unexpected " + node.type + ", at character " + node.start,{ fileName : "tool/src/Parser.hx", lineNumber : 164, className : "Parser", methodName : "walkDeclarations"});
 			}
 		}
 	}
@@ -1377,6 +1376,13 @@ class Parser {
 			}
 		}
 	}
+	inspectClass(id,def) {
+		var path = this.getIdentifier(id);
+		if(path.length > 0) {
+			var name = path[0];
+			this.tag(name,def);
+		}
+	}
 	inspectExpression(expression,def) {
 		switch(expression.type) {
 		case "AssignmentExpression":
@@ -1384,13 +1390,11 @@ class Parser {
 			if(path.length > 0) {
 				var name = path[0];
 				switch(name) {
-				case "$hxClasses":
+				case "$hxClasses":case "$hx_exports":
 					var moduleName = this.getIdentifier(expression.right);
 					if(moduleName.length == 1) {
 						this.tag(moduleName[0],def);
 					}
-					break;
-				case "$hx_exports":
 					break;
 				default:
 					if(Object.prototype.hasOwnProperty.call(this.types,name)) {
@@ -1416,11 +1420,11 @@ class Parser {
 					}
 					this.tag(name1,def);
 				} else if(name1 == "Object" && this.objectMethods[member] && expression.arguments != null && expression.arguments[0] != null) {
-					path1 = this.getIdentifier(expression.arguments[0].object);
-					if(path1.length == 1) {
-						name1 = path1[0];
-						if(Object.prototype.hasOwnProperty.call(this.types,name1)) {
-							this.tag(name1,def);
+					var spath = this.getIdentifier(expression.arguments[0].object);
+					if(spath.length == 1) {
+						var sname = spath[0];
+						if(Object.prototype.hasOwnProperty.call(this.types,sname)) {
+							this.tag(sname,def);
 						}
 					}
 				}
@@ -1550,6 +1554,8 @@ class Parser {
 			return [];
 		}
 		switch(left.type) {
+		case "AssignmentExpression":
+			return this.getIdentifier(left.right);
 		case "Identifier":
 			return [left.name];
 		case "Literal":
@@ -1597,8 +1603,8 @@ class Reporter {
 		this.calculate_rec(this.stats);
 		var raw = JSON.stringify(this.stats,null,"  ");
 		js_node_Fs.writeFileSync(output + ".stats.json",raw);
-		var src = js_node_Fs.readFileSync(js_node_Path.join(__dirname,"viewer.js"));
-		var viewer = "<!DOCTYPE html><body><script>var __STATS__ = " + raw + ";\n" + Std.string(src) + "</script></body>";
+		var src = js_node_Fs.readFileSync(js_node_Path.join(__dirname,"viewer.js"),"utf8");
+		var viewer = "<!DOCTYPE html><body><script>var __STATS__ = " + raw + ";\n" + src + "</script></body>";
 		js_node_Fs.writeFileSync(output + ".stats.html",viewer);
 	}
 	calculate_rec(group) {
@@ -1696,8 +1702,8 @@ class SourceMap {
 		if(p < 0) {
 			return;
 		}
-		this.fileName = StringTools.trim(HxOverrides.substr(src,p + "//# sourceMappingURL=".length,null));
-		this.fileName = js_node_Path.join(js_node_Path.dirname(input),this.fileName);
+		var srcName = StringTools.trim(HxOverrides.substr(src,p + "//# sourceMappingURL=".length,null));
+		this.fileName = js_node_Path.join(js_node_Path.dirname(input),srcName);
 		this.source = SM.decodeFile(this.fileName);
 	}
 	emitMappings(nodes,offset) {
@@ -1813,8 +1819,8 @@ class StringTools {
 	}
 }
 StringTools.__name__ = true;
-var acorn_Acorn = require("acorn");
-var acorn_Walk = require("acorn/dist/walk");
+var ast_Acorn = require("acorn");
+var ast_Walk = require("acorn-walk");
 var graphlib_Graph = require("graphlib").Graph;
 class haxe_Log {
 	static formatOutput(v,infos) {

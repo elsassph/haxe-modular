@@ -1,0 +1,29 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test14",
+    "nodes": [
+      "Test14"
+    ],
+    "exports": {},
+    "shared": {
+      "a_$b_Exposed": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "a_$b_Exposed",
+    "nodes": [
+      "a_$b_Exposed",
+      "a_$b_SubExposed"
+    ],
+    "exports": {
+      "a_$b_Exposed": true
+    },
+    "shared": {},
+    "imports": {}
+  }
+]

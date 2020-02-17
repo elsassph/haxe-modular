@@ -1,4 +1,4 @@
-import acorn.Acorn.AstNode;
+import ast.AstNode;
 import haxe.DynamicAccess;
 import js.node.Fs;
 import js.node.Path;
@@ -48,13 +48,13 @@ class Bundler
 		}
 	}
 
-	static var generateHtml:SourceMapConsumer->String->Array<String>->String = untyped global.generateHtml;
+	static final generateHtml:SourceMapConsumer->String->Array<String>->String = untyped global.generateHtml;
 
-	var parser:Parser;
-	var sourceMap:SourceMap;
-	var extractor:Extractor;
-	var reporter:Reporter;
-	var minifyId:MinifyId;
+	final parser:Parser;
+	final sourceMap:SourceMap;
+	final extractor:Extractor;
+	final reporter:Reporter;
+	final minifyId:MinifyId;
 	var commonjs:Bool;
 	var debugSourceMap:Bool;
 	var nodejsMode:Bool;
@@ -80,28 +80,27 @@ class Bundler
 
 		// lookup-map between identifiers and bundles
 		revMap = {};
-		var len = bundles.length;
+		final len = bundles.length;
 		for (i in 0...len) createRevMap(i, bundles[i]);
 
 		// filter output nodes for each bundle
 		buildIndex(src);
 
 		// emit
-		var results = [];
+		final results = [];
 		for (i in 0...len) {
-			var bundle = bundles[i];
-			var isMain = bundle.isMain;
-			var bundleOutput = isMain ? output : Path.join(Path.dirname(output), bundle.name + '.js');
+			final bundle = bundles[i];
+			final isMain = bundle.isMain;
+			final bundleOutput = isMain ? output : Path.join(Path.dirname(output), bundle.name + '.js');
 			trace('Emit $bundleOutput');
 
-			var buffer = emitBundle(src, bundle, isMain);
+			final buffer = emitBundle(src, bundle, isMain);
 			results[i] = {
 				name: bundle.name,
 				map: writeMap(bundleOutput, buffer),
 				source: write(bundleOutput, buffer.src),
 				debugMap: buffer.debugMap
 			};
-			isMain = false;
 		}
 		return results;
 	}
@@ -111,15 +110,15 @@ class Bundler
 		#if verbose_debug
 		trace('Build index...');
 		#end
-		var ids = idMap = {};
+		final ids = idMap = {};
 		if (!commonjs) ids.set('require', true);
-		var rev = revMap;
-		var body = parser.rootBody;
-		var bodyLength = body.length;
-		var bundlesLength = bundles.length;
+		final rev = revMap;
+		final body = parser.rootBody;
+		final bodyLength = body.length;
+		final bundlesLength = bundles.length;
 		for (i in 1...bodyLength)
 		{
-			var node = body[i];
+			final node = body[i];
 			// Non-attributed nodes go in all bundles
 			if (node.__tag__ == null) {
 				#if verbose_debug
@@ -144,7 +143,7 @@ class Bundler
 				#end
 
 				for (j in 0...list.length) {
-					var index = list[j];
+					final index = list[j];
 					if (index == 0) node.__main__ = true;
 					else bundles[index].indexes.push(i);
 				}
@@ -170,11 +169,11 @@ class Bundler
 	function createRevMap(index:Int, bundle:Bundle)
 	{
 		minifyId.set(bundle.name);
-		var rev = revMap;
-		var nodes = bundle.nodes;
-		var len = nodes.length;
+		final rev = revMap;
+		final nodes = bundle.nodes;
+		final len = nodes.length;
 		for (i in 0...len) {
-			var list = rev.get(nodes[i]);
+			final list = rev.get(nodes[i]);
 			if (list != null) list.push(index);
 			else rev.set(nodes[i], [index]);
 		}
@@ -200,9 +199,9 @@ class Bundler
 
 	function emitBundle(src:String, bundle:Bundle, isMain:Bool):OutputBuffer
 	{
-		var output = emitJS(src, bundle, isMain);
-		var map = sourceMap != null ? sourceMap.emitMappings(output.mapNodes, output.mapOffset) : null;
-		var debugMap = debugSourceMap && map != null ? emitDebugMap(output.buffer, bundle, map) : null;
+		final output = emitJS(src, bundle, isMain);
+		final map = sourceMap != null ? sourceMap.emitMappings(output.mapNodes, output.mapOffset) : null;
+		final debugMap = debugSourceMap && map != null ? emitDebugMap(output.buffer, bundle, map) : null;
 		return {
 			src:output.buffer,
 			map:map,
@@ -214,14 +213,14 @@ class Bundler
 	{
 		if (rawMap.sources.length == 0) return null;
 		// library doesn't like empty strings
-		rawMap.sources = rawMap.sources.map(function(url) return url == '' ? null : url);
+		rawMap.sources = rawMap.sources.map(url -> url == '' ? null : url);
 
-		var consumer = new SourceMapConsumer(rawMap);
-		var sourcesContent = [for (source in rawMap.sources) {
+		final consumer = new SourceMapConsumer(rawMap);
+		final sourcesContent = [for (source in rawMap.sources) {
 			if (source == null || source == '') '';
 			else {
-				var fileName = source.split('file://').pop();
-				Fs.readFileSync(fileName).toString();
+				final fileName = source.split('file://').pop();
+				Fs.readFileSync(fileName, 'utf8');
 			}
 		}];
 		try {
@@ -237,13 +236,13 @@ class Bundler
 	{
 		reporter.start(bundle);
 
+		final imports = bundle.imports.keys();
+		final shared = bundle.shared.keys();
+		final exports = bundle.exports.keys();
+		final body = parser.rootBody;
+		final hasSourceMap = sourceMap != null;
 		var mapOffset = 0;
-		var imports = bundle.imports.keys();
-		var shared = bundle.shared.keys();
-		var exports = bundle.exports.keys();
 		var buffer = '';
-		var body = parser.rootBody;
-		var hasSourceMap = sourceMap != null;
 
 		// include code before HaxeJS output only in main JS
 		if (isMain) {
@@ -252,10 +251,10 @@ class Bundler
 		}
 		else mapOffset++;
 
-		var inc = bundle.nodes;
-		var incAll = isMain && bundle.nodes.length == 0;
-		var mapNodes:Array<AstNode> = [];
-		var frag = isMain || bundle.isLib ? FRAGMENTS.MAIN : FRAGMENTS.CHILD;
+		final inc = bundle.nodes;
+		final incAll = isMain && bundle.nodes.length == 0;
+		final mapNodes:Array<AstNode> = [];
+		final frag = isMain || bundle.isLib ? FRAGMENTS.MAIN : FRAGMENTS.CHILD;
 
 		// header
 		if (commonjs)
@@ -283,7 +282,7 @@ class Bundler
 		}
 		if (imports.length > 0 || shared.length > 0)
 		{
-			var tmp = shared.concat([for (node in imports) '$node = $$s.${minifyId.get(node)}']);
+			final tmp = shared.concat([for (node in imports) '$node = $$s.${minifyId.get(node)}']);
 			buffer += 'var ${tmp.join(', ')};\n';
 			mapOffset++;
 		}
@@ -291,14 +290,14 @@ class Bundler
 		// split main content
 		if (isMain)
 		{
-			var len = body.length - 1;
+			final len = body.length - 1;
 			for (i in 1...len)
 			{
-				var node = body[i];
+				final node = body[i];
 				if (!incAll && !node.__main__)
 					continue;
 				if (hasSourceMap) mapNodes.push(node);
-				var chunk = src.substr(node.start, node.end - node.start);
+				final chunk = src.substr(node.start, node.end - node.start);
 				reporter.add(node.__tag__, chunk.length);
 				buffer += chunk;
 				buffer += '\n';
@@ -306,13 +305,13 @@ class Bundler
 		}
 		else
 		{
-			var indexes = bundle.indexes;
-			var len = indexes.length;
+			final indexes = bundle.indexes;
+			final len = indexes.length;
 			for (i in 0...len)
 			{
-				var node = body[indexes[i]];
+				final node = body[indexes[i]];
 				if (hasSourceMap) mapNodes.push(node);
-				var chunk = src.substr(node.start, node.end - node.start);
+				final chunk = src.substr(node.start, node.end - node.start);
 				reporter.add(node.__tag__, chunk.length);
 				buffer += chunk;
 				buffer += '\n';
@@ -334,17 +333,17 @@ class Bundler
 		if (isMain)
 		{
 			// entry point
-			var run = body[body.length - 1];
+			final run = body[body.length - 1];
 			buffer += src.substr(run.start, run.end - run.start);
 			buffer += '\n';
 
 			// main libs bridge
 			for (bundle in extractor.bundles) {
 				if (!bundle.isLib) continue;
-				var match = '"${bundle.name}__BRIDGE__"';
+				final match = '"${bundle.name}__BRIDGE__"';
 				var bridge = bundle.exports.keys()
-					.filter(function(node) return shared.indexOf(node) >= 0)
-					.map(function(node) return '$node = $$s.${minifyId.get(node)}')
+					.filter(node -> shared.indexOf(node) >= 0)
+					.map(node -> '$node = $$s.${minifyId.get(node)}')
 					.join(', ');
 				if (bridge == '') bridge = '0';
 				buffer = buffer.split(match).join('($bridge)');
@@ -367,14 +366,14 @@ class Bundler
 
 	function getBeforeBodySrc(src:String)
 	{
-		var chunk = src.substr(0, parser.rootExpr.start);
+		final chunk = src.substr(0, parser.rootExpr.start);
 		reporter.includedBefore(chunk.length);
 		return chunk;
 	}
 
 	function emitHot(inc:Array<String>)
 	{
-		var names = [];
+		final names = [];
 		for (name in parser.isHot.keys())
 			if (parser.isHot.get(name) && inc.indexOf(name) >= 0) names.push(name);
 

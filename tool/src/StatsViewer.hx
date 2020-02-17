@@ -59,19 +59,19 @@ class StatsViewer
 {
 	static inline var MAX_DEPTH = 3;
 
-	var allGroups:Array<CarrotSearchFoamTreeGroup>;
-	var filtered:Array<CarrotSearchFoamTreeGroup> = [];
+	final allGroups:Array<CarrotSearchFoamTreeGroup>;
+	final filtered:Array<CarrotSearchFoamTreeGroup> = [];
 	var pendingFilter:Bool;
 	var pendingGroup:CarrotSearchFoamTreeGroup;
 	var totalSize:Int;
 
-	var tip:DivElement;
+	final tip:DivElement;
 	var tipWidth:Int;
 	var tipHeight:Int;
 	var delayResize:Timer;
 	var delayClick:Timer;
 
-	var foamtree:CarrotSearchFoamTree;
+	final foamtree:CarrotSearchFoamTree;
 
 	static function main()
 	{
@@ -80,10 +80,10 @@ class StatsViewer
 
 	public function new()
 	{
-		var stats = getStats();
+		final stats = getStats();
 		allGroups = formatData(stats);
 
-		var element = createElement();
+		final element = createElement();
 		tip = createTip();
 		tipWidth = 0;
 		tipHeight = 0;
@@ -95,7 +95,7 @@ class StatsViewer
 	{
 		window.addEventListener('resize', function(_) {
 			if (delayResize != null) return;
-			delayResize = Timer.delay(function() {
+			delayResize = Timer.delay(() -> {
 				delayResize = null;
 				foamtree.resize();
 			}, 300);
@@ -132,7 +132,7 @@ class StatsViewer
 
 	function createFoamTree(element:DivElement, groups:Array<CarrotSearchFoamTreeGroup>)
 	{
-		var ft = new CarrotSearchFoamTree({
+		final ft = new CarrotSearchFoamTree({
 			element: element,
 			layout: "squarified",
 			pixelRatio: window.devicePixelRatio != null ? window.devicePixelRatio : 1,
@@ -179,14 +179,14 @@ class StatsViewer
 		pendingGroup = group;
 
 		if (delayClick != null) return;
-		delayClick = Timer.delay(function() {
+		delayClick = Timer.delay(() -> {
 			delayClick = null;
 			if (pendingFilter) {
 				pendingFilter = false;
 				if (filtered.indexOf(pendingGroup) >= 0) return;
 				filtered.push(pendingGroup);
 				var groups = [pendingGroup];
-				Timer.delay(function() {
+				Timer.delay(() -> {
 					setDepth(groups);
 					foamtree.set('dataObject', { groups: groups });
 					window.history.pushState(null, pendingGroup.label);
@@ -199,8 +199,8 @@ class StatsViewer
 
 	function setDepth(groups:Array<CarrotSearchFoamTreeGroup>)
 	{
-		var count = countChildren(groups);
-		var value = MAX_DEPTH + Math.round(50 / count);
+		final count = countChildren(groups);
+		final value = MAX_DEPTH + Math.round(50 / count);
 		if (foamtree.get('maxGroupLevelsAttached') != value) {
 			foamtree.set('maxGroupLevelsDrawn', value);
 			foamtree.set('maxGroupLevelsAttached', value);
@@ -220,7 +220,7 @@ class StatsViewer
 
 	function updateTip(e:CarrotSearchFoamTreeEvent)
 	{
-		var o = e.group;
+		final o = e.group;
 		if (o == null) {
 			clearTip();
 			return;
@@ -278,7 +278,7 @@ class StatsViewer
 
 	function createTip()
 	{
-		var div = document.createDivElement();
+		final div = document.createDivElement();
 		div.style.position = 'absolute';
 		div.style.left = '0';
 		div.style.top = '0';
@@ -298,7 +298,7 @@ class StatsViewer
 
 	function createElement()
 	{
-		var div = document.createDivElement();
+		final div = document.createDivElement();
 		div.style.position = 'absolute';
 		div.style.left = '0';
 		div.style.top = '0';
@@ -310,10 +310,10 @@ class StatsViewer
 
 	function formatData(stats:DynamicAccess<PackageStat>, parent:CarrotSearchFoamTreeGroup = null)
 	{
-		var groups:Array<CarrotSearchFoamTreeGroup> = [];
+		final groups:Array<CarrotSearchFoamTreeGroup> = [];
         for (key in stats.keys()) {
-          var o = stats.get(key);
-          var it:CarrotSearchFoamTreeGroup = {
+          final o = stats.get(key);
+          final it:CarrotSearchFoamTreeGroup = {
             label: key,
             size: o.size,
             weight: o.rel,
@@ -328,10 +328,10 @@ class StatsViewer
 
 	function getStats():DynamicAccess<PackageStat>
 	{
-		var stats:DynamicAccess<PackageStat> = untyped __STATS__;
+		final stats:DynamicAccess<PackageStat> = untyped __STATS__;
 		var total = 0;
         for (key in stats.keys()) {
-          var o = stats.get(key);
+          final o = stats.get(key);
 		  total += o.size;
 		}
 		totalSize = total;
