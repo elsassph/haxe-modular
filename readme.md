@@ -105,3 +105,6 @@ Q: Can I still use the `includeFile` macro to inject JS code in the output?
 - **Yes, but** only when the code is inserted at the top of the file; this is the
   default position when using `--macro includeFile('my-lib.js')`.
 
+Q: Does it support Haxe 4's ES6 output? (`-D js-es=6`)
+
+- **Yes** since 0.12.0
