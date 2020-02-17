@@ -21,8 +21,7 @@
     "@elsassph/fast-source-map": "^0.3.0",
     "acorn": "^7.1.0",
     "acorn-walk": "^7.1.1",
-    "cherow": "^1.6.9",
-    "graphlib": "^2.1.1",
+    "graphlib": "^2.1.8",
     "react-deep-force-update": "^2.0.1",
     "react-proxy": "^2.0.8",
     "source-map": "^0.5.6"
