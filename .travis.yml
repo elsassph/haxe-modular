@@ -16,8 +16,8 @@ install:
   - haxelib install uglifyjs
 
 before_script:
-  - haxe build-viewer.hxml
-  - haxe build-tool.hxml
+  # - haxe build-viewer.hxml
+  # - haxe build-tool.hxml
 
 script:
   if: group = stable
