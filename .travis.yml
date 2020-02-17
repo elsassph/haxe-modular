@@ -20,9 +20,8 @@ before_script:
   # - haxe build-tool.hxml
 
 script:
-  if: group = stable
-    - node tool/test/test-suite.js
-    - node tool/test/test-suite.js es6
+  - node tool/test/test-suite.js
+  - node tool/test/test-suite.js es6
 
 deploy:
   - provider: script
