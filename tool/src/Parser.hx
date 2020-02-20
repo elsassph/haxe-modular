@@ -184,7 +184,7 @@ class Parser
 		if (path.length > 0)
 		{
 			final name = path[0];
-			if (name == "$extend" || name == "$bind" || name == "$iterator" || name == "$getIterator") tag(name, def);
+			tag(name, def);
 		}
 	}
 
