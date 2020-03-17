@@ -75,7 +75,7 @@ class Bundle
 					.map(formatMatch)
 					.join(',');
 				var module = '$libName=$pattern';
-				var bridge = '${libName}__BRIDGE__';
+				var bridge = '"${libName}__BRIDGE__"';
 				Split.register(module);
 
 				#if modular_stub
@@ -85,7 +85,7 @@ class Bundle
 				return macro {
 					@:keep Require.module($v{libName})
 						.then(function(id:String) {
-							var _ = $v{bridge};
+							untyped __js__($v{bridge});
 							return id;
 						});
 				}
