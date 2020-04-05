@@ -1,0 +1,40 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test15",
+    "nodes": [
+      "$bind",
+      "$iterator",
+      "HxOverrides",
+      "Lambda",
+      "Require",
+      "Test15",
+      "haxe_IMap",
+      "haxe_ds_StringMap",
+      "require"
+    ],
+    "exports": {
+      "Lambda": true
+    },
+    "shared": {
+      "CaseG": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseG",
+    "nodes": [
+      "CaseG"
+    ],
+    "exports": {
+      "CaseG": true
+    },
+    "shared": {},
+    "imports": {
+      "Lambda": true
+    }
+  }
+]

@@ -25,13 +25,13 @@ script:
 
 deploy:
   - provider: script
-    haxe: stable
     script: bash ./releaseHaxelib.sh $HAXELIB_PWD
     on:
+      haxe: stable
       tags: true
   - provider: npm
-    haxe: stable
     email: "philippe.elsass@gmail.com"
     api_key: $NPM_KEY
     on:
+      haxe: stable
       tags: true
