@@ -201,17 +201,22 @@ function detectHaxe(callback) {
 			process.exit(-1);
 		} else {
 			const out = ('' + stdout + stderr).trim();
-			const v = parseInt(out);
-			console.log(`Running tests against Haxe version ${out} ->`, v, es6 ? '(ES6)' : '');
-			if (v !== 3 && v !== 4) {
-				console.log('FATAL: Haxe version unsupported');
+			const major = parseInt(out);
+			let minor = undefined;
+			if (major !== 3 && major !== 4) {
+				console.log(`FATAL: Haxe version unsupported (${out})`);
 				process.exit(-2);
 			}
-			if (v === 3 && es6) {
+			if (major === 3 && es6) {
 				console.log('ES6 mode not supported by Haxe 3 - ignoring');
 				process.exit(0);
 			}
-			haxeVersion = `${v}${es6 ? '_es6' : ''}`;
+			if (major === 4) {
+				const m = /4\.([0-9]+)/.exec(out);
+				if (m) minor = Number(m[1]);
+			}
+			haxeVersion = `${major}${minor ? `_${minor}` : ''}${es6 ? '_es6' : ''}`;
+			console.log(`Running tests against Haxe version ${out} ->`, haxeVersion);
 			try { fs.mkdirSync(`tool/test/expect/haxe_${haxeVersion}`); } catch (_) { }
 			callback();
 		}

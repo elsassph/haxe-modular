@@ -1,0 +1,71 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "TestInterop",
+    "nodes": [
+      "Bool",
+      "Class",
+      "Dynamic",
+      "Enum",
+      "Float",
+      "Int",
+      "Require",
+      "Std",
+      "TestInterop",
+      "haxe_Exception",
+      "haxe_IMap",
+      "haxe_Timer",
+      "haxe_ValueException",
+      "haxe_ds_StringMap",
+      "haxe_iterators_ArrayIterator",
+      "js_Boot",
+      "require"
+    ],
+    "exports": {
+      "js_Boot": true,
+      "Int": true,
+      "Float": true,
+      "Require": true,
+      "require": true
+    },
+    "shared": {
+      "CaseInterop": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseInterop",
+    "nodes": [
+      "CaseInterop"
+    ],
+    "exports": {
+      "CaseInterop": true
+    },
+    "shared": {
+      "a_$b_C_$_$d": true
+    },
+    "imports": {
+      "js_Boot": true,
+      "Int": true,
+      "Float": true,
+      "Require": true,
+      "require": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "a_$b_C_$_$d",
+    "nodes": [
+      "a_$b_C_$_$d"
+    ],
+    "exports": {
+      "a_$b_C_$_$d": true
+    },
+    "shared": {},
+    "imports": {}
+  }
+]
