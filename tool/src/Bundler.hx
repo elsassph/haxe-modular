@@ -168,7 +168,13 @@ class Bundler
 
 	function createRevMap(index:Int, bundle:Bundle)
 	{
-		minifyId.set(bundle.name);
+		// prevent minification of shared refs
+		if (bundle.isLib) {
+			for (param in bundle.libParams) minifyId.set(param);
+		} else {
+			minifyId.set(bundle.name);
+		}
+		// lookup-map between identifiers and bundles
 		final rev = revMap;
 		final nodes = bundle.nodes;
 		final len = nodes.length;

@@ -6,6 +6,7 @@ import haxe.DynamicAccess;
 typedef Bundle = {
 	isMain:Bool,
 	isLib:Bool,
+	libParams:Array<String>,
 	name:String,
 	nodes:Array<String>,
 	indexes:Array<Int>,
@@ -301,11 +302,12 @@ class Extractor
 		}
 	}
 
-	function createBundle(name:String, isLib:Bool = false)
+	function createBundle(name:String, isLib:Bool = false, libParams:Array<String> = null)
 	{
 		final bundle:Bundle = {
 			isMain: name == mainModule,
 			isLib: isLib,
+			libParams: libParams,
 			name: name,
 			nodes: [],
 			indexes: [],
@@ -356,10 +358,11 @@ class Extractor
 		// libname=pattern
 		final parts = name.split('=');
 		final newName = parts[0];
+		final libParams = parts[1].split(',');
 		return {
-			test: parts[1].split(','),
+			test: libParams,
 			roots: ({} :DynamicAccess<Bool>),
-			bundle: createBundle(newName, true)
+			bundle: createBundle(newName, true, libParams)
 		};
 	}
 

@@ -130,7 +130,7 @@ class Require
 	#end
 
 	#else //webpack
-	static macro public function module(name:Expr):ExprOf<js.Promise<Dynamic>>
+	static macro public function module(name:Expr):ExprOf<Promise<Dynamic>>
 	{
 		var module = switch(name.expr) {
 			case EConst(CString(s)): s;

@@ -420,7 +420,17 @@ class Bundler {
 		}
 	}
 	createRevMap(index,bundle) {
-		this.minifyId.set(bundle.name);
+		if(bundle.isLib) {
+			let _g = 0;
+			let _g1 = bundle.libParams;
+			while(_g < _g1.length) {
+				let param = _g1[_g];
+				++_g;
+				this.minifyId.set(param);
+			}
+		} else {
+			this.minifyId.set(bundle.name);
+		}
 		let rev = this.revMap;
 		let nodes = bundle.nodes;
 		let len = nodes.length;
@@ -487,7 +497,7 @@ class Bundler {
 			return Bundler.generateHtml(consumer,src,sourcesContent);
 		} catch( _g5 ) {
 			let err = haxe_Exception.caught(_g5).unwrap();
-			haxe_Log.trace("[WARNING] error while generating debug map for " + bundle.name + ": " + Std.string(err),{ fileName : "tool/src/Bundler.hx", lineNumber : 230, className : "Bundler", methodName : "emitDebugMap"});
+			haxe_Log.trace("[WARNING] error while generating debug map for " + bundle.name + ": " + Std.string(err),{ fileName : "tool/src/Bundler.hx", lineNumber : 236, className : "Bundler", methodName : "emitDebugMap"});
 			return null;
 		}
 	}
@@ -667,13 +677,13 @@ class Extractor {
 	}
 	process(mainModule,modulesList,debugMode) {
 		let t0 = new Date().getTime();
-		haxe_Log.trace("Bundling...",{ fileName : "tool/src/Extractor.hx", lineNumber : 48, className : "Extractor", methodName : "process"});
+		haxe_Log.trace("Bundling...",{ fileName : "tool/src/Extractor.hx", lineNumber : 49, className : "Extractor", methodName : "process"});
 		this.moduleMap = { };
 		this.parenting = new graphlib_Graph();
 		this.moduleTest = { };
 		let _gthis = this;
 		if(this.parser.typesCount == 0) {
-			haxe_Log.trace("Warning: unable to process (no type metadata)",{ fileName : "tool/src/Extractor.hx", lineNumber : 54, className : "Extractor", methodName : "process"});
+			haxe_Log.trace("Warning: unable to process (no type metadata)",{ fileName : "tool/src/Extractor.hx", lineNumber : 55, className : "Extractor", methodName : "process"});
 			this.main = this.createBundle(mainModule);
 			this.bundles = [this.main];
 			return;
@@ -721,7 +731,7 @@ class Extractor {
 		}
 		this.bundles = _g3;
 		let t1 = new Date().getTime();
-		haxe_Log.trace("Graph processed in: " + (t1 - t0) + "ms",{ fileName : "tool/src/Extractor.hx", lineNumber : 91, className : "Extractor", methodName : "process"});
+		haxe_Log.trace("Graph processed in: " + (t1 - t0) + "ms",{ fileName : "tool/src/Extractor.hx", lineNumber : 92, className : "Extractor", methodName : "process"});
 	}
 	populateBundles(mainModule,parents) {
 		let bundle = this.moduleMap[mainModule];
@@ -982,11 +992,11 @@ class Extractor {
 			}
 		}
 	}
-	createBundle(name,isLib) {
+	createBundle(name,isLib,libParams) {
 		if(isLib == null) {
 			isLib = false;
 		}
-		let bundle = { isMain : name == this.mainModule, isLib : isLib, name : name, nodes : [], indexes : [], exports : { }, shared : { }, imports : { }};
+		let bundle = { isMain : name == this.mainModule, isLib : isLib, libParams : libParams, name : name, nodes : [], indexes : [], exports : { }, shared : { }, imports : { }};
 		if(!this.parenting.hasNode(name)) {
 			this.parenting.setNode(name);
 		}
@@ -1032,9 +1042,9 @@ class Extractor {
 	resolveLib(name) {
 		let parts = name.split("=");
 		let newName = parts[0];
-		let tmp = parts[1].split(",");
-		let tmp1 = this.createBundle(newName,true);
-		return { test : tmp, roots : { }, bundle : tmp1};
+		let libParams = parts[1].split(",");
+		let tmp = this.createBundle(newName,true,libParams);
+		return { test : libParams, roots : { }, bundle : tmp};
 	}
 	addOnce(source,target) {
 		let temp = target.slice();
@@ -1977,7 +1987,37 @@ class js_Boot {
 }
 js_Boot.__name__ = true;
 var js_node_Fs = require("fs");
+class js_node_KeyValue {
+	static get_key(this1) {
+		return this1[0];
+	}
+	static get_value(this1) {
+		return this1[1];
+	}
+}
 var js_node_Path = require("path");
+class js_node_stream_WritableNewOptionsAdapter {
+	static from(options) {
+		if(!Object.prototype.hasOwnProperty.call(options,"final")) {
+			Object.defineProperty(options,"final",{ get : function() {
+				return options.final_;
+			}});
+		}
+		return options;
+	}
+}
+class js_node_url_URLSearchParamsEntry {
+	static _new(name,value) {
+		let this1 = [name,value];
+		return this1;
+	}
+	static get_name(this1) {
+		return this1[0];
+	}
+	static get_value(this1) {
+		return this1[1];
+	}
+}
 if(typeof(performance) != "undefined" ? typeof(performance.now) == "function" : false) {
 	HxOverrides.now = performance.now.bind(performance);
 }
