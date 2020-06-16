@@ -24,6 +24,10 @@
   {
     "isMain": false,
     "isLib": true,
+    "libParams": [
+      "lib_",
+      "a_$b_C_$_$d"
+    ],
     "name": "lib",
     "nodes": [
       "a_$b_C_$_$d",

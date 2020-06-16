@@ -69,6 +69,9 @@
   {
     "isMain": false,
     "isLib": true,
+    "libParams": [
+      "lib_"
+    ],
     "name": "lib",
     "nodes": [
       "lib_DepLib",
