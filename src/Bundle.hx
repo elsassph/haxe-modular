@@ -18,11 +18,11 @@ class Bundle
 		{
 			case Type.TType(_.get() => t, _):
 				var module = t.module.split('_').join('_$').split('.').join('_');
-				var bundleName = module;
-				if (bundleNameExpr != null) {
-					bundleName = getString(bundleNameExpr);
+				var bundleName = getStringOption(bundleNameExpr);
+				if (bundleName != null) {
 					Split.register('$bundleName=$module');
 				} else {
+					bundleName = module;
 					Split.register(module);
 				}
 				#if modular_stub
@@ -100,6 +100,13 @@ class Bundle
 			default:
 				Context.fatalError('String literal expected', e.pos);
 				return null;
+		}
+	}
+
+	static function getStringOption(e:Expr) {
+		switch (e.expr) {
+			case EConst(CString(s)): return s;
+			default: return null;
 		}
 	}
 
