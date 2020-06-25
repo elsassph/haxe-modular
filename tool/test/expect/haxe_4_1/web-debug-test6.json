@@ -29,6 +29,7 @@
     "isMain": false,
     "isLib": false,
     "name": "CaseA",
+    "alias": "CaseA",
     "nodes": [
       "CaseA",
       "DepAB",

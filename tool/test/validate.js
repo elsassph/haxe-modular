@@ -8,8 +8,8 @@ const valid = args[3];
 
 const resultRaw = String(fs.readFileSync(result));
 
-// if valid is missing, save result
-if (!fs.existsSync(valid)) {
+// if valid is missing (or we want to update), save result
+if (process.env.UPDATE_EXPECT === 'true' || !fs.existsSync(valid)) {
 	console.log('[Update]', valid, 'from', result);
 	fs.writeFileSync(valid, resultRaw);
 }

@@ -20,6 +20,7 @@
     "isMain": false,
     "isLib": false,
     "name": "CaseF",
+    "alias": "CaseF",
     "nodes": [
       "CaseF",
       "haxe_Exception",

@@ -91,7 +91,7 @@ class Bundler
 		for (i in 0...len) {
 			final bundle = bundles[i];
 			final isMain = bundle.isMain;
-			final bundleOutput = isMain ? output : Path.join(Path.dirname(output), bundle.name + '.js');
+			final bundleOutput = isMain ? output : Path.join(Path.dirname(output), bundle.alias + '.js');
 			trace('Emit $bundleOutput');
 
 			final buffer = emitBundle(src, bundle, isMain);

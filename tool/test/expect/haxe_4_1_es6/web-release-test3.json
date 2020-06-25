@@ -28,6 +28,7 @@
     "isMain": false,
     "isLib": false,
     "name": "CaseC",
+    "alias": "CaseC",
     "nodes": [
       "CaseC"
     ],
@@ -46,6 +47,7 @@
     "isMain": false,
     "isLib": false,
     "name": "DepC",
+    "alias": "DepC",
     "nodes": [
       "DepC",
       "DepSubC"
@@ -68,6 +70,7 @@
     "isMain": false,
     "isLib": false,
     "name": "SubC",
+    "alias": "SubC",
     "nodes": [
       "SubC"
     ],
@@ -84,6 +87,7 @@
     "isMain": false,
     "isLib": false,
     "name": "SubC2",
+    "alias": "SubC2",
     "nodes": [
       "SubC2"
     ],

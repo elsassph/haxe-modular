@@ -23,6 +23,7 @@
     "isMain": false,
     "isLib": false,
     "name": "CaseF",
+    "alias": "CaseF",
     "nodes": [
       "CaseF",
       "js__$Boot_HaxeError"

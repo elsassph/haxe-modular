@@ -30,6 +30,7 @@
       "a_$b_C_$_$d"
     ],
     "name": "lib",
+    "alias": "lib",
     "nodes": [
       "a_$b_C_$_$d",
       "lib_DepLib",

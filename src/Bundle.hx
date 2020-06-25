@@ -20,7 +20,7 @@ class Bundle
 				var module = t.module.split('_').join('_$').split('.').join('_');
 				var bundleName = getStringOption(bundleNameExpr);
 				if (bundleName != null) {
-					Split.register('$bundleName=$module');
+					Split.register('$module>$bundleName');
 				} else {
 					bundleName = module;
 					Split.register(module);
