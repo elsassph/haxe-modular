@@ -968,8 +968,8 @@ class Extractor {
 		this.modules = tmp.concat(_g1);
 	}
 	getModuleAlias($module) {
-		if($module.indexOf(">") > 0) {
-			let parts = $module.split(">");
+		if($module.indexOf("@") > 0) {
+			let parts = $module.split("@");
 			this.moduleAlias[parts[0]] = parts[1];
 			return parts[0];
 		}

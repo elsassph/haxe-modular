@@ -288,8 +288,8 @@ class Extractor
 
 	function getModuleAlias(module:String)
 	{
-		if (module.indexOf('>') > 0) {
-			final parts = module.split('>');
+		if (module.indexOf('@') > 0) {
+			final parts = module.split('@');
 			moduleAlias.set(parts[0], parts[1]);
 			return parts[0];
 		}
