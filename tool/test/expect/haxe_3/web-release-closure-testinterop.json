@@ -40,6 +40,7 @@
     "isMain": false,
     "isLib": false,
     "name": "CaseInterop",
+    "alias": "CaseInterop",
     "nodes": [
       "ArrayBuffer",
       "CaseInterop",
@@ -73,6 +74,7 @@
     "isMain": false,
     "isLib": false,
     "name": "a_$b_C_$_$d",
+    "alias": "a_$b_C_$_$d",
     "nodes": [
       "a_$b_C_$_$d"
     ],

@@ -31,26 +31,9 @@
   },
   {
     "isMain": false,
-    "isLib": true,
-    "name": "lib",
-    "nodes": [
-      "lib_DepLib",
-      "lib_Lib",
-      "lib_Lib2"
-    ],
-    "exports": {
-      "lib_Lib": true,
-      "lib_Lib2": true
-    },
-    "shared": {},
-    "imports": {
-      "$hxClasses": true
-    }
-  },
-  {
-    "isMain": false,
     "isLib": false,
     "name": "CaseA",
+    "alias": "CaseA",
     "nodes": [
       "CaseA"
     ],
@@ -68,6 +51,7 @@
     "isMain": false,
     "isLib": false,
     "name": "CaseB",
+    "alias": "CaseB",
     "nodes": [
       "CaseB",
       "DepB"
@@ -81,6 +65,28 @@
       "DepDepB": true,
       "$hxClasses": true,
       "lib_Lib2": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": true,
+    "libParams": [
+      "lib_"
+    ],
+    "name": "lib",
+    "alias": "lib",
+    "nodes": [
+      "lib_DepLib",
+      "lib_Lib",
+      "lib_Lib2"
+    ],
+    "exports": {
+      "lib_Lib": true,
+      "lib_Lib2": true
+    },
+    "shared": {},
+    "imports": {
+      "$hxClasses": true
     }
   }
 ]

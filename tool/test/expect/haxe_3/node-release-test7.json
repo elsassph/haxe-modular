@@ -20,6 +20,7 @@
     "isMain": false,
     "isLib": false,
     "name": "CaseD",
+    "alias": "CaseD",
     "nodes": [
       "CaseD",
       "CycleD"

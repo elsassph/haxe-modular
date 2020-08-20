@@ -21,6 +21,7 @@
     "isMain": false,
     "isLib": false,
     "name": "CaseG",
+    "alias": "CaseG",
     "nodes": [
       "CaseG"
     ],

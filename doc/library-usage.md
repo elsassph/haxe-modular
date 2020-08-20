@@ -103,9 +103,10 @@ file, `MyAppView.js`, containing the code and dependencies of `MyAppView`.
 
 ### Bundle API
 
-`Bundle.load(module:Class):Promise<String>`
+`Bundle.load(module:Class, ?bundleName:String):Promise<String>`
 
 - `module`: the entry point class reference,
+- `bundleName`: an optional bundle name, instead of the automatic naming,
 - returns a Promise providing the name of the loaded module
 
 (API is identical generally to the "Lazy loading" feature below)

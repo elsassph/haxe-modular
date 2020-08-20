@@ -12,21 +12,26 @@ class Bundle
 	 * Load async application bundle created with `classRef` as entry point
 	 * Note: excution is synchronous in nodejs; the Promise can be ignored
 	 */
-	macro static public function load(classRef:Expr)
+	macro static public function load(classRef:Expr, ?bundleNameExpr:Expr)
 	{
 		switch (Context.typeof(classRef))
 		{
 			case Type.TType(_.get() => t, _):
 				var module = t.module.split('_').join('_$').split('.').join('_');
-				Split.register(module);
-
+				var bundleName = getStringOption(bundleNameExpr);
+				if (bundleName != null) {
+					Split.register('$module@$bundleName');
+				} else {
+					bundleName = module;
+					Split.register(module);
+				}
 				#if modular_stub
 				return macro ({ then: function(cb) { cb($v{module}); }});
 				#else
 
 				var bridge = macro var _ = untyped $i{module} = $p{["$s", module]};
 				#if nodejs
-				var jsModule = './$module';
+				var jsModule = './$bundleName';
 				return macro cast {
 					untyped require($v{jsModule});
 					$bridge;
@@ -41,7 +46,7 @@ class Bundle
 					#if debug
 					Require.hot(function(_) $bridge, $v{module});
 					#end
-					@:keep Require.module($v{module})
+					@:keep Require.module($v{bundleName})
 						.then(function(_i:String) {
 							$bridge;
 							return _i;
@@ -57,15 +62,6 @@ class Bundle
 
 	macro static public function loadLib(libNameExpr:Expr, pkgListExpr:Expr)
 	{
-		function getString(e:Expr) {
-			switch (e.expr) {
-				case EConst(CString(s)): return s;
-				default:
-					Context.fatalError('String literal expected', e.pos);
-					return null;
-			}
-		}
-
 		var libName = getString(libNameExpr);
 
 		switch (pkgListExpr.expr) {
@@ -98,6 +94,22 @@ class Bundle
 	}
 
 	#if macro
+	static function getString(e:Expr) {
+		switch (e.expr) {
+			case EConst(CString(s)): return s;
+			default:
+				Context.fatalError('String literal expected', e.pos);
+				return null;
+		}
+	}
+
+	static function getStringOption(e:Expr) {
+		switch (e.expr) {
+			case EConst(CString(s)): return s;
+			default: return null;
+		}
+	}
+
 	static function formatMatch(s:String)
 	{
 		var m = s.split('_').join('_$').split('.').join('_');

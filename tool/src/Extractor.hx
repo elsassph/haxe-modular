@@ -6,7 +6,9 @@ import haxe.DynamicAccess;
 typedef Bundle = {
 	isMain:Bool,
 	isLib:Bool,
+	libParams:Array<String>,
 	name:String,
+	alias:String,
 	nodes:Array<String>,
 	indexes:Array<Int>,
 	exports:DynamicAccess<Bool>,
@@ -34,6 +36,7 @@ class Extractor
 	var libsNodes:Array<String>;
 	var libMap:DynamicAccess<LibTest>;
 	var moduleTest:DynamicAccess<Bool>;
+	var moduleAlias:DynamicAccess<String>;
 	var parenting:Graph;
 	var moduleMap:DynamicAccess<Bundle>;
 
@@ -49,6 +52,7 @@ class Extractor
 		moduleMap = {};
 		parenting = new Graph();
 		moduleTest = {};
+		moduleAlias = {};
 
 		if (parser.typesCount == 0) {
 			trace('Warning: unable to process (no type metadata)');
@@ -62,7 +66,7 @@ class Extractor
 		hmrMode = debugMode;
 		this.mainModule = mainModule;
 		uniqueModules(modulesList);
-		for (module in modulesList) moduleTest.set(module, true);
+		for (module in modules) moduleTest.set(module, true);
 
 		// apply policy with orphan nodes
 		linkOrphans();
@@ -262,20 +266,35 @@ class Extractor
 
 	function uniqueModules(modulesList:Array<String>)
 	{
-		// deduplicate and merge modules
+		// deduplicate and merge modules, find aliases
 		modules = [];
+		moduleAlias = {};
 		final modulesMap:DynamicAccess<Array<String>> = {};
 		for (module in modulesList) {
-			if (module.indexOf('=') > 0) {
+			if (module.indexOf('=') > 0) { // lib
 				final parts = module.split('=');
-				final name = parts[0];
+				final name = getModuleAlias(parts[0]);
 				if (!modulesMap.exists(name)) modulesMap.set(name, []);
 				for (m in parts[1].split(","))
 					if (modulesMap.get(name).indexOf(m) < 0) modulesMap.get(name).push(m);
 			}
-			else if (modules.indexOf(module) < 0) modules.push(module);
+			else {
+				final name = getModuleAlias(module);
+				if (modules.indexOf(name) < 0) modules.push(name);
+			}
 		}
 		modules = modules.concat([for (name in modulesMap.keys()) '$name=${modulesMap.get(name).join(",")}']);
+	}
+
+	function getModuleAlias(module:String)
+	{
+		if (module.indexOf('@') > 0) {
+			final parts = module.split('@');
+			moduleAlias.set(parts[0], parts[1]);
+			return parts[0];
+		}
+		moduleAlias.set(module, module);
+		return module;
 	}
 
 	function linkEnums(root:String, list:Array<String>)
@@ -301,12 +320,14 @@ class Extractor
 		}
 	}
 
-	function createBundle(name:String, isLib:Bool = false)
+	function createBundle(name:String, isLib:Bool = false, libParams:Array<String> = null)
 	{
 		final bundle:Bundle = {
 			isMain: name == mainModule,
 			isLib: isLib,
+			libParams: libParams,
 			name: name,
+			alias: moduleAlias.get(name),
 			nodes: [],
 			indexes: [],
 			exports: {},
@@ -356,10 +377,11 @@ class Extractor
 		// libname=pattern
 		final parts = name.split('=');
 		final newName = parts[0];
+		final libParams = parts[1].split(',');
 		return {
-			test: parts[1].split(','),
+			test: libParams,
 			roots: ({} :DynamicAccess<Bool>),
-			bundle: createBundle(newName, true)
+			bundle: createBundle(newName, true, libParams)
 		};
 	}
 

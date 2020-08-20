@@ -91,7 +91,7 @@ class Bundler
 		for (i in 0...len) {
 			final bundle = bundles[i];
 			final isMain = bundle.isMain;
-			final bundleOutput = isMain ? output : Path.join(Path.dirname(output), bundle.name + '.js');
+			final bundleOutput = isMain ? output : Path.join(Path.dirname(output), bundle.alias + '.js');
 			trace('Emit $bundleOutput');
 
 			final buffer = emitBundle(src, bundle, isMain);
@@ -168,7 +168,13 @@ class Bundler
 
 	function createRevMap(index:Int, bundle:Bundle)
 	{
-		minifyId.set(bundle.name);
+		// prevent minification of shared refs
+		if (bundle.isLib) {
+			for (param in bundle.libParams) minifyId.set(param);
+		} else {
+			minifyId.set(bundle.name);
+		}
+		// lookup-map between identifiers and bundles
 		final rev = revMap;
 		final nodes = bundle.nodes;
 		final len = nodes.length;

@@ -368,7 +368,7 @@ class Bundler {
 			let i = _g2++;
 			let bundle = this.bundles[i];
 			let isMain = bundle.isMain;
-			let bundleOutput = isMain ? output : js_node_Path.join(js_node_Path.dirname(output),bundle.name + ".js");
+			let bundleOutput = isMain ? output : js_node_Path.join(js_node_Path.dirname(output),bundle.alias + ".js");
 			haxe_Log.trace("Emit " + bundleOutput,{ fileName : "tool/src/Bundler.hx", lineNumber : 95, className : "Bundler", methodName : "generate"});
 			let buffer = this.emitBundle(src,bundle,isMain);
 			results[i] = { name : bundle.name, map : this.writeMap(bundleOutput,buffer), source : this.write(bundleOutput,buffer.src), debugMap : buffer.debugMap};
@@ -420,7 +420,17 @@ class Bundler {
 		}
 	}
 	createRevMap(index,bundle) {
-		this.minifyId.set(bundle.name);
+		if(bundle.isLib) {
+			let _g = 0;
+			let _g1 = bundle.libParams;
+			while(_g < _g1.length) {
+				let param = _g1[_g];
+				++_g;
+				this.minifyId.set(param);
+			}
+		} else {
+			this.minifyId.set(bundle.name);
+		}
 		let rev = this.revMap;
 		let nodes = bundle.nodes;
 		let len = nodes.length;
@@ -487,7 +497,7 @@ class Bundler {
 			return Bundler.generateHtml(consumer,src,sourcesContent);
 		} catch( _g5 ) {
 			let err = haxe_Exception.caught(_g5).unwrap();
-			haxe_Log.trace("[WARNING] error while generating debug map for " + bundle.name + ": " + Std.string(err),{ fileName : "tool/src/Bundler.hx", lineNumber : 230, className : "Bundler", methodName : "emitDebugMap"});
+			haxe_Log.trace("[WARNING] error while generating debug map for " + bundle.name + ": " + Std.string(err),{ fileName : "tool/src/Bundler.hx", lineNumber : 236, className : "Bundler", methodName : "emitDebugMap"});
 			return null;
 		}
 	}
@@ -667,13 +677,14 @@ class Extractor {
 	}
 	process(mainModule,modulesList,debugMode) {
 		let t0 = new Date().getTime();
-		haxe_Log.trace("Bundling...",{ fileName : "tool/src/Extractor.hx", lineNumber : 48, className : "Extractor", methodName : "process"});
+		haxe_Log.trace("Bundling...",{ fileName : "tool/src/Extractor.hx", lineNumber : 51, className : "Extractor", methodName : "process"});
 		this.moduleMap = { };
 		this.parenting = new graphlib_Graph();
 		this.moduleTest = { };
+		this.moduleAlias = { };
 		let _gthis = this;
 		if(this.parser.typesCount == 0) {
-			haxe_Log.trace("Warning: unable to process (no type metadata)",{ fileName : "tool/src/Extractor.hx", lineNumber : 54, className : "Extractor", methodName : "process"});
+			haxe_Log.trace("Warning: unable to process (no type metadata)",{ fileName : "tool/src/Extractor.hx", lineNumber : 58, className : "Extractor", methodName : "process"});
 			this.main = this.createBundle(mainModule);
 			this.bundles = [this.main];
 			return;
@@ -683,8 +694,9 @@ class Extractor {
 		this.mainModule = mainModule;
 		this.uniqueModules(modulesList);
 		let _g = 0;
-		while(_g < modulesList.length) {
-			let $module = modulesList[_g];
+		let _g1 = this.modules;
+		while(_g < _g1.length) {
+			let $module = _g1[_g];
 			++_g;
 			this.moduleTest[$module] = true;
 		}
@@ -701,27 +713,27 @@ class Extractor {
 		this.main = this.moduleMap[mainModule];
 		let _this = this.modules;
 		let result = new Array(_this.length);
-		let _g1 = 0;
-		let _g2 = _this.length;
-		while(_g1 < _g2) {
-			let i = _g1++;
+		let _g2 = 0;
+		let _g3 = _this.length;
+		while(_g2 < _g3) {
+			let i = _g2++;
 			let $module = _this[i];
 			let name = $module.indexOf("=") > 0 ? $module.split("=")[0] : $module;
 			result[i] = _gthis.moduleMap[name];
 		}
-		let _g3 = [];
-		let _g4 = 0;
-		let _g5 = result;
-		while(_g4 < _g5.length) {
-			let v = _g5[_g4];
-			++_g4;
+		let _g4 = [];
+		let _g5 = 0;
+		let _g6 = result;
+		while(_g5 < _g6.length) {
+			let v = _g6[_g5];
+			++_g5;
 			if(v != null) {
-				_g3.push(v);
+				_g4.push(v);
 			}
 		}
-		this.bundles = _g3;
+		this.bundles = _g4;
 		let t1 = new Date().getTime();
-		haxe_Log.trace("Graph processed in: " + (t1 - t0) + "ms",{ fileName : "tool/src/Extractor.hx", lineNumber : 91, className : "Extractor", methodName : "process"});
+		haxe_Log.trace("Graph processed in: " + (t1 - t0) + "ms",{ fileName : "tool/src/Extractor.hx", lineNumber : 95, className : "Extractor", methodName : "process"});
 	}
 	populateBundles(mainModule,parents) {
 		let bundle = this.moduleMap[mainModule];
@@ -916,6 +928,7 @@ class Extractor {
 	}
 	uniqueModules(modulesList) {
 		this.modules = [];
+		this.moduleAlias = { };
 		let modulesMap = { };
 		let _g = 0;
 		while(_g < modulesList.length) {
@@ -923,7 +936,7 @@ class Extractor {
 			++_g;
 			if($module.indexOf("=") > 0) {
 				let parts = $module.split("=");
-				let name = parts[0];
+				let name = this.getModuleAlias(parts[0]);
 				if(!Object.prototype.hasOwnProperty.call(modulesMap,name)) {
 					modulesMap[name] = [];
 				}
@@ -936,8 +949,11 @@ class Extractor {
 						modulesMap[name].push(m);
 					}
 				}
-			} else if(this.modules.indexOf($module) < 0) {
-				this.modules.push($module);
+			} else {
+				let name = this.getModuleAlias($module);
+				if(this.modules.indexOf(name) < 0) {
+					this.modules.push(name);
+				}
 			}
 		}
 		let tmp = this.modules;
@@ -950,6 +966,15 @@ class Extractor {
 			_g1.push("" + name + "=" + modulesMap[name].join(","));
 		}
 		this.modules = tmp.concat(_g1);
+	}
+	getModuleAlias($module) {
+		if($module.indexOf("@") > 0) {
+			let parts = $module.split("@");
+			this.moduleAlias[parts[0]] = parts[1];
+			return parts[0];
+		}
+		this.moduleAlias[$module] = $module;
+		return $module;
 	}
 	linkEnums(root,list) {
 		let _g = 0;
@@ -982,11 +1007,11 @@ class Extractor {
 			}
 		}
 	}
-	createBundle(name,isLib) {
+	createBundle(name,isLib,libParams) {
 		if(isLib == null) {
 			isLib = false;
 		}
-		let bundle = { isMain : name == this.mainModule, isLib : isLib, name : name, nodes : [], indexes : [], exports : { }, shared : { }, imports : { }};
+		let bundle = { isMain : name == this.mainModule, isLib : isLib, libParams : libParams, name : name, alias : this.moduleAlias[name], nodes : [], indexes : [], exports : { }, shared : { }, imports : { }};
 		if(!this.parenting.hasNode(name)) {
 			this.parenting.setNode(name);
 		}
@@ -1032,9 +1057,9 @@ class Extractor {
 	resolveLib(name) {
 		let parts = name.split("=");
 		let newName = parts[0];
-		let tmp = parts[1].split(",");
-		let tmp1 = this.createBundle(newName,true);
-		return { test : tmp, roots : { }, bundle : tmp1};
+		let libParams = parts[1].split(",");
+		let tmp = this.createBundle(newName,true,libParams);
+		return { test : libParams, roots : { }, bundle : tmp};
 	}
 	addOnce(source,target) {
 		let temp = target.slice();
@@ -1977,7 +2002,37 @@ class js_Boot {
 }
 js_Boot.__name__ = true;
 var js_node_Fs = require("fs");
+class js_node_KeyValue {
+	static get_key(this1) {
+		return this1[0];
+	}
+	static get_value(this1) {
+		return this1[1];
+	}
+}
 var js_node_Path = require("path");
+class js_node_stream_WritableNewOptionsAdapter {
+	static from(options) {
+		if(!Object.prototype.hasOwnProperty.call(options,"final")) {
+			Object.defineProperty(options,"final",{ get : function() {
+				return options.final_;
+			}});
+		}
+		return options;
+	}
+}
+class js_node_url_URLSearchParamsEntry {
+	static _new(name,value) {
+		let this1 = [name,value];
+		return this1;
+	}
+	static get_name(this1) {
+		return this1[0];
+	}
+	static get_value(this1) {
+		return this1[1];
+	}
+}
 if(typeof(performance) != "undefined" ? typeof(performance.now) == "function" : false) {
 	HxOverrides.now = performance.now.bind(performance);
 }

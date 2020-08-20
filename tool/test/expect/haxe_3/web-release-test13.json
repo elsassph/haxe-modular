@@ -24,6 +24,7 @@
     "isMain": false,
     "isLib": false,
     "name": "a_$b_Exposed",
+    "alias": "a_$b_Exposed",
     "nodes": [
       "a_$b_Exposed",
       "a_$b_SubExposed"

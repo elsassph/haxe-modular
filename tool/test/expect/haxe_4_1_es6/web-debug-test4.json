@@ -37,6 +37,7 @@
     "isMain": false,
     "isLib": false,
     "name": "CaseA",
+    "alias": "CaseA",
     "nodes": [
       "CaseA"
     ],
@@ -54,6 +55,7 @@
     "isMain": false,
     "isLib": false,
     "name": "CaseB",
+    "alias": "CaseB",
     "nodes": [
       "CaseB",
       "DepB"
@@ -72,7 +74,11 @@
   {
     "isMain": false,
     "isLib": true,
+    "libParams": [
+      "lib_"
+    ],
     "name": "lib",
+    "alias": "lib",
     "nodes": [
       "lib_DepLib",
       "lib_Lib",

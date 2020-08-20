@@ -29,6 +29,7 @@
     "isMain": false,
     "isLib": false,
     "name": "CaseA",
+    "alias": "CaseA",
     "nodes": [
       "CaseA"
     ],
@@ -45,6 +46,7 @@
     "isMain": false,
     "isLib": false,
     "name": "CaseB",
+    "alias": "CaseB",
     "nodes": [
       "CaseB",
       "DepB",
