@@ -1,0 +1,28 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test16",
+    "nodes": [
+      "Require",
+      "Test16",
+      "haxe_ds_StringMap"
+    ],
+    "exports": {},
+    "shared": {},
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": true,
+    "libParams": [
+      "foo_"
+    ],
+    "name": "lib",
+    "alias": "lib",
+    "nodes": [],
+    "exports": {},
+    "shared": {},
+    "imports": {}
+  }
+]
