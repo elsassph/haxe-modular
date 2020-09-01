@@ -1,0 +1,31 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test16",
+    "nodes": [
+      "HxOverrides",
+      "Require",
+      "Test16",
+      "haxe_ds_StringMap",
+      "haxe_iterators_ArrayIterator",
+      "require"
+    ],
+    "exports": {},
+    "shared": {},
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": true,
+    "libParams": [
+      "foo_"
+    ],
+    "name": "lib",
+    "alias": "lib",
+    "nodes": [],
+    "exports": {},
+    "shared": {},
+    "imports": {}
+  }
+]

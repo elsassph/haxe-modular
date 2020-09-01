@@ -12,6 +12,7 @@ class Parser
 	public var isRequire:DynamicAccess<Bool>;
 	public var typesCount(default, null):Int;
 	public var mainModule:String = 'Main';
+	var tagHook: (name:String, def:AstNode) -> Bool = null;
 
 	final reservedTypes:DynamicAccess<Bool> = {
 		'String':true, 'Math':true, 'Array':true, 'Date':true, 'Number':true, 'Boolean':true,
@@ -29,7 +30,7 @@ class Parser
 		final engine = processInput(src, withLocation);
 		final t1 = Date.now().getTime();
 		trace('Parsed ($engine) in: ${t1 - t0}ms');
-
+  
 		buildGraph(commonjs);
 		final t2 = Date.now().getTime();
 		trace('AST processed in: ${t2 - t1}ms');
@@ -131,15 +132,17 @@ class Parser
 		{
 			case 'BlockStatement':
 				final body = getBodyNodes(block);
-				walkDeclarations(body);
+				walkDeclarations(body, true);
 			default:
 				throw 'Expecting block of statements inside root function';
 		}
 	}
 
-	function walkDeclarations(body:Array<AstNode>)
+	function walkDeclarations(body:Array<AstNode>, isRoot:Bool)
 	{
-		rootBody = body;
+		if (isRoot) {
+			rootBody = body;
+		}
 
 		for (node in body)
 		{
@@ -175,6 +178,22 @@ class Parser
 			final path = getIdentifier(test.left);
 			if (path.length > 1 && path[1] == 'prototype')
 				tag(path[0], def);
+		}
+		else if (test.type == 'ConditionalExpression')
+		{
+			// Unknown conditional expression, so tag based on sub-expression, e.g.:
+			//     if(typeof(performance) != "undefined" ? typeof(performance.now) == "function" : false) {
+			//          HxOverrides.now = performance.now.bind(performance);
+			//     }
+			if (def.consequent.type == 'BlockStatement') {
+				tagHook = function(name, decl) {
+					if (decl == def) return false; // tag parent if expr
+					tag(name, def);
+					return true; // don't tag sub-expr
+				}
+				walkDeclarations(def.consequent.body, false);
+				tagHook = null;
+			}
 		}
 	}
 
@@ -323,6 +342,9 @@ class Parser
 
 	function tag(name:String, def:AstNode)
 	{
+		if (tagHook != null && tagHook(name, def)) {
+			return;
+		}
 		if (!types.exists(name)) {
 			if (reservedTypes.get(name)) {
 				// Tag types we want to include only in main module (eg. 'Math.__name__ = "Math";)
