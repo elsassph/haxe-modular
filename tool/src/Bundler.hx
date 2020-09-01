@@ -57,7 +57,6 @@ class Bundler
 	final minifyId:MinifyId;
 	var commonjs:Bool;
 	var debugSourceMap:Bool;
-	var nodejsMode:Bool;
 	var revMap:DynamicAccess<Array<Int>>;
 	var idMap:DynamicAccess<Bool>;
 	var bundles:Array<Bundle>;
