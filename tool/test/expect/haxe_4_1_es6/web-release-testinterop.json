@@ -39,10 +39,12 @@
     "name": "CaseInterop",
     "alias": "CaseInterop",
     "nodes": [
-      "CaseInterop"
+      "CaseInterop",
+      "HxOverrides"
     ],
     "exports": {
-      "CaseInterop": true
+      "CaseInterop": true,
+      "HxOverrides": true
     },
     "shared": {
       "a_$b_C_$_$d": true
@@ -67,6 +69,8 @@
       "a_$b_C_$_$d": true
     },
     "shared": {},
-    "imports": {}
+    "imports": {
+      "HxOverrides": true
+    }
   }
 ]
