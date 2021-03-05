@@ -1,0 +1,18 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test0",
+    "nodes": [
+      "$hxClasses",
+      "CaseA",
+      "DepAB",
+      "DepDepAB",
+      "Test0",
+      "haxe_iterators_ArrayIterator"
+    ],
+    "exports": {},
+    "shared": {},
+    "imports": {}
+  }
+]

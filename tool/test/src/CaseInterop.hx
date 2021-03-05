@@ -3,8 +3,9 @@ import a_b.C__d;
 class CaseInterop {
 	public function new() {
 		trace('CaseInterop');
-		var i = cast(0, Int);
-		var f = cast(0, Float);
+		var i = cast(value, Int);
+		var f = cast(value, Float);
+		trace(haxe.Timer.stamp());
 
 		Bundle.load(C__d).then(function(_) {
 			new C__d();
@@ -16,5 +17,11 @@ class CaseInterop {
 			var m = js.Lib.require('foo');
 			#end
 		});
+	}
+
+	static public var value: Int;
+	static function __init__() {
+		var v = 42;
+		CaseInterop.value = v;
 	}
 }

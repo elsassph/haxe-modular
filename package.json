@@ -6,6 +6,13 @@
   "bin": {
     "haxe-split": "bin/cmd.js"
   },
+  "scripts": {
+    "postinstall": "lix download",
+    "build:viewer": "haxe build-viewer.hxml",
+    "build:cli": "haxe build-cli.hxml",
+    "build": "npm run build:viewer && npm run build:cli",
+    "test": "node tool/test/test-suite.js"
+  },
   "files": [
     "bin",
     "tool/bin",
@@ -27,6 +34,7 @@
     "source-map": "^0.5.6"
   },
   "devDependencies": {
+    "lix": "^15.10.1",
     "json-diff": "^0.5.2",
     "uglify-js": "^2.8.29"
   },

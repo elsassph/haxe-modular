@@ -1,0 +1,32 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        haxe-version: [3.4.7, 4.0.5, 4.1.5, stable]
+
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Haxe matrix version
+        run: npx lix install haxe ${{ matrix.haxe-version }}
+
+      - name: Run tests (es5)
+        run: npm run test
+
+      - name: Run tests (es6)
+        run: npm run test -- es6
