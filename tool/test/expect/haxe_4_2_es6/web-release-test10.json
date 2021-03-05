@@ -1,0 +1,64 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test10",
+    "nodes": [
+      "$hxClasses",
+      "Require",
+      "Test10",
+      "Test10",
+      "haxe_IMap",
+      "haxe_ds_StringMap",
+      "haxe_iterators_ArrayIterator",
+      "require"
+    ],
+    "exports": {
+      "Test10": true,
+      "Require": true,
+      "$hxClasses": true
+    },
+    "shared": {
+      "CaseE": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseE",
+    "alias": "CaseE",
+    "nodes": [
+      "CaseE"
+    ],
+    "exports": {
+      "CaseE": true
+    },
+    "shared": {
+      "DepE": true
+    },
+    "imports": {
+      "Test10": true,
+      "Require": true,
+      "$hxClasses": true
+    }
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "DepE",
+    "alias": "DepE",
+    "nodes": [
+      "DepE"
+    ],
+    "exports": {
+      "DepE": true
+    },
+    "shared": {},
+    "imports": {
+      "CaseE": true,
+      "Test10": true,
+      "$hxClasses": true
+    }
+  }
+]

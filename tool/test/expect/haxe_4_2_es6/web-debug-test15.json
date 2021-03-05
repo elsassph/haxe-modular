@@ -1,0 +1,42 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test15",
+    "nodes": [
+      "$getIterator",
+      "Lambda",
+      "Require",
+      "Std",
+      "Test15",
+      "haxe_Timer",
+      "haxe_ds_StringMap",
+      "haxe_iterators_ArrayIterator",
+      "js_Boot",
+      "require"
+    ],
+    "exports": {
+      "Lambda": true
+    },
+    "shared": {
+      "CaseG": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseG",
+    "alias": "CaseG",
+    "nodes": [
+      "CaseG"
+    ],
+    "exports": {
+      "CaseG": true
+    },
+    "shared": {},
+    "imports": {
+      "Lambda": true
+    }
+  }
+]

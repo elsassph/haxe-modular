@@ -30,7 +30,7 @@ class Parser
 		final engine = processInput(src, withLocation);
 		final t1 = Date.now().getTime();
 		trace('Parsed ($engine) in: ${t1 - t0}ms');
-  
+
 		buildGraph(commonjs);
 		final t2 = Date.now().getTime();
 		trace('AST processed in: ${t2 - t1}ms');
@@ -161,12 +161,37 @@ class Parser
 						inspectExpression(node.consequent.expression, node);
 					else
 						inspectIfStatement(node.test, node);
+				case 'BlockStatement':
+					inspectBlockStatement(node);
 				case 'EmptyStatement':
 					// ignore
 				default:
 					trace('WARNING: Unexpected ${node.type}, at character ${node.start}');
 			}
 		}
+	}
+
+	function inspectBlockStatement(def:AstNode)
+	{
+		// Top-level blocks are created since Haxe 4.2+ for static _init_ code in ES6
+		// We'll attempt to link the whole block to a type reference in its body
+		// ex:
+		// {
+		//    Date.prototype.__class__ = Date;
+		//    Date.__name__ = "Date";
+		//    var Int = { };
+		//  }
+		var tagged = false;
+		tagHook = function(name, decl) {
+			if (decl == def) return false; // self-tagging
+			if (!tagged) {
+				tag(name, def);
+				tagged = true;
+			}
+			return false; // tag sub-expr so we can share pseudo-types like Int
+		}
+		walkDeclarations(def.body, false);
+		tagHook = null;
 	}
 
 	function inspectIfStatement(test:AstNode, def:AstNode)
@@ -187,7 +212,7 @@ class Parser
 			//     }
 			if (def.consequent.type == 'BlockStatement') {
 				tagHook = function(name, decl) {
-					if (decl == def) return false; // tag parent if expr
+					if (decl == def) return false; // self-tagging
 					tag(name, def);
 					return true; // don't tag sub-expr
 				}

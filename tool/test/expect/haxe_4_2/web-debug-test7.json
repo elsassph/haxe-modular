@@ -1,0 +1,43 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test7",
+    "nodes": [
+      "$hxClasses",
+      "Require",
+      "Std",
+      "Test7",
+      "haxe_IMap",
+      "haxe_Timer",
+      "haxe_ds_StringMap",
+      "haxe_iterators_ArrayIterator",
+      "js_Boot",
+      "require"
+    ],
+    "exports": {
+      "$hxClasses": true
+    },
+    "shared": {
+      "CaseD": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseD",
+    "alias": "CaseD",
+    "nodes": [
+      "CaseD",
+      "CycleD"
+    ],
+    "exports": {
+      "CaseD": true
+    },
+    "shared": {},
+    "imports": {
+      "$hxClasses": true
+    }
+  }
+]

@@ -12,7 +12,7 @@ const testClasses = [
 ];
 const useLib = { Test4:true, Test5:true, Test12:true };
 
-const { only, es6 } = getOnly();
+const { only, es6, interop } = getOnly();
 
 const suites = [{
 	name: 'node-debug',
@@ -66,12 +66,17 @@ function getOnly() {
 	if (args.length <= 2) return {};
 	let only = args.slice(2);
 	let es6 = false;
+	let interop = false;
 	if (only[0] === 'es6') {
 		es6 = true;
 		only.shift();
 	}
+	if (only[0] === 'interop') {
+		interop = true;
+		only.shift();
+	}
 	if (only.length === 0) only = null;
-	return { only, es6 };
+	return { only, es6, interop };
 }
 
 function exitWithResult() {
@@ -109,7 +114,7 @@ function runInterop() {
 }
 
 function runSuites() {
-	if (!suites.length) {
+	if (interop || !suites.length) {
 		runInterop();
 		return;
 	}
@@ -147,7 +152,7 @@ function execTest(className, name, params, isNode, callback) {
 	if (useLib[className]) params += ' -D uselib';
 	if (es6) params += ' -D js-es=6';
 	var cmd = `haxe tool/test/test-common.hxml -main ${className} -js ${folder}/index.js ${params}`;
-	//console.log(cmd);
+	console.log(cmd);
 	exec(cmd, (err, stdout, stderr) => {
 		if (err) {
 			hasFailedCase = 1;

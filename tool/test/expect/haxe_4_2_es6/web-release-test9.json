@@ -1,0 +1,39 @@
+[
+  {
+    "isMain": true,
+    "isLib": false,
+    "name": "Test9",
+    "nodes": [
+      "$hxClasses",
+      "Require",
+      "Test9",
+      "haxe_IMap",
+      "haxe_ds_StringMap",
+      "haxe_iterators_ArrayIterator",
+      "require"
+    ],
+    "exports": {
+      "$hxClasses": true
+    },
+    "shared": {
+      "CaseD": true
+    },
+    "imports": {}
+  },
+  {
+    "isMain": false,
+    "isLib": false,
+    "name": "CaseD",
+    "alias": "CaseD",
+    "nodes": [
+      "CaseD"
+    ],
+    "exports": {
+      "CaseD": true
+    },
+    "shared": {},
+    "imports": {
+      "$hxClasses": true
+    }
+  }
+]

@@ -33,6 +33,7 @@
     "name": "lib",
     "alias": "lib",
     "nodes": [
+      "HxOverrides",
       "a_$b_C_$_$d",
       "lib_DepLib",
       "lib_Lib2"

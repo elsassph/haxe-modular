@@ -3,6 +3,7 @@ language: haxe
 haxe:
   - 3.4.7
   - 4.0.5
+  - 4.1.5
   - stable
   - development
 
@@ -11,18 +12,15 @@ matrix:
     - haxe: development
 
 install:
+  - echo "{\"version\":\"$(dirname `which haxe`)\", \"resolveLibs\":\"scoped\"}" > .haxerc
   - node -v && npm install
-  - haxelib install hxnodejs
-  - haxelib install closure
-  - haxelib install uglifyjs
 
 before_script:
-  # - haxe build-viewer.hxml
-  # - haxe build-tool.hxml
+  # - npm run build
 
 script:
-  - node tool/test/test-suite.js
-  - node tool/test/test-suite.js es6
+  - npm run test
+  - npm run test -- es6
 
 deploy:
   - provider: script
