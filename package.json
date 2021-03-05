@@ -1,6 +1,6 @@
 {
   "name": "haxe-modular",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "description": "",
   "main": "runtime/index.js",
   "bin": {
