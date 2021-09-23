@@ -1,13 +1,13 @@
 {
   "name": "haxe-modular",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "description": "",
   "main": "runtime/index.js",
   "bin": {
     "haxe-split": "bin/cmd.js"
   },
   "scripts": {
-    "postinstall": "lix download",
+    "prepare": "lix download",
     "build:viewer": "haxe build-viewer.hxml",
     "build:cli": "haxe build-cli.hxml",
     "build": "npm run build:viewer && npm run build:cli",
