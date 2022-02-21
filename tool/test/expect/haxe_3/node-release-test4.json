@@ -10,11 +10,8 @@
       "DepDepAB",
       "DepDepMain",
       "DepMain",
-      "Require",
       "Test4",
       "Type",
-      "haxe_IMap",
-      "haxe_ds_StringMap",
       "js_Boot"
     ],
     "exports": {

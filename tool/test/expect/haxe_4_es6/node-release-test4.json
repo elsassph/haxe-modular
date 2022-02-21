@@ -11,10 +11,7 @@
       "DepDepAB",
       "DepDepMain",
       "DepMain",
-      "Require",
       "Test4",
-      "haxe_IMap",
-      "haxe_ds_StringMap",
       "js_Boot",
       "js__$Boot_HaxeError"
     ],

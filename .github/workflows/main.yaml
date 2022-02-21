@@ -16,9 +16,11 @@ jobs:
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v2
+        with:
+          node-version: '12'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci && npm run prepare
 
       - name: Install Haxe matrix version
         run: npx lix install haxe ${{ matrix.haxe-version }}

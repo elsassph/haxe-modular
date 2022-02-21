@@ -11,10 +11,7 @@
       "DepDepAB",
       "DepDepMain",
       "DepMain",
-      "Require",
       "Test4",
-      "haxe_IMap",
-      "haxe_ds_StringMap",
       "haxe_iterators_ArrayIterator",
       "js_Boot"
     ],

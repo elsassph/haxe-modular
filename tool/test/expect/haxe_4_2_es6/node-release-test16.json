@@ -4,9 +4,7 @@
     "isLib": false,
     "name": "Test16",
     "nodes": [
-      "Require",
       "Test16",
-      "haxe_ds_StringMap",
       "haxe_iterators_ArrayIterator"
     ],
     "exports": {},

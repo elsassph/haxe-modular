@@ -1,5 +1,30 @@
 "use strict";
 
+// There are 2 types of suites:
+// - normal suites ('<node|web>-<debug|release>')
+// - interop suite ('interop')
+//
+// "Normal suites" tests are named Test1, Test2, ...
+// "Interop" tests are named 'web-<debug|release>[-<closure|uglify>]'
+//
+// Usage:
+//
+//  # run all tests
+// 	npm run test
+//
+//  # run all tests in a suite
+//  npm run test node-debug
+//  npm run test web-release
+//  npm run test interop
+//
+//  # run a single test in all suites
+//  npm run test all Test4
+//
+//  # run a single test
+//  npm run test node-release Test4
+//  npm run test interop web-release-closure
+//
+
 const exec = require('child_process').exec;
 const fs = require('fs');
 const t0 = new Date().getTime();
@@ -119,7 +144,7 @@ function runSuites() {
 		return;
 	}
 	const suite = suites.shift();
-	if (only && only[0] !== suite.name) {
+	if (only && only[0] !== 'all' && only[0] !== suite.name) {
 		runSuites();
 		return;
 	}
