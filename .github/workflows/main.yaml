@@ -18,7 +18,7 @@ jobs:
         uses: actions/setup-node@v2
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci && npm run prepare
 
       - name: Install Haxe matrix version
         run: npx lix install haxe ${{ matrix.haxe-version }}
