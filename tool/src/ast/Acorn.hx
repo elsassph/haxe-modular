@@ -52,7 +52,7 @@ typedef AcornOptions = {
 	 * or 8 (2017). This influences support for strict mode, the set of reserved words,
 	 * and support for new syntax features. Default is 7.
 	 */
-	@:optional var ecmaVersion:Int;
+	var ecmaVersion:Int;
 	/**
 	 * Indicate the mode the code should be parsed in. Can be either "script" or "module".
 	 * This influences global strict mode and parsing of import and export declarations.

@@ -81,7 +81,11 @@ class Bundle
 				return macro {
 					@:keep Require.module($v{libName})
 						.then(function(id:String) {
+							#if (haxe_ver >= 4)
+							js.Syntax.code($v{bridge});
+							#else
 							untyped __js__($v{bridge});
+							#end
 							return id;
 						});
 				}

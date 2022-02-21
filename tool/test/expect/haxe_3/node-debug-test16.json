@@ -4,10 +4,7 @@
     "isLib": false,
     "name": "Test16",
     "nodes": [
-      "Require",
-      "Test16",
-      "haxe_IMap",
-      "haxe_ds_StringMap"
+      "Test16"
     ],
     "exports": {},
     "shared": {},

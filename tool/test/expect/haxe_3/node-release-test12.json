@@ -7,11 +7,8 @@
       "$hxClasses",
       "DepDepMain",
       "DepMain",
-      "Require",
       "Test12",
-      "Type",
-      "haxe_IMap",
-      "haxe_ds_StringMap"
+      "Type"
     ],
     "exports": {
       "$hxClasses": true

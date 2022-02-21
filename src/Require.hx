@@ -1,15 +1,17 @@
 import haxe.Timer;
 import haxe.macro.Expr;
 
+#if (!webpack && !nodejs)
 #if (haxe_ver >= 4)
 typedef Promise<T> = js.lib.Promise<T>;
 #else
 typedef Promise<T> = js.Promise<T>;
 #end
+#end
 
 class Require
 {
-	#if (!macro && !webpack)
+	#if (!webpack && !nodejs)
 	static public var jsPath = './';
 	static public var jsExt = '.js';
 
@@ -129,14 +131,18 @@ class Require
 	}
 	#end
 
-	#else //webpack
-	static macro public function module(name:Expr):ExprOf<Promise<Dynamic>>
+	#else //webpack/nodejs
+	static macro public function module(name:Expr)
 	{
 		var module = switch(name.expr) {
 			case EConst(CString(s)): s;
 			default: throw 'Modules should be required by String literal name';
 		}
-		return macro untyped __js__('System.import')($v{'./' + module});
+		#if (haxe_ver >= 4.1)
+		return macro js.Syntax.code('import')($v{'./' + module});
+		#else
+		return macro untyped __js__('import')($v{'./' + module});
+		#end
 	}
 
 	static public function hot(?handler:String -> Void, ?forModule:String)
