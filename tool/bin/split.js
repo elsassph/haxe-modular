@@ -534,7 +534,7 @@ class Bundler {
 			buffer += frag.SHARED;
 			++mapOffset;
 			if(isMain) {
-				buffer += "var require = (function(r){ return function require(m) { return r[m]; } })($s.__registry__ || {});\n";
+				buffer += "var require = (function(){ return function require(m) { return $s.__registry__[m]; } })();\n";
 				++mapOffset;
 			}
 		}
